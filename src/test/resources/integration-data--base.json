@@ -1,0 +1,30 @@
+[
+  {
+    "projectId": "123withSingleSection",
+    "constitution": {
+      "bylaws": [
+        {
+          "scope": "OPERATION_CORE_RETRIBUTION_MODEL",
+          "definition": "CAPS"
+        }
+      ]
+    },
+    "status": "STARTUP"
+  },
+  {
+    "projectId": "345MultipleSections",
+    "constitution": {
+      "bylaws": [
+        {
+          "scope": "OPERATION_CORE_RETRIBUTION_MODEL",
+          "definition": "CAPS"
+        },
+        {
+          "scope": "OWNERSHIP_MECHANISM",
+          "definition": "CAPS_BASED"
+        }
+      ]
+    },
+    "status": "OPERATIONAL"
+  }
+]

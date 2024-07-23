@@ -1,0 +1,15 @@
+context:
+  initializer:
+    classes: com.angorasix.projects.management.integrations.BeansInitializer
+server:
+  port: ${A6_PROJECTS_MGMT_INTEGRATIONS_PORT:60010}
+
+spring:
+  config:
+    import: classpath:/api.yml, classpath:/security.yml, classpath:/security.client.yml, classpath:/sources.yml, classpath:/amqp.yml
+  application:
+    name: ${APP_NAME:projects.management.integrations}
+  data:
+    mongodb:
+      uri: ${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_URI:mongodb://localhost:27017/}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_NAME:a6-projects-management}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_PARAMS:?}
+#      auto-index-creation: true
