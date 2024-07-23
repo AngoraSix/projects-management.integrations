@@ -1,0 +1,8 @@
+#spring:
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          trello:
+#            client-id: ${A6_PROJECTS_MGMT_INTEGRATIONS_CLIENT_GOOGLE_CLIENT_ID:174901881980-h19g4ghkjju4juhm6qf0tqgclsnki5ip.apps.googleusercontent.com}
+#            client-secret: ${A6_PROJECTS_MGMT_INTEGRATIONS_CLIENT_GOOGLE_CLIENT_SECRET:gBBEYsLymVo8OKZuPLZISJPO}

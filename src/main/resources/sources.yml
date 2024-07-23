@@ -1,0 +1,7 @@
+configs:
+  source:
+    trello:
+      apiKey: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APIKEY:TrelloApiKey}
+      apiSecret: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APISECRET:TrelloApiSecret}
+    supported:
+      - trello

@@ -1,0 +1,20 @@
+configs:
+  api:
+    basePaths:
+      projectsManagementIntegration: "/management-integration"
+    routes:
+      baseListCrudRoute: ""
+      baseByIdCrudRoute: "/{id}"
+      baseByProjectManagementIdCrudRoute: "/project-management/{projectManagementId}"
+      listIntegrationsByProjectManagementId:
+        name: listIntegrationsByProjectManagementId
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+        method: GET
+        path: ${configs.api.routes.baseByProjectManagementIdCrudRoute}
+      getIntegration:
+        name: getIntegration
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+        method: GET
+        path: ${configs.api.routes.baseByIdCrudRoute}
