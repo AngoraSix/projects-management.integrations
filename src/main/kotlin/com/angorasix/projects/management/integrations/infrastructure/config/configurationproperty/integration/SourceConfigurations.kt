@@ -15,10 +15,10 @@ data class SourceConfigurations(
 
     @NestedConfigurationProperty
     var trello: TrelloConfigs,
-    var supported: Set<String>
+    var supported: Set<String>,
 )
 
-data class TrelloConfigs (
+data class TrelloConfigs(
     val apiKey: String,
     val apiSecret: String,
 )

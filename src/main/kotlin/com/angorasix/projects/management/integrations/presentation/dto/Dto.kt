@@ -1,7 +1,6 @@
 package com.angorasix.projects.management.integrations.presentation.dto
 
 import com.angorasix.commons.domain.SimpleContributor
-import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationConfig
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import org.springframework.hateoas.RepresentationModel
 import org.springframework.hateoas.server.core.Relation
@@ -23,12 +22,9 @@ data class IntegrationDto(
 ) : RepresentationModel<IntegrationDto>()
 
 data class IntegrationStatusDto(
-    val status: IntegrationStatusValues,
+    val status: IntegrationStatusValues? = null,
     val expirationDate: Instant? = null,
-    val sourceStrategyData: Any? = null,
+    val sourceStrategyData: Map<String, Any>? = null,
 )
 
-data class IntegrationConfigDto(
-    val sourceStrategyConfigData: Any?
-)
-
+data class IntegrationConfigDto(val sourceStrategyConfigData: Map<String, Any>?)

@@ -19,7 +19,6 @@ import org.springframework.web.util.UriComponentsBuilder
  *
  * @author rozagerardo
  */
-
 fun IntegrationDto.resolveHypermedia(
     requestingContributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
@@ -33,6 +32,10 @@ fun IntegrationDto.resolveHypermedia(
     val selfLinkWithDefaultAffordance =
         Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
     add(selfLinkWithDefaultAffordance)
+
+    requestingContributor?.let {
+        // actions for requesting contributor
+    }
 
     return this
 }
@@ -48,23 +51,23 @@ fun List<IntegrationDto>.generateCollectionModel(): Pair<Boolean, CollectionMode
     return Pair(this.isEmpty(), collectionModel)
 }
 
-fun CollectionModel<IntegrationDto>.resolveHypermedia(
-    requestingContributor: SimpleContributor?,
-    projectId: String,
-    apiConfigs: ApiConfigs,
-    request: ServerRequest,
-    isEmpty: Boolean,
-): CollectionModel<IntegrationDto> {
-    val getByProjectManagementId = apiConfigs.routes.listIntegrationsByProjectManagementId
-    // self
-    val selfLink = Link.of(
-        uriBuilder(request).path(getByProjectManagementId.resolvePath()).build().toUriString(),
-    ).withRel(getByProjectManagementId.name).expand(projectId).withSelfRel()
-    val selfLinkWithDefaultAffordance =
-        Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
-    add(selfLinkWithDefaultAffordance)
-    return this
-}
+// fun CollectionModel<IntegrationDto>.resolveHypermedia(
+//    requestingContributor: SimpleContributor?,
+//    projectId: String,
+//    apiConfigs: ApiConfigs,
+//    request: ServerRequest,
+//    isEmpty: Boolean,
+// ): CollectionModel<IntegrationDto> {
+//    val getByProjectManagementId = apiConfigs.routes.listIntegrationsByProjectManagementId
+//    // self
+//    val selfLink = Link.of(
+//        uriBuilder(request).path(getByProjectManagementId.resolvePath()).build().toUriString(),
+//    ).withRel(getByProjectManagementId.name).expand(projectId).withSelfRel()
+//    val selfLinkWithDefaultAffordance =
+//        Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
+//    add(selfLinkWithDefaultAffordance)
+//    return this
+// }
 
 fun CollectionModel<IntegrationDto>.resolveHypermedia(
     requestingContributor: SimpleContributor?,

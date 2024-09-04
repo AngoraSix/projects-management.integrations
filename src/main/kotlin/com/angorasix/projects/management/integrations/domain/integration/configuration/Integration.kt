@@ -1,7 +1,6 @@
 package com.angorasix.projects.management.integrations.domain.integration.configuration
 
 import com.angorasix.commons.domain.SimpleContributor
-import jakarta.validation.constraints.NotNull
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 import org.springframework.data.mongodb.core.index.CompoundIndex
@@ -20,14 +19,14 @@ import java.time.Instant
 class Integration @PersistenceCreator public constructor(
     @field:Id val id: String?,
     val source: String,
-    val projectManagementId: String, // for a particular Project Management (same user/admin could link to the same source),
+    val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
     val status: IntegrationStatus,
     val admins: Set<SimpleContributor> = emptySet(),
     val config: IntegrationConfig,
 ) {
     constructor(
         source: String,
-        projectManagementId: String, // for a particular Project Management (same user/admin could link to the same source),
+        projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
         status: IntegrationStatus,
         admins: Set<SimpleContributor> = emptySet(),
         config: IntegrationConfig,
@@ -44,13 +43,18 @@ class Integration @PersistenceCreator public constructor(
 data class IntegrationStatus(
     @Transient val status: IntegrationStatusValues, // should match one of the IntegrationStatusValues, but flexible
     val expirationDate: Instant? = null, // if the integration or syncing as an expiration date
-    val sourceStrategyData: Any? = null, // any information used by the integration/source strategy to manage its state
-)
+    val sourceStrategyStatusData: Map<String, Any>? = null, // any information used by the source to manage its state
+) {
+    companion object {
+        fun registered(sourceStrategyData: Map<String, Any>?): IntegrationStatus =
+            IntegrationStatus(IntegrationStatusValues.UNSYNCED, Instant.now(), sourceStrategyData)
+    }
+}
 
 enum class IntegrationStatusValues {
     NOT_REGISTERED, SYNCED, UNSYNCED
 }
 
 data class IntegrationConfig(
-    val sourceStrategyConfigData: Any?, // any information used by the integration/source strategy to retrieve data
+    val sourceStrategyConfigData: Map<String, Any>?, // any information used by the source strategy to retrieve data
 )

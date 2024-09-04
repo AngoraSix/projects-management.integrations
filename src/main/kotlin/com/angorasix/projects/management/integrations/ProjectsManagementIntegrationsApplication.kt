@@ -16,8 +16,10 @@ import org.springframework.hateoas.support.WebStack
     type = [EnableHypermediaSupport.HypermediaType.HAL_FORMS],
     stacks = [WebStack.WEBFLUX],
 )
-@ConfigurationPropertiesScan("com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty")
-class ProjectsManagementCoreApplication
+@ConfigurationPropertiesScan(
+    "com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty",
+)
+class ProjectsManagementIntegrationsApplication
 
 /**
  * Main application method.
@@ -25,5 +27,5 @@ class ProjectsManagementCoreApplication
  * @param args java args
  */
 fun main(args: Array<String>) {
-    runApplication<ProjectsManagementCoreApplication>(args = args)
+    runApplication<ProjectsManagementIntegrationsApplication>(args = args)
 }

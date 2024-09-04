@@ -12,6 +12,12 @@ configs:
           - ${configs.api.basePaths.projectsManagementIntegration}
         method: GET
         path: ${configs.api.routes.baseByProjectManagementIdCrudRoute}
+      registerIntegrationForProjectManagement:
+        name: registerIntegrationForProjectManagement
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+        method: POST
+        path: ${configs.api.routes.baseByProjectManagementIdCrudRoute}
       getIntegration:
         name: getIntegration
         basePaths:

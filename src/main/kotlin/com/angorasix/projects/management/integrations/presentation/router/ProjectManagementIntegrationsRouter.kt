@@ -15,8 +15,8 @@ class ProjectManagementIntegrationsRouter(
     private val handler: ProjectManagementIntegrationsHandler,
     private val apiConfigs: ApiConfigs,
 ) {
-
     /**
+     *
      * Main RouterFunction configuration for all endpoints related to ProjectManagements.
      *
      * @return the [RouterFunction] with all the routes for ProjectManagements
@@ -34,6 +34,20 @@ class ProjectManagementIntegrationsRouter(
                     method(
                         apiConfigs.routes.listIntegrationsByProjectManagementId.method,
                         handler::getProjectManagementIntegrations,
+                    )
+                }
+                method(apiConfigs.routes.registerIntegrationForProjectManagement.method).nest {
+                    method(
+                        apiConfigs.routes.registerIntegrationForProjectManagement.method,
+                        handler::registerIntegration,
+                    )
+                }
+            }
+            apiConfigs.routes.baseByIdCrudRoute.nest {
+                method(apiConfigs.routes.getIntegration.method).nest {
+                    method(
+                        apiConfigs.routes.getIntegration.method,
+                        handler::getIntegration,
                     )
                 }
             }

@@ -21,12 +21,13 @@ data class ApiConfigs(
     var basePaths: BasePathConfigs,
 )
 
-data class BasePathConfigs (val projectsManagementIntegration: String)
+data class BasePathConfigs(val projectsManagementIntegration: String)
 
-data class RoutesConfigs (
+data class RoutesConfigs(
     val baseListCrudRoute: String,
     val baseByIdCrudRoute: String,
     val baseByProjectManagementIdCrudRoute: String,
     val listIntegrationsByProjectManagementId: Route,
+    val registerIntegrationForProjectManagement: Route,
     val getIntegration: Route,
 )

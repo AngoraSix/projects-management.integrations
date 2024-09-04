@@ -17,7 +17,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 class IntegrationAsset @PersistenceCreator public constructor(
     @field:Id val id: String?,
     val source: Source,
-    val projectManagementId: String, // for a particular Project Management (same user/admin could link to the same source),
+    val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
     val admins: Set<SimpleContributor> = emptySet(),
     val sourceStrategyConfigData: Any?, // any information used by the integration/source strategy to retrieve data
     val sourceStrategyStateData: Any?, // any information used by the integration/source strategy to manage its state
@@ -34,6 +34,6 @@ class IntegrationAsset @PersistenceCreator public constructor(
         projectManagementId,
         admins,
         sourceStrategyConfigData,
-        sourceStrategyStateData
+        sourceStrategyStateData,
     )
 }

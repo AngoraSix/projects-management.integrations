@@ -1,15 +1,10 @@
 package com.angorasix.projects.management.integrations.infrastructure.security
 
-import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integration.SourceConfigurations
 import org.springframework.context.annotation.Bean
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.web.server.ServerHttpSecurity
-import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction
 import org.springframework.security.web.server.SecurityWebFilterChain
-import org.springframework.web.reactive.function.client.ClientRequest
-import org.springframework.web.reactive.function.client.WebClient
 
 /**
  *
@@ -44,26 +39,5 @@ class ProjectManagementIntegrationsSecurityConfiguration {
         }
 //            .oauth2Client(Customizer.withDefaults())
         return http.build()
-    }
-
-//    @Bean
-//    fun oauth2WebClient(authorizedClientManager: ReactiveOAuth2AuthorizedClientManager): WebClient {
-//        val oauth2Client = ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
-//        return WebClient.builder()
-//            .filter(oauth2Client)
-//            .build()
-//    }
-
-    @Bean
-    fun trelloWebClient(integrationConfigs: SourceConfigurations): WebClient {
-        return WebClient.builder()
-            .filter { request, next ->
-                next.exchange(
-                    ClientRequest.from(request)
-                        .header(integrationConfigs.trello.apiKey, integrationConfigs.trello.apiSecret)
-                        .build()
-                )
-            }
-            .build()
     }
 }

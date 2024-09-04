@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
 import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationConfig
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
@@ -12,27 +13,28 @@ import com.angorasix.projects.management.integrations.presentation.dto.Integrati
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationStatusDto
 import org.springframework.hateoas.CollectionModel
 import org.springframework.web.reactive.function.server.ServerRequest
-import java.time.Instant
 
 /**
  * <p> Class containing all Dto Mapping Extensions.</p>
  *
  * @author rozagerardo
  */
-fun IntegrationDto.convertToDomain(admins: Set<SimpleContributor>): Integration {
-    if (source == null || projectManagementId == null) {
+fun IntegrationDto.convertToDomain(
+    admins: Set<SimpleContributor>,
+    projectManagementIdParam: String? = null,
+): Integration {
+    val checkedSource = source?.uppercase()?.let { Source.valueOf(it) }
+    val checkedProjectManagementId = projectManagementIdParam ?: projectManagementId
+    if (checkedSource == null || checkedProjectManagementId == null) {
         throw IllegalArgumentException(
-            "Invalid Integration -" +
-                    "source: $source -" +
-                    "projectManagementId: $projectManagementId",
+            "Invalid Integration - source: $source - projectManagementId: $checkedProjectManagementId",
         )
     }
-    val statusValue =
-        status?.convertToDomain() ?: IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED)
+    val statusValue = status?.convertToDomain() ?: IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED)
     val configValue = config?.convertToDomain() ?: IntegrationConfig(null)
     return Integration(
-        source,
-        projectManagementId,
+        checkedSource.value,
+        checkedProjectManagementId,
         statusValue,
         admins,
         configValue,
@@ -40,9 +42,7 @@ fun IntegrationDto.convertToDomain(admins: Set<SimpleContributor>): Integration 
 }
 
 fun IntegrationStatusDto.convertToDomain(): IntegrationStatus =
-    IntegrationStatus(
-        status, expirationDate, sourceStrategyData,
-    )
+    IntegrationStatus(status ?: IntegrationStatusValues.NOT_REGISTERED, expirationDate, sourceStrategyData)
 
 fun IntegrationConfigDto.convertToDomain(): IntegrationConfig {
     return IntegrationConfig(
@@ -81,9 +81,7 @@ fun Integration.convertToDto(
 }
 
 fun IntegrationStatus.convertToDto(): IntegrationStatusDto =
-    IntegrationStatusDto(
-        status, expirationDate, sourceStrategyData,
-    )
+    IntegrationStatusDto(status, expirationDate, sourceStrategyStatusData)
 
 fun IntegrationConfig.convertToDto(): IntegrationConfigDto {
     return IntegrationConfigDto(
