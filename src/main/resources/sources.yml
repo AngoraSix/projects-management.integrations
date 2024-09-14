@@ -1,7 +1,12 @@
 configs:
   source:
-    trello:
-      apiKey: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APIKEY:TrelloApiKey}
-      apiSecret: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APISECRET:TrelloApiSecret}
+    sourceConfigs:
+      trello:
+        registrationStrategy: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_REGISTRATIONSTRATEGY:redirectAuthorization}
+        strategyConfigs:
+          apiKey: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APIKEY:TrelloApiKey}
+          apiSecret: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APISECRET:TrelloApiSecret}
+          appName: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APPNAME:AngoraSix}
+          authorizationUrlPattern: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_AUTHORIZATIONURLPATTERN:https://trello.com/1/authorize?key=:apiKey&name=:appName&expiration=30days&response_type=token&scope=read,write}
     supported:
       - trello

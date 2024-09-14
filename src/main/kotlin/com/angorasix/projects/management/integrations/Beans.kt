@@ -4,7 +4,7 @@ import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
 import com.angorasix.projects.management.integrations.application.strategies.TrelloRegistrationStrategy
-import com.angorasix.projects.management.integrations.infrastructure.registration.strategies.trelloWebClient
+import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.trelloWebClient
 import com.angorasix.projects.management.integrations.infrastructure.security.ProjectManagementIntegrationsSecurityConfiguration
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
 import com.angorasix.projects.management.integrations.presentation.router.ProjectManagementIntegrationsRouter

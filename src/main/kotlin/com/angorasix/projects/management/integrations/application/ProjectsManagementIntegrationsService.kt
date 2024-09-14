@@ -8,7 +8,7 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationRepository
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
-import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integration.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking

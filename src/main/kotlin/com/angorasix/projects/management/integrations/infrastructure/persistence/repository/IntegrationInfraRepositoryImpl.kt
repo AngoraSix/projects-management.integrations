@@ -64,7 +64,7 @@ private fun ListIntegrationFilter.toQuery(requestingContributor: SimpleContribut
     projectManagementId?.let { query.addCriteria(where("projectManagementId").`in`(it)) }
     sources?.let { query.addCriteria(where("source").`in`(it)) }
 
-    if (adminId != null && requestingContributor != null) {
+    if (adminId != null) {
         query.addCriteria(where("admins.contributorId").`in`(adminId + requestingContributor.contributorId))
     }
 

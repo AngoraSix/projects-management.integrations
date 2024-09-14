@@ -16,7 +16,7 @@ import java.time.Instant
  */
 @Document
 @CompoundIndex(name = "integration_idx", def = "{'source': 1, 'projectManagementId': 1}")
-class Integration @PersistenceCreator public constructor(
+data class Integration @PersistenceCreator public constructor(
     @field:Id val id: String?,
     val source: String,
     val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
@@ -56,5 +56,5 @@ enum class IntegrationStatusValues {
 }
 
 data class IntegrationConfig(
-    val sourceStrategyConfigData: Map<String, Any>?, // any information used by the source strategy to retrieve data
+    val sourceStrategyConfigData: Map<String, Any>?
 )

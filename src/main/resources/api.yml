@@ -1,7 +1,7 @@
 configs:
   api:
     basePaths:
-      projectsManagementIntegration: "/management-integration"
+      projectsManagementIntegration: "/managements-integration"
     routes:
       baseListCrudRoute: ""
       baseByIdCrudRoute: "/{id}"

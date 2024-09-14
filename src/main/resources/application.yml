@@ -2,7 +2,7 @@ context:
   initializer:
     classes: com.angorasix.projects.management.integrations.BeansInitializer
 server:
-  port: ${A6_PROJECTS_MGMT_INTEGRATIONS_PORT:60010}
+  port: ${A6_PROJECTS_MGMT_INTEGRATIONS_PORT:10302}
 
 spring:
   config:

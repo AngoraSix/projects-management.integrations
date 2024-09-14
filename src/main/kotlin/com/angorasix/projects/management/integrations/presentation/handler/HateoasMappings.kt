@@ -2,6 +2,7 @@ package com.angorasix.projects.management.integrations.presentation.handler
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
 import org.springframework.hateoas.CollectionModel
@@ -22,6 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder
 fun IntegrationDto.resolveHypermedia(
     requestingContributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
+    sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
 ): IntegrationDto {
     val getSingleRoute = apiConfigs.routes.getIntegration
@@ -34,9 +36,15 @@ fun IntegrationDto.resolveHypermedia(
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
-        // actions for requesting contributor
+        if (requestingContributor.isAdminHint == true) {
+            sourceConfigurations.supported.flatMap {
+                sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions() ?: emptyList()
+            }.forEach { actionData ->
+                val actionLink = Link.of(actionData.value).withRel(actionData.key)
+                add(actionLink)
+            }
+        }
     }
-
     return this
 }
 

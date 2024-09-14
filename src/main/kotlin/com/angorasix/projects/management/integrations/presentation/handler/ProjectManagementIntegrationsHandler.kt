@@ -5,6 +5,7 @@ import com.angorasix.commons.infrastructure.constants.AngoraSixInfrastructure
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
 import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
 import org.springframework.hateoas.IanaLinkRelations
@@ -26,6 +27,7 @@ import java.net.URI
 class ProjectManagementIntegrationsHandler(
     private val service: ProjectsManagementIntegrationsService,
     private val apiConfigs: ApiConfigs,
+    private val sourceConfigurations: SourceConfigurations,
 ) {
 
     /**
@@ -45,6 +47,7 @@ class ProjectManagementIntegrationsHandler(
                     it.convertToDto(
                         requestingContributor as? SimpleContributor,
                         apiConfigs,
+                        sourceConfigurations,
                         request,
                     )
                 ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(outputIntegration)
@@ -71,11 +74,12 @@ class ProjectManagementIntegrationsHandler(
                 it.convertToDto(
                     requestingContributor,
                     apiConfigs,
+                    sourceConfigurations,
                     request,
                 )
             }
                 .let {
-                    ServerResponse.ok().contentType(MediaTypes.HAL_FORMS_JSON)
+                    ok().contentType(MediaTypes.HAL_FORMS_JSON)
                         .bodyValueAndAwait(
                             it.convertToDto(
                                 requestingContributor,
@@ -122,7 +126,7 @@ class ProjectManagementIntegrationsHandler(
             }
 
             val outputIntegration = service.registerIntegration(integration, requestingContributor)
-                .convertToDto(requestingContributor, apiConfigs, request)
+                .convertToDto(requestingContributor, apiConfigs, sourceConfigurations, request)
 
             val selfLink =
                 outputIntegration.links.getRequiredLink(IanaLinkRelations.SELF).href

@@ -1,6 +1,6 @@
-package com.angorasix.projects.management.integrations.infrastructure.registration.strategies
+package com.angorasix.projects.management.integrations.infrastructure.integrations.strategies
 
-import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integration.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import org.springframework.context.annotation.Bean
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.WebClient
@@ -15,11 +15,15 @@ import org.springframework.web.reactive.function.client.WebClient
 
 @Bean
 fun trelloWebClient(integrationConfigs: SourceConfigurations): WebClient {
+    val trelloApiKey = integrationConfigs.sourceConfigs["trello"]?.strategyConfigs?.get("apiKey")
+        ?: throw IllegalArgumentException("trello apiKey config is required")
+    val trelloApiSecret = integrationConfigs.sourceConfigs["trello"]?.strategyConfigs?.get("apiSecret")
+        ?: throw IllegalArgumentException("trello apiSecret config is required")
     return WebClient.builder()
         .filter { request, next ->
             next.exchange(
                 ClientRequest.from(request)
-                    .header(integrationConfigs.trello.apiKey, integrationConfigs.trello.apiSecret)
+                    .header(trelloApiKey, trelloApiSecret)
                     .build(),
             )
         }
