@@ -56,7 +56,7 @@ class ProjectsManagementIntegrationsService(
         requestingContributor: SimpleContributor,
     ): Integration {
         val processedRegisterIntegration =
-            registrationStrategies[Source.valueOf(newIntegrationData.source.uppercase())]?.processIntegration(
+            registrationStrategies[Source.valueOf(newIntegrationData.source.uppercase())]?.processIntegrationRegistration(
                 newIntegrationData,
                 requestingContributor,
             ) ?: throw IllegalArgumentException("Source not supported")

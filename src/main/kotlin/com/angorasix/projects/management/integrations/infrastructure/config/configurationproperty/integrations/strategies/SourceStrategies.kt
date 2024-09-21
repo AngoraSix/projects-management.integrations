@@ -16,9 +16,16 @@ class TrelloStrategy(sourceConfigs: Map<String, String>): SourceStrategy(sourceC
     override fun resolveRegistrationActions(): List<ActionData> {
         val authUrlPattern =
             sourceConfigs["authorizationUrlPattern"] ?: throw IllegalArgumentException("redirectAuthUrl is required")
-        val appName = sourceConfigs["appName"] ?: throw IllegalArgumentException("appName is required")
-        val apiKey = sourceConfigs["apiKey"] ?: throw IllegalArgumentException("apiKey is required")
-        val authUrl = authUrlPattern.replace(":appName", appName).replace(":apiKey", apiKey)
+
+        val paramsRegex = """:(\w+)""".toRegex()
+
+        val authUrl = paramsRegex.replace(authUrlPattern) { matchResult ->
+            val key = matchResult.groupValues[1] // Get the key without the ":"
+            sourceConfigs[key] ?: matchResult.value // Replace with map value or leave unchanged if not found
+        }
+//        val appName = sourceConfigs["appName"] ?: throw IllegalArgumentException("appName is required")
+//        val apiKey = sourceConfigs["apiKey"] ?: throw IllegalArgumentException("apiKey is required")
+//        val authUrl = authUrlPattern.replace(":appName", appName).replace(":apiKey", apiKey)
         return listOf(ActionData(SourceStrategiesConstants.REDIRECT_AUTHORIZATION_STRATEGY_KEY, authUrl))
     }
 }

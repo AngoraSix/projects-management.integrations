@@ -3,6 +3,7 @@ package com.angorasix.projects.management.integrations.presentation.handler
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.infrastructure.constants.AngoraSixInfrastructure
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
+import com.angorasix.commons.reactive.presentation.error.resolveNotFound
 import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations

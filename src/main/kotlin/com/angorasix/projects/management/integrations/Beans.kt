@@ -33,7 +33,7 @@ val beans = beans {
 
     // Strategies Implementations
     bean("trelloStrategy") {
-        TrelloRegistrationStrategy(ref("trelloWebClient"))
+        TrelloRegistrationStrategy(ref("trelloWebClient"), ref())
     }
 }
 

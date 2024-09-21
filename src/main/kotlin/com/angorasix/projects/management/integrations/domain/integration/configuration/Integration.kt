@@ -46,13 +46,13 @@ data class IntegrationStatus(
     val sourceStrategyStatusData: Map<String, Any>? = null, // any information used by the source to manage its state
 ) {
     companion object {
-        fun registered(sourceStrategyData: Map<String, Any>?): IntegrationStatus =
+        fun registered(sourceStrategyData: Map<String, Any>?, ): IntegrationStatus =
             IntegrationStatus(IntegrationStatusValues.UNSYNCED, Instant.now(), sourceStrategyData)
     }
 }
 
 enum class IntegrationStatusValues {
-    NOT_REGISTERED, SYNCED, UNSYNCED
+    NOT_REGISTERED, REQUIRES_CONFIGURATION, SYNCED, UNSYNCED
 }
 
 data class IntegrationConfig(
