@@ -24,3 +24,12 @@ configs:
           - ${configs.api.basePaths.projectsManagementIntegration}
         method: GET
         path: ${configs.api.routes.baseByIdCrudRoute}
+      patchIntegration:
+        name: patchIntegration
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+        method: PATCH
+        path: ${configs.api.routes.baseByIdCrudRoute}
+    integrationActions:
+      redirectAuthorization: redirectAuthorization
+      disableIntegration: disableIntegration

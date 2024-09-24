@@ -6,13 +6,14 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationConfig
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
-import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.BoardDto
-import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientConstants
+import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.MemberDto
+import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants
+import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_TOKEN_CONFIG_PARAM
+import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_USER_CONFIG_PARAM
+import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.TRELLO_TOKEN_BODY_FIELD
 import kotlinx.coroutines.reactor.awaitSingle
-import org.springframework.core.ParameterizedTypeReference
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.util.UriComponentsBuilder
-import java.net.URI
 
 interface RegistrationStrategy {
     suspend fun processIntegrationRegistration(
@@ -24,36 +25,34 @@ interface RegistrationStrategy {
 class TrelloRegistrationStrategy(
     private val trelloWebClient: WebClient,
     private val integrationConfigs: SourceConfigurations,
+    private val passwordEncoder: PasswordEncoder
 ) : RegistrationStrategy {
     override suspend fun processIntegrationRegistration(
         integrationData: Integration,
         requestingContributor: SimpleContributor,
     ): Integration {
-        val memberBoardsUri =
-            integrationConfigs.sourceConfigs["trello"]?.strategyConfigs?.get("memberBoardsUrl")
-                ?: throw IllegalArgumentException("trello memberBoardsUrl config is required for registration")
+        val accessToken =
+            integrationData.config.sourceStrategyConfigData?.get(TRELLO_TOKEN_BODY_FIELD) as? String
+                ?: throw IllegalArgumentException("trello access token body param is required for registration")
+        val memberUri =
+            integrationConfigs.sourceConfigs["trello"]?.strategyConfigs?.get("memberUrl")
+                ?: throw IllegalArgumentException("trello memberUrl config is required for registration")
 
-        println("DEBUGEO GERGERGER")
-        println(memberBoardsUri)
-
-        val response = trelloWebClient.get()
-            .uri(memberBoardsUri)
+        // Call Trello to get User data
+        val trelloMemberDto = trelloWebClient.get()
+            .uri(memberUri)
             .attributes{attrs ->
-                attrs[WebClientConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
-                    integrationData.config.sourceStrategyConfigData?.get("token")
+                attrs[IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
+                    accessToken
             }
-            .retrieve().bodyToMono(object : ParameterizedTypeReference<List<BoardDto>>() {})
-            .awaitSingle()
+            .retrieve().bodyToMono(MemberDto::class.java).awaitSingle()
 
-        println("DEBUGEO GERGERGER 33333")
-        println(response.toString())
-        // call Trello using webClient and ...
         return Integration(
             Source.TRELLO.value,
             integrationData.projectManagementId,
             IntegrationStatus.registered(extractStatusData(integrationData.status.sourceStrategyStatusData)),
             setOf(requestingContributor),
-            IntegrationConfig(extractConfigData(integrationData.status.sourceStrategyStatusData)),
+            IntegrationConfig(extractConfigData(passwordEncoder.encode(accessToken), trelloMemberDto)),
         )
     }
 
@@ -61,11 +60,7 @@ class TrelloRegistrationStrategy(
         return data
     }
 
-    private fun extractConfigData(data: Map<String, Any>?): Map<String, Any>? {
-        return if (data?.isEmpty() == true) {
-            null
-        } else {
-            mapOf("TEST" to "yes", "TEST2" to data.toString())
-        }
+    private fun extractConfigData(accessToken: String, userData: MemberDto): Map<String, Any> {
+        return mapOf(ACCESS_TOKEN_CONFIG_PARAM to accessToken, ACCESS_USER_CONFIG_PARAM to userData)
     }
 }

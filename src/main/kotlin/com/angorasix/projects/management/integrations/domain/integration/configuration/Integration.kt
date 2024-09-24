@@ -52,7 +52,7 @@ data class IntegrationStatus(
 }
 
 enum class IntegrationStatusValues {
-    NOT_REGISTERED, REQUIRES_CONFIGURATION, SYNCED, UNSYNCED
+    NOT_REGISTERED, REQUIRES_CONFIGURATION, SYNCED, UNSYNCED, DISABLED
 }
 
 data class IntegrationConfig(

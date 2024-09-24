@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
 import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
@@ -37,11 +38,26 @@ fun IntegrationDto.resolveHypermedia(
 
     requestingContributor?.let {
         if (requestingContributor.isAdminHint == true) {
-            sourceConfigurations.supported.flatMap {
-                sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions() ?: emptyList()
-            }.forEach { actionData ->
-                val actionLink = Link.of(actionData.value).withRel(actionData.key)
-                add(actionLink)
+            if (status?.status != IntegrationStatusValues.DISABLED) {
+                sourceConfigurations.supported.flatMap {
+                    sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions(apiConfigs)
+                        ?: emptyList()
+                }.forEach { actionData ->
+                    val actionLink = Link.of(actionData.value).withRel(actionData.key)
+                    add(actionLink)
+                }
+            } else {
+                val patchIntegrationRoute = apiConfigs.routes.patchIntegration
+                val disableActionName = apiConfigs.integrationActions.disableIntegration
+                val disableActionLink = Link.of(
+                    uriBuilder(request).path(patchIntegrationRoute.resolvePath()).build()
+                        .toUriString(),
+                ).withTitle(disableActionName).withName(disableActionName)
+                    .withRel(disableActionName)
+                val disableAffordanceLink =
+                    Affordances.of(disableActionLink).afford(patchIntegrationRoute.method)
+                        .withName(disableActionName).toLink()
+                add(disableAffordanceLink)
             }
         }
     }

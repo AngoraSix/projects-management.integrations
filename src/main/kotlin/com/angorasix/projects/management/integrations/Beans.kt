@@ -14,6 +14,9 @@ import org.springframework.context.support.beans
 
 val beans = beans {
     bean {
+        ProjectManagementIntegrationsSecurityConfiguration().passwordEncoder()
+    }
+    bean {
         ProjectManagementIntegrationsSecurityConfiguration().springSecurityFilterChain(ref())
     }
     bean {
@@ -33,7 +36,7 @@ val beans = beans {
 
     // Strategies Implementations
     bean("trelloStrategy") {
-        TrelloRegistrationStrategy(ref("trelloWebClient"), ref())
+        TrelloRegistrationStrategy(ref("trelloWebClient"), ref(), ref())
     }
 }
 

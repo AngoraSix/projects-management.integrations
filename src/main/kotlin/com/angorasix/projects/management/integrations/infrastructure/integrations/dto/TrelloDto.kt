@@ -11,3 +11,11 @@ data class BoardDto(
     val shortUrl: String,
     val shortLink: String,
 )
+
+data class MemberDto(
+    val id: String,
+    val username: String,
+    val fullName: String,
+    val url: String,
+    val email: String,
+    val avatarUrl: String)
