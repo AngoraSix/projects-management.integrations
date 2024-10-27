@@ -1,12 +1,20 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
+import IntegrationModification
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.infrastructure.constants.AngoraSixInfrastructure
+import com.angorasix.commons.presentation.dto.Patch
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
+import com.angorasix.commons.reactive.presentation.error.resolveExceptionResponse
+import com.angorasix.commons.reactive.presentation.error.resolveNotFound
+import com.angorasix.commons.reactive.presentation.utils.affectedContributors
 import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
+import com.angorasix.projects.management.integrations.presentation.dto.SupportedPatchOperations
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.IanaLinkRelations
 import org.springframework.hateoas.MediaTypes
 import org.springframework.web.reactive.function.server.ServerRequest
@@ -26,6 +34,8 @@ import java.net.URI
 class ProjectManagementIntegrationsHandler(
     private val service: ProjectsManagementIntegrationsService,
     private val apiConfigs: ApiConfigs,
+    private val sourceConfigurations: SourceConfigurations,
+    private val objectMapper: ObjectMapper,
 ) {
 
     /**
@@ -45,6 +55,7 @@ class ProjectManagementIntegrationsHandler(
                     it.convertToDto(
                         requestingContributor as? SimpleContributor,
                         apiConfigs,
+                        sourceConfigurations,
                         request,
                     )
                 ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(outputIntegration)
@@ -67,15 +78,17 @@ class ProjectManagementIntegrationsHandler(
 
         val projectManagementId = request.pathVariable("projectManagementId")
         return if (requestingContributor is SimpleContributor) {
-            service.findIntegrationsForProjectManagement(projectManagementId, requestingContributor).map {
-                it.convertToDto(
-                    requestingContributor,
-                    apiConfigs,
-                    request,
-                )
-            }
+            service.findIntegrationsForProjectManagement(projectManagementId, requestingContributor)
+                .map {
+                    it.convertToDto(
+                        requestingContributor,
+                        apiConfigs,
+                        sourceConfigurations,
+                        request,
+                    )
+                }
                 .let {
-                    ServerResponse.ok().contentType(MediaTypes.HAL_FORMS_JSON)
+                    ok().contentType(MediaTypes.HAL_FORMS_JSON)
                         .bodyValueAndAwait(
                             it.convertToDto(
                                 requestingContributor,
@@ -122,7 +135,7 @@ class ProjectManagementIntegrationsHandler(
             }
 
             val outputIntegration = service.registerIntegration(integration, requestingContributor)
-                .convertToDto(requestingContributor, apiConfigs, request)
+                .convertToDto(requestingContributor, apiConfigs, sourceConfigurations, request)
 
             val selfLink =
                 outputIntegration.links.getRequiredLink(IanaLinkRelations.SELF).href
@@ -134,52 +147,43 @@ class ProjectManagementIntegrationsHandler(
         }
     }
 
-//    /**
-//     * Handler for the Update ProjectManagementIntegration endpoint,
-//     * retrieving a Mono with the updated ProjectManagementIntegration.
-//     *
-//     * @param request - HTTP `ServerRequest` object
-//     * @return the `ServerResponse`
-//     */
-//    suspend fun updateProjectManagementIntegration(request: ServerRequest): ServerResponse {
-//        val requestingContributor =
-//            request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
-//
-//        return if (requestingContributor is SimpleContributor) {
-//            val projectId = request.pathVariable("id")
-//
-//            val updateProjectManagementIntegrationData = try {
-//                request.awaitBody<IntegrationDto>()
-//                    .let { it.convertToDomain(it.admins ?: emptySet()) }
-//            } catch (e: IllegalArgumentException) {
-//                return resolveBadRequest(
-//                    e.message ?: "Incorrect Project Management body",
-//                    "Project Management",
-//                )
-//            }
-//
-//            service.updateIntegration(
-//                projectId,
-//                updateProjectManagementIntegrationData,
-//                requestingContributor,
-//            )?.let {
-//                val outputProjectManagementIntegration =
-//                    it.convertToDto(
-//                        requestingContributor,
-//                        apiConfigs,
-//                        request,
-//                    )
-//
-//                ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(outputProjectManagementIntegration)
-//            } ?: resolveNotFound("Can't update this project management", "Project Management")
-//        } else {
-//            resolveBadRequest("Invalid Contributor Token", "Contributor Token")
-//        }
-//    }
+    /**
+     * Handler for the Patch Club endpoint, retrieving a Mono with the requested Club.
+     *
+     * @param request - HTTP `ServerRequest` object
+     * @return the `ServerResponse`
+     */
+    suspend fun patchIntegration(request: ServerRequest): ServerResponse {
+        val contributor =
+            request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
+        val integrationId = request.pathVariable("id")
+        val patch = request.awaitBody(Patch::class)
+        return if (contributor is SimpleContributor) {
+            try {
+                val modifyOperations = patch.operations.map {
+                    it.toDomainObjectModification(
+                        contributor,
+                        SupportedPatchOperations.values().map { o -> o.op }.toList(),
+                        objectMapper,
+                    )
+                }
+                val modifyClubOperations: List<IntegrationModification<Any>> =
+                    modifyOperations.filterIsInstance<IntegrationModification<Any>>()
+                val serviceOutput =
+                    service.modifyIntegration(contributor, integrationId, modifyClubOperations)
+                serviceOutput?.convertToDto(
+                    contributor,
+                    apiConfigs,
+                    sourceConfigurations,
+                    request,
+                )
+                    ?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it)}
+                    ?: resolveNotFound("Can't patch this Integration", "Integration")
+            } catch (ex: RuntimeException) {
+                return resolveExceptionResponse(ex, "Integration")
+            }
+        } else {
+            resolveBadRequest("Invalid Contributor", "Contributor")
+        }
+    }
 }
-
-// private fun MultiValueMap<String, String>.toQueryFilter(): ListIntegrationFilter {
-//    return ListIntegrationFilter(
-//        get(ProjectsManagementIntegrationsQueryParams.PROJECT_MANAGEMENT_IDS.param)?.flatMap { it.split(",") },
-//    )
-// }

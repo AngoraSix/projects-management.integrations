@@ -26,11 +26,10 @@ class IntegrationInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperatio
         return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java).asFlow()
     }
 
-    override suspend fun findByIdForContributor(
-        id: String,
+    override suspend fun findForContributorUsingFilter(
+        filter: ListIntegrationFilter,
         requestingContributor: SimpleContributor,
     ): Integration? {
-        val filter = ListIntegrationFilter()
         return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java)
             .awaitFirstOrNull()
     }
@@ -63,10 +62,6 @@ private fun ListIntegrationFilter.toQuery(requestingContributor: SimpleContribut
     ids?.let { query.addCriteria(where("_id").`in`(it)) }
     projectManagementId?.let { query.addCriteria(where("projectManagementId").`in`(it)) }
     sources?.let { query.addCriteria(where("source").`in`(it)) }
-
-    if (adminId != null && requestingContributor != null) {
-        query.addCriteria(where("admins.contributorId").`in`(adminId + requestingContributor.contributorId))
-    }
 
     return query
 }

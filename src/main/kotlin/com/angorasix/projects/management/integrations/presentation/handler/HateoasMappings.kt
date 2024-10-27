@@ -1,9 +1,13 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
 import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
+import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
+import org.springframework.hateoas.AffordanceModel.PayloadMetadata
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.Link
 import org.springframework.hateoas.mediatype.Affordances
@@ -21,7 +25,9 @@ import org.springframework.web.util.UriComponentsBuilder
  */
 fun IntegrationDto.resolveHypermedia(
     requestingContributor: SimpleContributor?,
+    integration: Integration,
     apiConfigs: ApiConfigs,
+    sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
 ): IntegrationDto {
     val getSingleRoute = apiConfigs.routes.getIntegration
@@ -34,9 +40,36 @@ fun IntegrationDto.resolveHypermedia(
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
-        // actions for requesting contributor
+        if (requestingContributor.isAdminHint == true || integration.isAdmin(requestingContributor.contributorId)) {
+            if (status?.status in listOf(
+                    IntegrationStatusValues.NOT_REGISTERED,
+                    IntegrationStatusValues.DISABLED,
+                )
+            ) {
+                sourceConfigurations.supported.flatMap {
+                    sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions(
+                        apiConfigs,
+                    )
+                        ?: emptyList()
+                }.forEach { actionData ->
+                    val actionLink = Link.of(actionData.value).withRel(actionData.key)
+                    add(actionLink)
+                }
+            } else {
+                val patchIntegrationRoute = apiConfigs.routes.patchIntegration
+                val disableActionName = apiConfigs.integrationActions.disableIntegration
+                val disableActionLink = Link.of(
+                    uriBuilder(request).path(patchIntegrationRoute.resolvePath()).build()
+                        .toUriString(),
+                ).withTitle(disableActionName).withName(disableActionName)
+                    .withRel(disableActionName)
+                val disableAffordanceLink =
+                    Affordances.of(disableActionLink).afford(patchIntegrationRoute.method)
+                        .withName(disableActionName).toLink()
+                add(disableAffordanceLink)
+            }
+        }
     }
-
     return this
 }
 
@@ -86,7 +119,7 @@ fun CollectionModel<IntegrationDto>.resolveHypermedia(
         Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
     add(selfLinkWithDefaultAffordance)
     if (requestingContributor != null && requestingContributor.isAdminHint == true) {
-        // here goes admin-specific hypermedia
+        // here goes admin-specific collection hypermedia
     }
     return this
 }

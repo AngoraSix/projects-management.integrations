@@ -19,6 +19,10 @@ data class ApiConfigs(
 
     @NestedConfigurationProperty
     var basePaths: BasePathConfigs,
+
+
+    @NestedConfigurationProperty
+    var integrationActions: IntegrationActions,
 )
 
 data class BasePathConfigs(val projectsManagementIntegration: String)
@@ -30,4 +34,10 @@ data class RoutesConfigs(
     val listIntegrationsByProjectManagementId: Route,
     val registerIntegrationForProjectManagement: Route,
     val getIntegration: Route,
+    val patchIntegration: Route,
+)
+
+class IntegrationActions(
+    val redirectAuthorization: String,
+    val disableIntegration: String,
 )

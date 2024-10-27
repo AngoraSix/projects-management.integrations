@@ -16,7 +16,7 @@ import java.time.Instant
  */
 @Document
 @CompoundIndex(name = "integration_idx", def = "{'source': 1, 'projectManagementId': 1}")
-class Integration @PersistenceCreator public constructor(
+data class Integration @PersistenceCreator public constructor(
     @field:Id val id: String?,
     val source: String,
     val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
@@ -38,23 +38,32 @@ class Integration @PersistenceCreator public constructor(
         admins,
         config,
     )
+
+
+    /**
+     * Checks whether a particular contributor is Admin of this Club.
+     *
+     * @param contributorId - contributor candidate to check.
+     */
+    fun isAdmin(contributorId: String?): Boolean =
+        (contributorId != null).and(admins.any { it.contributorId == contributorId })
 }
 
 data class IntegrationStatus(
-    @Transient val status: IntegrationStatusValues, // should match one of the IntegrationStatusValues, but flexible
-    val expirationDate: Instant? = null, // if the integration or syncing as an expiration date
+    @Transient var status: IntegrationStatusValues, // should match one of the IntegrationStatusValues, but flexible
+    var expirationDate: Instant? = null, // the integration or syncing expiration date
     val sourceStrategyStatusData: Map<String, Any>? = null, // any information used by the source to manage its state
 ) {
     companion object {
-        fun registered(sourceStrategyData: Map<String, Any>?): IntegrationStatus =
+        fun registered(sourceStrategyData: Map<String, Any>?, ): IntegrationStatus =
             IntegrationStatus(IntegrationStatusValues.UNSYNCED, Instant.now(), sourceStrategyData)
     }
 }
 
 enum class IntegrationStatusValues {
-    NOT_REGISTERED, SYNCED, UNSYNCED
+    NOT_REGISTERED, REQUIRES_CONFIGURATION, SYNCED, UNSYNCED, DISABLED
 }
 
 data class IntegrationConfig(
-    val sourceStrategyConfigData: Map<String, Any>?, // any information used by the source strategy to retrieve data
+    val sourceStrategyConfigData: Map<String, Any>?
 )

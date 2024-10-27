@@ -7,6 +7,7 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationConfigDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
@@ -64,6 +65,7 @@ fun Integration.convertToDto(): IntegrationDto {
 fun Integration.convertToDto(
     contributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
+    sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
 ): IntegrationDto {
     return IntegrationDto(
@@ -75,7 +77,9 @@ fun Integration.convertToDto(
         id,
     ).resolveHypermedia(
         contributor,
+        this,
         apiConfigs,
+        sourceConfigurations,
         request,
     )
 }
