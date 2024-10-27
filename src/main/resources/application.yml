@@ -6,8 +6,8 @@ server:
 
 logging:
   level:
-    reactor.netty: DEBUG
-    org.springframework.web.reactive.function.client: DEBUG
+    reactor.netty: INFO
+    org.springframework.web.reactive.function.client: INFO
 
 spring:
   config:

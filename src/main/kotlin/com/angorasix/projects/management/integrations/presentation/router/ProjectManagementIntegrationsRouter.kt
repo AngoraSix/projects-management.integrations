@@ -50,6 +50,12 @@ class ProjectManagementIntegrationsRouter(
                         handler::getIntegration,
                     )
                 }
+                method(apiConfigs.routes.patchIntegration.method).nest {
+                    method(
+                        apiConfigs.routes.patchIntegration.method,
+                        handler::patchIntegration,
+                    )
+                }
             }
         }
     }

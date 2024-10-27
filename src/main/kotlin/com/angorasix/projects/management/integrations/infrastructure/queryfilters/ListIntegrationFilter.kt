@@ -11,17 +11,15 @@ import org.springframework.util.MultiValueMap
  * @author rozagerardo
  */
 data class ListIntegrationFilter(
-    val projectManagementId: Collection<String>? = null,
-    val adminId: Set<String>? = null,
-    val sources: Set<String>? = null,
     val ids: Collection<String>? = null, // integration ids
+    val sources: Set<String>? = null,
+    val projectManagementId: Collection<String>? = null,
 ) {
     fun toMultiValueMap(): MultiValueMap<String, String> {
         val multiMap: MultiValueMap<String, String> = LinkedMultiValueMap()
         projectManagementId?.let { multiMap.add("projectManagementId", projectManagementId.joinToString(",")) }
-        adminId?.let { multiMap.add("adminId", adminId.joinToString(",")) }
         sources?.let { multiMap.add("sources", sources.joinToString(",")) }
-        adminId?.let { multiMap.add("ids", adminId.joinToString(",")) }
+        ids?.let { multiMap.add("ids", ids.joinToString(",")) }
         return multiMap
     }
 }

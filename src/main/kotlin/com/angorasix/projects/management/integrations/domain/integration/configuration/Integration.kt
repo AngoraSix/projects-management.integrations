@@ -38,11 +38,20 @@ data class Integration @PersistenceCreator public constructor(
         admins,
         config,
     )
+
+
+    /**
+     * Checks whether a particular contributor is Admin of this Club.
+     *
+     * @param contributorId - contributor candidate to check.
+     */
+    fun isAdmin(contributorId: String?): Boolean =
+        (contributorId != null).and(admins.any { it.contributorId == contributorId })
 }
 
 data class IntegrationStatus(
-    @Transient val status: IntegrationStatusValues, // should match one of the IntegrationStatusValues, but flexible
-    val expirationDate: Instant? = null, // if the integration or syncing as an expiration date
+    @Transient var status: IntegrationStatusValues, // should match one of the IntegrationStatusValues, but flexible
+    var expirationDate: Instant? = null, // the integration or syncing expiration date
     val sourceStrategyStatusData: Map<String, Any>? = null, // any information used by the source to manage its state
 ) {
     companion object {

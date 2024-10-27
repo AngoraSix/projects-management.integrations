@@ -77,6 +77,7 @@ fun Integration.convertToDto(
         id,
     ).resolveHypermedia(
         contributor,
+        this,
         apiConfigs,
         sourceConfigurations,
         request,

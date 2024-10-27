@@ -17,8 +17,8 @@ interface IntegrationInfraRepository {
         requestingContributor: SimpleContributor,
     ): Flow<Integration>
 
-    suspend fun findByIdForContributor(
-        id: String,
+    suspend fun findForContributorUsingFilter(
+        filter: ListIntegrationFilter,
         requestingContributor: SimpleContributor,
     ): Integration?
 

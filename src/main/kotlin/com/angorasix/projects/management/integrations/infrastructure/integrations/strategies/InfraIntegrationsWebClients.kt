@@ -45,13 +45,6 @@ fun trelloWebClient(integrationConfigs: SourceConfigurations): WebClient {
         .filter { request, next ->
             val userToken =
                 request.attribute(IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN)
-            // @TODO: Just for dev debugging purposes
-            println(
-                "OAuth oauth_consumer_key=\"%s\", oauth_token=\"%s\"".format(
-                    trelloApiKey,
-                    userToken.get(),
-                ),
-            )
             next.exchange(
                 ClientRequest.from(request)
                     .header(

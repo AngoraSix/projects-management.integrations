@@ -1,21 +1,21 @@
 package com.angorasix.projects.management.integrations.infrastructure.integrations.dto
 
-data class BoardDto(
+data class TrelloBoardDto(
     val id: String,
     val name: String,
     val desc: String?,
-    val closed: Boolean,
-    val idOrganization: String,
-    val pinned: Boolean,
-    val url: String,
-    val shortUrl: String,
-    val shortLink: String,
+    val closed: Boolean?,
+    val idOrganization: String?,
+    val pinned: Boolean?,
+    val url: String?,
+    val shortUrl: String?,
+    val shortLink: String?,
 )
 
-data class MemberDto(
+data class TrelloMemberDto(
     val id: String,
     val username: String,
-    val fullName: String,
-    val url: String,
-    val email: String,
-    val avatarUrl: String)
+    val fullName: String?,
+    val url: String?,
+    val email: String?,
+    val avatarUrl: String?)
