@@ -8,10 +8,12 @@ import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
 import com.angorasix.commons.reactive.presentation.error.resolveExceptionResponse
 import com.angorasix.commons.reactive.presentation.error.resolveNotFound
 import com.angorasix.commons.reactive.presentation.utils.affectedContributors
+import com.angorasix.projects.management.integrations.application.DataExchangeService
 import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
+import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
 import com.angorasix.projects.management.integrations.presentation.dto.SupportedPatchOperations
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -33,6 +35,7 @@ import java.net.URI
  */
 class ProjectManagementIntegrationsHandler(
     private val service: ProjectsManagementIntegrationsService,
+    private val dataExchangeService: DataExchangeService,
     private val apiConfigs: ApiConfigs,
     private val sourceConfigurations: SourceConfigurations,
     private val objectMapper: ObjectMapper,

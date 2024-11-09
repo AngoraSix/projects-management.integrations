@@ -11,6 +11,7 @@ import com.angorasix.projects.management.integrations.infrastructure.integration
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_TOKEN_CONFIG_PARAM
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_USER_CONFIG_PARAM
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.TRELLO_TOKEN_BODY_FIELD
+import com.angorasix.projects.management.integrations.infrastructure.security.TokenEncryptionUtil
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.reactive.function.client.WebClient
@@ -26,7 +27,7 @@ interface RegistrationStrategy {
 class TrelloRegistrationStrategy(
     private val trelloWebClient: WebClient,
     private val integrationConfigs: SourceConfigurations,
-    private val passwordEncoder: PasswordEncoder
+    private val tokenEncryptionUtil: TokenEncryptionUtil
 ) : RegistrationStrategy {
     override suspend fun processIntegrationRegistration(
         integrationData: Integration,
@@ -55,7 +56,7 @@ class TrelloRegistrationStrategy(
             integrationData.projectManagementId,
             IntegrationStatus.registered(extractStatusData(integrationData.status.sourceStrategyStatusData)),
             setOf(requestingContributor),
-            IntegrationConfig(extractConfigData(passwordEncoder.encode(accessToken), trelloMemberDto)),
+            IntegrationConfig(extractConfigData(tokenEncryptionUtil.encrypt(accessToken), trelloMemberDto)),
         )
     }
 

@@ -28,12 +28,6 @@ class ProjectsManagementIntegrationsService(
             ListIntegrationFilter(listOf(id)),
             requestingContributor,
         )
-//
-//    suspend fun findIntegrationByKey(source: String, projectManagementId: String): IntegrationAsset? =
-//        repository.findBySourceAndProjectManagementId(source, projectManagementId)
-//
-//    fun findIntegrations(filter: ListIntegrationFilter): Flow<IntegrationAsset> =
-//        repository.findUsingFilter(filter)
 
     fun findIntegrationsForProjectManagement(
         projectManagementId: String,

@@ -39,7 +39,6 @@ data class Integration @PersistenceCreator public constructor(
         config,
     )
 
-
     /**
      * Checks whether a particular contributor is Admin of this Club.
      *
