@@ -11,5 +11,4 @@ import org.springframework.data.repository.kotlin.CoroutineSortingRepository
  */
 interface DataExchangeRepository :
     CoroutineCrudRepository<DataExchange, String>,
-    CoroutineSortingRepository<DataExchange, String> {
-}
+    CoroutineSortingRepository<DataExchange, String>

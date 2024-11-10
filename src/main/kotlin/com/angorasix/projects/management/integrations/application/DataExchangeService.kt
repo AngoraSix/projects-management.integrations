@@ -5,7 +5,6 @@ import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.DataExchangeStrategy
 import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchange
 import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeRepository
-import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 
 /**
  *
@@ -14,7 +13,6 @@ import com.angorasix.projects.management.integrations.infrastructure.config.conf
  */
 class DataExchangeService(
     private val repository: DataExchangeRepository,
-//    private val sourceConfigs: SourceConfigurations,
     private val integrationsService: ProjectsManagementIntegrationsService,
     private val dataExchangeStrategies: Map<Source, DataExchangeStrategy>,
 ) {
@@ -25,17 +23,12 @@ class DataExchangeService(
         val integration =
             integrationsService.findSingleIntegration(integrationId, requestingContributor)
         return integration?.let {
-            println("GER2222")
-            println(integration)
             val source = Source.valueOf(integration.source.uppercase())
             val dataExchange = dataExchangeStrategies[source]?.startDataExchange(
                 integration,
                 requestingContributor,
             )
-            println(dataExchange)
             dataExchange?.let { repository.save(it) }
         }
     }
-
-
 }

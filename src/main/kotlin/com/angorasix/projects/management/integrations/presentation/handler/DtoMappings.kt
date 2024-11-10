@@ -13,7 +13,12 @@ import com.angorasix.projects.management.integrations.domain.integration.exchang
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
-import com.angorasix.projects.management.integrations.presentation.dto.*
+import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeDto
+import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeStatusDto
+import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeStatusStepDto
+import com.angorasix.projects.management.integrations.presentation.dto.IntegrationConfigDto
+import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
+import com.angorasix.projects.management.integrations.presentation.dto.IntegrationStatusDto
 import org.springframework.hateoas.CollectionModel
 import org.springframework.web.reactive.function.server.ServerRequest
 
@@ -55,17 +60,6 @@ fun IntegrationStatusDto.convertToDomain(): IntegrationStatus =
 fun IntegrationConfigDto.convertToDomain(): IntegrationConfig {
     return IntegrationConfig(
         sourceStrategyConfigData,
-    )
-}
-
-fun Integration.convertToDto(): IntegrationDto {
-    return IntegrationDto(
-        source,
-        projectManagementId,
-        status.convertToDto(),
-        admins,
-        config.convertToDto(),
-        id,
     )
 }
 
@@ -119,7 +113,6 @@ fun List<IntegrationDto>.convertToDto(
 fun DataExchange.convertToDto(
     contributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
-    sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
 ): DataExchangeDto {
     return DataExchangeDto(
@@ -134,7 +127,6 @@ fun DataExchange.convertToDto(
         contributor,
         this,
         apiConfigs,
-        sourceConfigurations,
         request,
     )
 }

@@ -54,7 +54,7 @@ data class IntegrationStatus(
     val sourceStrategyStatusData: Map<String, Any>? = null, // any information used by the source to manage its state
 ) {
     companion object {
-        fun registered(sourceStrategyData: Map<String, Any>?, ): IntegrationStatus =
+        fun registered(sourceStrategyData: Map<String, Any>?): IntegrationStatus =
             IntegrationStatus(IntegrationStatusValues.UNSYNCED, Instant.now(), sourceStrategyData)
     }
 }
@@ -64,5 +64,5 @@ enum class IntegrationStatusValues {
 }
 
 data class IntegrationConfig(
-    val sourceStrategyConfigData: Map<String, Any>?
+    val sourceStrategyConfigData: Map<String, Any>?,
 )

@@ -1,13 +1,13 @@
 package com.angorasix.projects.management.integrations.presentation.dto
 
-import IntegrationModification
-import ModifyIntegrationStatus
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.commons.presentation.dto.InlineFieldSpecDto
 import com.angorasix.commons.presentation.dto.PatchOperation
 import com.angorasix.commons.presentation.dto.PatchOperationSpec
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
+import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.ModifyIntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusValues
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.RepresentationModel
@@ -50,9 +50,11 @@ enum class SupportedPatchOperations(val op: PatchOperationSpec) {
             ): IntegrationModification<IntegrationStatusValues> {
                 val memberValue =
                     objectMapper.treeToValue(operation.value, IntegrationStatusValues::class.java)
-                        ?: throw IllegalArgumentException("Not supported value: ${operation.value}. Supported values: [${IntegrationStatusValues.values()}]")
+                        ?: throw IllegalArgumentException(
+                            "Not supported value: ${operation.value}." +
+                                "Supported values: [${IntegrationStatusValues.values()}]",
+                        )
                 return ModifyIntegrationStatus(memberValue)
-
             }
         },
     ),

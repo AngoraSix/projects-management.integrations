@@ -21,40 +21,46 @@ import javax.crypto.spec.SecretKeySpec
  *
  * @author rozagerardo
  */
-class ProjectManagementIntegrationsSecurityConfiguration {
+class ProjectManagementIntegrationsSecurityConfiguration private constructor() {
 
-    fun passwordEncoder(): PasswordEncoder =
-        PasswordEncoderFactories.createDelegatingPasswordEncoder()
+    companion object {
+        fun passwordEncoder(): PasswordEncoder =
+            PasswordEncoderFactories.createDelegatingPasswordEncoder()
 
-    fun tokenEncryptionUtils(securityConfigs: SecurityConfigurations): TokenEncryptionUtil =
-        TokenEncryptionUtil(securityConfigs)
+        fun tokenEncryptionUtils(securityConfigs: SecurityConfigurations): TokenEncryptionUtil =
+            TokenEncryptionUtil(securityConfigs)
 
-    /**
-     *
-     *
-     * Security Filter Chain setup.
-     *
-     *
-     * @param http Spring's customizable ServerHttpSecurity bean
-     * @return fully configured SecurityWebFilterChain
-     */
-    fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        http.authorizeExchange { exchanges: ServerHttpSecurity.AuthorizeExchangeSpec ->
-            exchanges
-                .pathMatchers(
-                    HttpMethod.GET,
-                    "/management-integrations/**",
-                ).permitAll()
-                .anyExchange().authenticated()
-        }.oauth2ResourceServer { oauth2 ->
-            oauth2.jwt(Customizer.withDefaults())
-        }
+        /**
+         *
+         *
+         * Security Filter Chain setup.
+         *
+         *
+         * @param http Spring's customizable ServerHttpSecurity bean
+         * @return fully configured SecurityWebFilterChain
+         */
+        fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
+            http.authorizeExchange { exchanges: ServerHttpSecurity.AuthorizeExchangeSpec ->
+                exchanges
+                    .pathMatchers(
+                        HttpMethod.GET,
+                        "/management-integrations/**",
+                    ).permitAll()
+                    .anyExchange().authenticated()
+            }.oauth2ResourceServer { oauth2 ->
+                oauth2.jwt(Customizer.withDefaults())
+            }
 //            .oauth2Client(Customizer.withDefaults())
-        return http.build()
+            return http.build()
+        }
     }
 }
 
-class TokenEncryptionUtil(val securityConfigs: SecurityConfigurations) {
+private const val ALG = "SHA-256"
+
+private const val KEY_SIZE_LIMIT = 16
+
+class TokenEncryptionUtil(private val securityConfigs: SecurityConfigurations) {
 
     fun encrypt(token: String): String {
         val cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM)
@@ -74,8 +80,8 @@ class TokenEncryptionUtil(val securityConfigs: SecurityConfigurations) {
 
     private fun getAesKeyFromString(key: String): SecretKey {
         // Hash the key to ensure it's 16 bytes (128 bits)
-        val digest = MessageDigest.getInstance("SHA-256").digest(key.toByteArray())
-        val aesKey = digest.copyOf(16) // Use only the first 16 bytes for AES-128
+        val digest = MessageDigest.getInstance(ALG).digest(key.toByteArray())
+        val aesKey = digest.copyOf(KEY_SIZE_LIMIT) // Use only the first 16 bytes for AES-128
         return SecretKeySpec(aesKey, ENCRYPTION_ALGORITHM)
     }
 

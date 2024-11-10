@@ -7,7 +7,7 @@ import com.angorasix.projects.management.integrations.application.strategies.Dat
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
 import com.angorasix.projects.management.integrations.application.strategies.TrelloDataExchangeStrategy
 import com.angorasix.projects.management.integrations.application.strategies.TrelloRegistrationStrategy
-import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.trelloWebClient
+import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientStrategies
 import com.angorasix.projects.management.integrations.infrastructure.security.ProjectManagementIntegrationsSecurityConfiguration
 import com.angorasix.projects.management.integrations.presentation.handler.DataExchangeHandler
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
@@ -18,13 +18,13 @@ import org.springframework.context.support.beans
 
 val beans = beans {
     bean {
-        ProjectManagementIntegrationsSecurityConfiguration().passwordEncoder()
+        ProjectManagementIntegrationsSecurityConfiguration.passwordEncoder()
     }
     bean {
-        ProjectManagementIntegrationsSecurityConfiguration().tokenEncryptionUtils(ref())
+        ProjectManagementIntegrationsSecurityConfiguration.tokenEncryptionUtils(ref())
     }
     bean {
-        ProjectManagementIntegrationsSecurityConfiguration().springSecurityFilterChain(ref())
+        ProjectManagementIntegrationsSecurityConfiguration.springSecurityFilterChain(ref())
     }
     bean {
         val strategies = mapOf(
@@ -45,7 +45,7 @@ val beans = beans {
     }
     // Strategies Infrastructure
     bean("trelloWebClient") {
-        trelloWebClient(ref())
+        WebClientStrategies.trelloWebClient(ref())
     }
 
     // Strategies Implementations

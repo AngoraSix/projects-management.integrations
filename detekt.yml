@@ -4,7 +4,7 @@
 #
 #performance:
 #  SpreadOperator:
-#    excludes: [''**/test/**DocsIntegrationTest.kt']
+#    excludes: ['**/ProjectsCoreApplication.kt', '**/test/**DocsIntegrationTest.kt']
 build:
   maxIssues: 0
   excludeCorrectable: false
@@ -281,7 +281,7 @@ exceptions:
     active: true
   TooGenericExceptionCaught:
     active: true
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    excludes: [ '**/presentation/handler/**', '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
     exceptionNames:
       - 'ArrayIndexOutOfBoundsException'
       - 'Error'
@@ -657,6 +657,7 @@ style:
     allowNonStandardGrouping: false
   UnnecessaryAbstractClass:
     active: true
+    excludes: [ '**/IntegrationModification.kt' ]
   UnnecessaryAnnotationUseSiteTarget:
     active: false
   UnnecessaryApply:

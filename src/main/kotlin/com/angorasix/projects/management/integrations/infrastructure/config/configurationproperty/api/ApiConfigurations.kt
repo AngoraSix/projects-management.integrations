@@ -20,7 +20,6 @@ data class ApiConfigs(
     @NestedConfigurationProperty
     var basePaths: BasePathConfigs,
 
-
     @NestedConfigurationProperty
     var integrationActions: IntegrationActions,
 )
@@ -46,5 +45,5 @@ class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
     val importData: String,
-    val continueDataExchange: String
+    val continueDataExchange: String,
 )

@@ -1,10 +1,14 @@
 package com.angorasix.projects.management.integrations.application
 
-import IntegrationModification
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
-import com.angorasix.projects.management.integrations.domain.integration.configuration.*
+import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
+import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationConfig
+import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationRepository
+import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
+import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import kotlinx.coroutines.flow.toList
@@ -67,7 +71,6 @@ class ProjectsManagementIntegrationsService(
             ) ?: throw IllegalArgumentException("Source not supported")
         return repository.save(processedRegisterIntegration)
     }
-
 
     /**
      * Method to modify [Integration].

@@ -18,4 +18,5 @@ data class TrelloMemberDto(
     val fullName: String?,
     val url: String?,
     val email: String?,
-    val avatarUrl: String?)
+    val avatarUrl: String?,
+)

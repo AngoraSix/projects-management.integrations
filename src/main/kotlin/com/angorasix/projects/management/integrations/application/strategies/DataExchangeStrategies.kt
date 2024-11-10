@@ -14,7 +14,6 @@ import com.angorasix.projects.management.integrations.infrastructure.config.conf
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloBoardDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_TOKEN_CONFIG_PARAM
-import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.TRELLO_TOKEN_BODY_FIELD
 import com.angorasix.projects.management.integrations.infrastructure.security.TokenEncryptionUtil
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.core.ParameterizedTypeReference
@@ -39,9 +38,6 @@ class TrelloDataExchangeStrategy(
         integration: Integration,
         requestingContributor: SimpleContributor,
     ): DataExchange {
-        println("DEBUG GER 333")
-        println(integration.config.sourceStrategyConfigData)
-        println(integration.config.sourceStrategyConfigData?.get(ACCESS_TOKEN_CONFIG_PARAM))
         val accessToken =
             tokenEncryptionUtil.decrypt(
                 integration.config.sourceStrategyConfigData?.get(ACCESS_TOKEN_CONFIG_PARAM) as? String
@@ -86,5 +82,5 @@ class TrelloDataExchangeStrategy(
 }
 
 private enum class TrelloSteps(val value: String) {
-    SELECT_BOARD("SELECT_BOARD")
+    SELECT_BOARD("SELECT_BOARD"),
 }

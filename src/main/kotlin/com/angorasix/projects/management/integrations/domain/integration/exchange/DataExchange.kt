@@ -24,7 +24,6 @@ data class DataExchange @PersistenceCreator constructor(
     val admins: Set<SimpleContributor> = emptySet(),
     val sourceStrategyStateData: Any?, // any information used by the integration/source strategy to manage its state
 ) {
-
     constructor(
         integrationId: String,
         source: Source,
@@ -43,7 +42,6 @@ data class DataExchange @PersistenceCreator constructor(
         admins,
         sourceStrategyStateData,
     )
-
 
     /**
      * Checks whether a particular contributor is Admin of this Club.

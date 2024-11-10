@@ -6,8 +6,6 @@ import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
 import com.angorasix.commons.reactive.presentation.error.resolveNotFound
 import com.angorasix.projects.management.integrations.application.DataExchangeService
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
-import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.IanaLinkRelations
 import org.springframework.hateoas.MediaTypes
 import org.springframework.web.reactive.function.server.ServerRequest
@@ -27,8 +25,6 @@ import java.net.URI
 class DataExchangeHandler(
     private val service: DataExchangeService,
     private val apiConfigs: ApiConfigs,
-    private val sourceConfigurations: SourceConfigurations,
-    private val objectMapper: ObjectMapper,
 ) {
     /**
      * Handler for the Create DataExchange endpoint for a particular Integration.
@@ -37,14 +33,13 @@ class DataExchangeHandler(
      * @return the `ServerResponse`
      */
     suspend fun createDataExchange(request: ServerRequest): ServerResponse {
-        println("ENTROOO GER1")
         val requestingContributor =
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
         val integrationId = request.pathVariable("integrationId")
 
         return if (requestingContributor is SimpleContributor) {
             service.createDataExchange(integrationId, requestingContributor)
-                ?.convertToDto(requestingContributor, apiConfigs, sourceConfigurations, request)
+                ?.convertToDto(requestingContributor, apiConfigs, request)
                 ?.let { outputDataExchangeDto ->
                     val selfLink =
                         outputDataExchangeDto?.links?.getRequiredLink(IanaLinkRelations.SELF)?.href
@@ -66,11 +61,11 @@ class DataExchangeHandler(
     suspend fun getDataExchange(request: ServerRequest): ServerResponse {
         val requestingContributor =
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
-        val integrationId = request.pathVariable("integrationId")
-        val dataExchangeId = request.pathVariable("id")
+//        val integrationId = request.pathVariable("integrationId")
+//        val dataExchangeId = request.pathVariable("id")
 
         return if (requestingContributor is SimpleContributor) {
-            // @TODO: Implement the service method to get the DataExchange
+            // Implement the service method to get the DataExchange
             ok().contentType(MediaTypes.HAL_FORMS_JSON).buildAndAwait()
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
@@ -86,11 +81,11 @@ class DataExchangeHandler(
     suspend fun patchDataExchange(request: ServerRequest): ServerResponse {
         val requestingContributor =
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
-        val integrationId = request.pathVariable("integrationId")
-        val dataExchangeId = request.pathVariable("id")
+//        val integrationId = request.pathVariable("integrationId")
+//        val dataExchangeId = request.pathVariable("id")
 
         return if (requestingContributor is SimpleContributor) {
-            // @TODO: Implement the service method to patch the DataExchange
+            // Implement the service method to patch the DataExchange
             ok().contentType(MediaTypes.HAL_FORMS_JSON).buildAndAwait()
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
