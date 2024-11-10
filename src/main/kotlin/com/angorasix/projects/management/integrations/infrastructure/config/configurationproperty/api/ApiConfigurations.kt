@@ -20,7 +20,6 @@ data class ApiConfigs(
     @NestedConfigurationProperty
     var basePaths: BasePathConfigs,
 
-
     @NestedConfigurationProperty
     var integrationActions: IntegrationActions,
 )
@@ -31,13 +30,20 @@ data class RoutesConfigs(
     val baseListCrudRoute: String,
     val baseByIdCrudRoute: String,
     val baseByProjectManagementIdCrudRoute: String,
+    val baseIntegrationDataExchangeCrudRoute: String,
+    val baseIntegrationDataExchangeByIdCrudRoute: String,
     val listIntegrationsByProjectManagementId: Route,
     val registerIntegrationForProjectManagement: Route,
     val getIntegration: Route,
     val patchIntegration: Route,
+    val createDataExchange: Route,
+    val getDataExchange: Route,
+    val patchDataExchange: Route,
 )
 
 class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
+    val importData: String,
+    val continueDataExchange: String,
 )

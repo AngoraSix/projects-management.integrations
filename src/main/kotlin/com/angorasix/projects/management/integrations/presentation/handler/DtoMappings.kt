@@ -2,13 +2,20 @@ package com.angorasix.projects.management.integrations.presentation.handler
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
+import com.angorasix.commons.presentation.dto.convertToDto
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationConfig
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchange
+import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatus
+import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusStep
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
+import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeDto
+import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeStatusDto
+import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeStatusStepDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationConfigDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationStatusDto
@@ -31,7 +38,8 @@ fun IntegrationDto.convertToDomain(
             "Invalid Integration - source: $source - projectManagementId: $checkedProjectManagementId",
         )
     }
-    val statusValue = status?.convertToDomain() ?: IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED)
+    val statusValue =
+        status?.convertToDomain() ?: IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED)
     val configValue = config?.convertToDomain() ?: IntegrationConfig(null)
     return Integration(
         checkedSource.value,
@@ -43,22 +51,15 @@ fun IntegrationDto.convertToDomain(
 }
 
 fun IntegrationStatusDto.convertToDomain(): IntegrationStatus =
-    IntegrationStatus(status ?: IntegrationStatusValues.NOT_REGISTERED, expirationDate, sourceStrategyData)
+    IntegrationStatus(
+        status ?: IntegrationStatusValues.NOT_REGISTERED,
+        expirationDate,
+        sourceStrategyData,
+    )
 
 fun IntegrationConfigDto.convertToDomain(): IntegrationConfig {
     return IntegrationConfig(
         sourceStrategyConfigData,
-    )
-}
-
-fun Integration.convertToDto(): IntegrationDto {
-    return IntegrationDto(
-        source,
-        projectManagementId,
-        status.convertToDto(),
-        admins,
-        config.convertToDto(),
-        id,
     )
 }
 
@@ -108,3 +109,30 @@ fun List<IntegrationDto>.convertToDto(
         request,
     )
 }
+
+fun DataExchange.convertToDto(
+    contributor: SimpleContributor?,
+    apiConfigs: ApiConfigs,
+    request: ServerRequest,
+): DataExchangeDto {
+    return DataExchangeDto(
+        source,
+        integrationId,
+        startedInstant,
+        lastInteractionInstant,
+        status.convertToDto(),
+        sourceStrategyStateData,
+        id,
+    ).resolveHypermedia(
+        contributor,
+        this,
+        apiConfigs,
+        request,
+    )
+}
+
+fun DataExchangeStatus.convertToDto(): DataExchangeStatusDto =
+    DataExchangeStatusDto(status, steps.map { it.convertToDto() })
+
+fun DataExchangeStatusStep.convertToDto(): DataExchangeStatusStepDto =
+    DataExchangeStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() })

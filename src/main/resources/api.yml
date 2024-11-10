@@ -5,6 +5,8 @@ configs:
     routes:
       baseListCrudRoute: ""
       baseByIdCrudRoute: "/{id}"
+      baseIntegrationDataExchangeCrudRoute: "/{integrationId}/data-exchange"
+      baseIntegrationDataExchangeByIdCrudRoute: "/{integrationId}/data-exchange/{id}"
       baseByProjectManagementIdCrudRoute: "/project-management/{projectManagementId}"
       listIntegrationsByProjectManagementId:
         name: listIntegrationsByProjectManagementId
@@ -30,6 +32,26 @@ configs:
           - ${configs.api.basePaths.projectsManagementIntegration}
         method: PATCH
         path: ${configs.api.routes.baseByIdCrudRoute}
+      createDataExchange:
+        name: createDataExchange
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+        method: POST
+        path: ${configs.api.routes.baseIntegrationDataExchangeCrudRoute}
+      getDataExchange:
+        name: getDataExchange
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+        method: GET
+        path: ${configs.api.routes.baseIntegrationDataExchangeByIdCrudRoute}
+      patchDataExchange:
+        name: patchDataExchange
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+        method: PATCH
+        path: ${configs.api.routes.baseIntegrationDataExchangeByIdCrudRoute}
     integrationActions:
       redirectAuthorization: redirectAuthorization
       disableIntegration: disableIntegration
+      importData: importData
+      continueDataExchange: continueDataExchange

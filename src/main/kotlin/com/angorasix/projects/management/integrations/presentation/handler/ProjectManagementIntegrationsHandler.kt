@@ -1,14 +1,13 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
-import IntegrationModification
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.infrastructure.constants.AngoraSixInfrastructure
 import com.angorasix.commons.presentation.dto.Patch
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
 import com.angorasix.commons.reactive.presentation.error.resolveExceptionResponse
 import com.angorasix.commons.reactive.presentation.error.resolveNotFound
-import com.angorasix.commons.reactive.presentation.utils.affectedContributors
 import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
+import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
@@ -176,8 +175,7 @@ class ProjectManagementIntegrationsHandler(
                     apiConfigs,
                     sourceConfigurations,
                     request,
-                )
-                    ?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it)}
+                )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
                     ?: resolveNotFound("Can't patch this Integration", "Integration")
             } catch (ex: RuntimeException) {
                 return resolveExceptionResponse(ex, "Integration")
