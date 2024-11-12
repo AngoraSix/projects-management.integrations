@@ -6,6 +6,7 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationConfig
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceType
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloMemberDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_TOKEN_CONFIG_PARAM
@@ -37,7 +38,7 @@ class TrelloRegistrationStrategy(
             integrationData.config.sourceStrategyConfigData?.get(TRELLO_TOKEN_BODY_FIELD) as? String
                 ?: throw IllegalArgumentException("trello access token body param is required for registration")
         val memberUri =
-            integrationConfigs.sourceConfigs["trello"]?.strategyConfigs?.get("memberUrl")
+            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("memberUrl")
                 ?: throw IllegalArgumentException("trello memberUrl config is required for registration")
 
         // Call Trello to get User data

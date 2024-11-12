@@ -19,7 +19,7 @@ import kotlinx.coroutines.runBlocking
  *
  * @author rozagerardo
  */
-class ProjectsManagementIntegrationsService(
+class IntegrationsService(
     private val repository: IntegrationRepository,
     private val sourceConfigs: SourceConfigurations,
     private val registrationStrategies: Map<Source, RegistrationStrategy>,

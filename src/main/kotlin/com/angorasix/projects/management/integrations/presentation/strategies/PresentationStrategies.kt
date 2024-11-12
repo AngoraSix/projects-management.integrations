@@ -25,5 +25,5 @@ class TrelloStrategy(sourceConfigs: Map<String, String>) : SourceStrategy(source
 
 data class ActionData(
     val key: String,
-    val value: String,
+    val url: String,
 )

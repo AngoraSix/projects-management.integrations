@@ -2,7 +2,7 @@ package com.angorasix.projects.management.integrations
 
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.DataExchangeService
-import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
+import com.angorasix.projects.management.integrations.application.IntegrationsService
 import com.angorasix.projects.management.integrations.application.strategies.DataExchangeStrategy
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
 import com.angorasix.projects.management.integrations.application.strategies.TrelloDataExchangeStrategy
@@ -30,7 +30,7 @@ val beans = beans {
         val strategies = mapOf(
             Source.TRELLO to ref<RegistrationStrategy>("trelloRegistrationStrategy"),
         )
-        ProjectsManagementIntegrationsService(ref(), ref(), strategies)
+        IntegrationsService(ref(), ref(), strategies)
     }
     bean<ProjectManagementIntegrationsHandler>()
     bean<DataExchangeHandler>()

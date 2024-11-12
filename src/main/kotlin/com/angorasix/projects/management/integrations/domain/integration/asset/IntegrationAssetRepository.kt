@@ -10,7 +10,7 @@ import org.springframework.data.repository.kotlin.CoroutineSortingRepository
  *
  * @author rozagerardo
  */
-interface DataExchangeRepository :
+interface IntegrationAssetRepository :
     CoroutineCrudRepository<DataExchange, String>,
     CoroutineSortingRepository<DataExchange, String>,
     DataExchangeInfraRepository

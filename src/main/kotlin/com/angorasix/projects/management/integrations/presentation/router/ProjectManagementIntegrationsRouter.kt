@@ -35,10 +35,10 @@ class ProjectManagementIntegrationsRouter(
             apiConfigs.routes.baseByProjectManagementIdCrudRoute.nest {
                 defineByProjectManagementIdRoutes()
             }
-            apiConfigs.routes.baseIntegrationDataExchangeByIdCrudRoute.nest {
+            apiConfigs.routes.baseDataExchangeByIdCrudRoute.nest {
                 defineDataExchangeByIdEndpoints()
             }
-            apiConfigs.routes.baseIntegrationDataExchangeCrudRoute.nest {
+            apiConfigs.routes.baseDataExchangeByIntegrationIdCrudRoute.nest {
                 defineDataExchangeBaseEndpoints()
             }
             apiConfigs.routes.baseByIdCrudRoute.nest {
