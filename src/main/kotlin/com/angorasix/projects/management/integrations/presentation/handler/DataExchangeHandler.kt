@@ -11,6 +11,8 @@ import com.angorasix.projects.management.integrations.domain.integration.exchang
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.presentation.dto.SupportedDataExchangePatchOperations
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.hateoas.IanaLinkRelations
 import org.springframework.hateoas.MediaTypes
 import org.springframework.web.reactive.function.server.ServerRequest
@@ -33,6 +35,9 @@ class DataExchangeHandler(
     private val apiConfigs: ApiConfigs,
     private val objectMapper: ObjectMapper,
 ) {
+    /* default */
+    val logger: Logger = LoggerFactory.getLogger(DataExchangeHandler::class.java)
+
     /**
      * Handler for the Create DataExchange endpoint for a particular Integration.
      *
@@ -114,6 +119,7 @@ class DataExchangeHandler(
                 )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
                     ?: resolveNotFound("Can't patch this Data Exchange", "Data Exchange")
             } catch (ex: RuntimeException) {
+                logger.error("Error while patching Data Exchange", ex)
                 return resolveExceptionResponse(ex, "Data Exchange")
             }
         } else {

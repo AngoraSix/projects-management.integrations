@@ -81,10 +81,11 @@ data class DataExchangeStatusDto(
 data class DataExchangeStatusStepDto(
     val stepKey: String,
     val requiredDataForStep: List<InlineFieldSpecDto> = emptyList(),
+    var responseData: Map<String, List<String>>? = null,
 )
 
 enum class SupportedDataExchangePatchOperations(val op: PatchOperationSpec) {
-    STEP_RESPONSE_DATAS(
+    STEP_RESPONSE_DATA(
         object : PatchOperationSpec {
             override fun supportsPatchOperation(operation: PatchOperation): Boolean =
                 operation.op == "replace" && Regex("^/status/steps/\\d+$").matches(operation.path)
@@ -103,9 +104,9 @@ enum class SupportedDataExchangePatchOperations(val op: PatchOperationSpec) {
                             "Not supported value: ${operation.value}." +
                                 "Supported values: [${IntegrationStatusValues.values()}]",
                         )
-                val indexedResponse = ArrayList<Map<String, List<String>>?>()
                 val index = extractNumberFromPath(operation.path)
-                indexedResponse[index] = responseDataValue
+                val indexedResponse = MutableList<Map<String, List<String>>?>(index + 1) { null }
+                indexedResponse.add(index, responseDataValue)
                 return ReplaceStepResponseData(indexedResponse)
             }
         },

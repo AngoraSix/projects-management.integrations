@@ -7,15 +7,15 @@ import com.angorasix.projects.management.integrations.domain.integration.exchang
 abstract class DataExchangeModification<U>(modifyValue: U) :
     DomainObjectModification<DataExchange, U>(modifyValue)
 
-class ReplaceStepResponseData(stepResponses: List<Map<String,List<String>>?>) :
-    DataExchangeModification<List<Map<String,List<String>>?>>(stepResponses) {
+class ReplaceStepResponseData(stepResponses: List<Map<String, List<String>>?>) :
+    DataExchangeModification<List<Map<String, List<String>>?>>(stepResponses) {
     override fun modify(
         simpleContributor: SimpleContributor,
         domainObject: DataExchange,
     ): DataExchange {
         require(domainObject.isAdmin(simpleContributor.contributorId)) { "Requesting contributor is not admin" }
         modifyValue.forEachIndexed { index, stepResponse ->
-            if(stepResponse != null) {
+            if (stepResponse != null) {
                 domainObject.status.steps[index].responseData = stepResponse
             }
         }

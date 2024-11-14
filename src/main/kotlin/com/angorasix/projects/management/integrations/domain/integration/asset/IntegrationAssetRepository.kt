@@ -1,6 +1,5 @@
-package com.angorasix.projects.management.integrations.domain.integration.exchange
+package com.angorasix.projects.management.integrations.domain.integration.asset
 
-import com.angorasix.projects.management.integrations.infrastructure.persistence.repository.DataExchangeInfraRepository
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.data.repository.kotlin.CoroutineSortingRepository
 
@@ -11,6 +10,5 @@ import org.springframework.data.repository.kotlin.CoroutineSortingRepository
  * @author rozagerardo
  */
 interface IntegrationAssetRepository :
-    CoroutineCrudRepository<DataExchange, String>,
-    CoroutineSortingRepository<DataExchange, String>,
-    DataExchangeInfraRepository
+    CoroutineCrudRepository<IntegrationAsset, String>,
+    CoroutineSortingRepository<IntegrationAsset, String>
