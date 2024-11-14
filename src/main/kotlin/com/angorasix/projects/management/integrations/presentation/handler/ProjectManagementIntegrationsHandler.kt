@@ -6,13 +6,13 @@ import com.angorasix.commons.presentation.dto.Patch
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
 import com.angorasix.commons.reactive.presentation.error.resolveExceptionResponse
 import com.angorasix.commons.reactive.presentation.error.resolveNotFound
-import com.angorasix.projects.management.integrations.application.ProjectsManagementIntegrationsService
+import com.angorasix.projects.management.integrations.application.IntegrationsService
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
-import com.angorasix.projects.management.integrations.presentation.dto.SupportedPatchOperations
+import com.angorasix.projects.management.integrations.presentation.dto.SupportedIntegrationPatchOperations
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.IanaLinkRelations
 import org.springframework.hateoas.MediaTypes
@@ -31,7 +31,7 @@ import java.net.URI
  * @author rozagerardo
  */
 class ProjectManagementIntegrationsHandler(
-    private val service: ProjectsManagementIntegrationsService,
+    private val service: IntegrationsService,
     private val apiConfigs: ApiConfigs,
     private val sourceConfigurations: SourceConfigurations,
     private val objectMapper: ObjectMapper,
@@ -147,7 +147,7 @@ class ProjectManagementIntegrationsHandler(
     }
 
     /**
-     * Handler for the Patch Club endpoint, retrieving a Mono with the requested Club.
+     * Handler for the Patch Integration endpoint, retrieving a Mono with the requested Integration.
      *
      * @param request - HTTP `ServerRequest` object
      * @return the `ServerResponse`
@@ -162,14 +162,18 @@ class ProjectManagementIntegrationsHandler(
                 val modifyOperations = patch.operations.map {
                     it.toDomainObjectModification(
                         contributor,
-                        SupportedPatchOperations.values().map { o -> o.op }.toList(),
+                        SupportedIntegrationPatchOperations.values().map { o -> o.op }.toList(),
                         objectMapper,
                     )
                 }
-                val modifyClubOperations: List<IntegrationModification<Any>> =
+                val modifyIntegrationOperations: List<IntegrationModification<Any>> =
                     modifyOperations.filterIsInstance<IntegrationModification<Any>>()
                 val serviceOutput =
-                    service.modifyIntegration(contributor, integrationId, modifyClubOperations)
+                    service.modifyIntegration(
+                        contributor,
+                        integrationId,
+                        modifyIntegrationOperations,
+                    )
                 serviceOutput?.convertToDto(
                     contributor,
                     apiConfigs,

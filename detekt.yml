@@ -657,7 +657,7 @@ style:
     allowNonStandardGrouping: false
   UnnecessaryAbstractClass:
     active: true
-    excludes: [ '**/IntegrationModification.kt' ]
+    excludes: [ '**/IntegrationModification.kt', '**/DataExchangeModification.kt' ]
   UnnecessaryAnnotationUseSiteTarget:
     active: false
   UnnecessaryApply:

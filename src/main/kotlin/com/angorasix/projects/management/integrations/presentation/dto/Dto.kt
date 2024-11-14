@@ -9,6 +9,9 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.ModifyIntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.exchange.modification.DataExchangeModification
+import com.angorasix.projects.management.integrations.domain.integration.exchange.modification.ReplaceStepResponseData
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.RepresentationModel
 import org.springframework.hateoas.server.core.Relation
@@ -37,7 +40,7 @@ data class IntegrationStatusDto(
 
 data class IntegrationConfigDto(val sourceStrategyConfigData: Map<String, Any>?)
 
-enum class SupportedPatchOperations(val op: PatchOperationSpec) {
+enum class SupportedIntegrationPatchOperations(val op: PatchOperationSpec) {
     STATUS(
         object : PatchOperationSpec {
             override fun supportsPatchOperation(operation: PatchOperation): Boolean =
@@ -48,13 +51,13 @@ enum class SupportedPatchOperations(val op: PatchOperationSpec) {
                 operation: PatchOperation,
                 objectMapper: ObjectMapper,
             ): IntegrationModification<IntegrationStatusValues> {
-                val memberValue =
+                val statusValue =
                     objectMapper.treeToValue(operation.value, IntegrationStatusValues::class.java)
                         ?: throw IllegalArgumentException(
                             "Not supported value: ${operation.value}." +
                                 "Supported values: [${IntegrationStatusValues.values()}]",
                         )
-                return ModifyIntegrationStatus(memberValue)
+                return ModifyIntegrationStatus(statusValue)
             }
         },
     ),
@@ -78,4 +81,41 @@ data class DataExchangeStatusDto(
 data class DataExchangeStatusStepDto(
     val stepKey: String,
     val requiredDataForStep: List<InlineFieldSpecDto> = emptyList(),
+    var responseData: Map<String, List<String>>? = null,
 )
+
+enum class SupportedDataExchangePatchOperations(val op: PatchOperationSpec) {
+    STEP_RESPONSE_DATA(
+        object : PatchOperationSpec {
+            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
+                operation.op == "replace" && Regex("^/status/steps/\\d+$").matches(operation.path)
+
+            override fun mapToObjectModification(
+                contributor: SimpleContributor,
+                operation: PatchOperation,
+                objectMapper: ObjectMapper,
+            ): DataExchangeModification<List<Map<String, List<String>>?>> {
+                val responseDataValue =
+                    objectMapper.convertValue(
+                        operation.value,
+                        object : TypeReference<Map<String, List<String>>>() {},
+                    )
+                        ?: throw IllegalArgumentException(
+                            "Not supported value: ${operation.value}." +
+                                "Supported values: [${IntegrationStatusValues.values()}]",
+                        )
+                val index = extractNumberFromPath(operation.path)
+                val indexedResponse = MutableList<Map<String, List<String>>?>(index + 1) { null }
+                indexedResponse.add(index, responseDataValue)
+                return ReplaceStepResponseData(indexedResponse)
+            }
+        },
+    ),
+}
+
+fun extractNumberFromPath(path: String): Int {
+    val regex = Regex("^/status/steps/(\\d+)$")
+    val matchResult = regex.matchEntire(path)
+    return matchResult?.groups?.get(1)?.value?.toInt()
+        ?: throw IllegalArgumentException("Invalid path")
+}

@@ -135,4 +135,4 @@ fun DataExchangeStatus.convertToDto(): DataExchangeStatusDto =
     DataExchangeStatusDto(status, steps.map { it.convertToDto() })
 
 fun DataExchangeStatusStep.convertToDto(): DataExchangeStatusStepDto =
-    DataExchangeStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() })
+    DataExchangeStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)

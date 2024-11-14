@@ -25,8 +25,8 @@ data class DataExchange @PersistenceCreator constructor(
     val sourceStrategyStateData: Any?, // any information used by the integration/source strategy to manage its state
 ) {
     constructor(
-        integrationId: String,
         source: Source,
+        integrationId: String,
         startedDateTime: Instant,
         lastInteractionDateTime: Instant,
         status: DataExchangeStatus,
@@ -53,14 +53,20 @@ data class DataExchange @PersistenceCreator constructor(
 }
 
 data class DataExchangeStatus(
-    val status: DataExchangeStatusValues,
-    val steps: List<DataExchangeStatusStep> = emptyList(),
+    var status: DataExchangeStatusValues,
+    val steps: MutableList<DataExchangeStatusStep> = arrayListOf(),
 )
 
 data class DataExchangeStatusStep(
     val stepKey: String,
     val requiredDataForStep: List<InlineFieldSpec> = emptyList(),
-)
+    var responseData: Map<String, List<String>>? = null,
+) {
+    fun isCompleted(): Boolean = responseData != null &&
+        requiredDataForStep.all {
+            responseData!!.containsKey(it.name)
+        }
+}
 
 enum class DataExchangeStatusValues {
     IN_PROGRESS, COMPLETED, FAILED

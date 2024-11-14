@@ -6,11 +6,12 @@ configs:
         strategyConfigs:
           # GENERAL
           apiKey: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APIKEY:TrelloApiKey}
-          apiSecret: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APISECRET:TrelloApiSecret}
+#          apiSecret: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APISECRET:TrelloApiSecret}
           appName: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APPNAME:AngoraSix}
           # REGISTRATION
           authorizationUrlPattern: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_AUTHORIZATIONURLPATTERN:https://trello.com/1/authorize?expiration=30days&name=:appName&scope=read,write&response_type=token&key=:apiKey&callback_method=fragment&return_url=:redirectUri}
-          memberBoardsUrl: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_MEMBERBOARDSURL:https://api.trello.com/1/members/me/boards}
           memberUrl: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_MEMBERURL:https://api.trello.com/1/members/me}
+          memberBoardsUrl: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_MEMBERBOARDSURL:https://api.trello.com/1/members/me/boards}
+          boardListsUrlPattern: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_BOARDLISTSURLPATTERN:https://api.trello.com/1/boards/:boardId/lists?filter=open}
     supported:
       - trello

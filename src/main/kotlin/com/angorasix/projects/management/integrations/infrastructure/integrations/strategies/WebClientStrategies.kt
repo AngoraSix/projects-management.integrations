@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations.infrastructure.integrations.strategies
 
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -32,10 +33,10 @@ class WebClientStrategies {
     companion object {
         fun trelloWebClient(integrationConfigs: SourceConfigurations): WebClient {
             val trelloApiKey =
-                integrationConfigs.sourceConfigs["trello"]?.strategyConfigs?.get("apiKey")
+                integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("apiKey")
                     ?: throw IllegalArgumentException("trello apiKey config is required")
 
-//    val trelloApiSecret = integrationConfigs.sourceConfigs["trello"]?.strategyConfigs?.get("apiSecret")
+//    val trelloApiSecret = integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("apiSecret")
 //        ?: throw IllegalArgumentException("trello apiSecret config is required")
             return WebClient.builder()
                 .defaultUriVariables(mapOf("key" to trelloApiKey))

@@ -1,5 +1,6 @@
 package com.angorasix.projects.management.integrations.domain.integration.exchange
 
+import com.angorasix.projects.management.integrations.infrastructure.persistence.repository.DataExchangeInfraRepository
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.data.repository.kotlin.CoroutineSortingRepository
 
@@ -11,4 +12,5 @@ import org.springframework.data.repository.kotlin.CoroutineSortingRepository
  */
 interface DataExchangeRepository :
     CoroutineCrudRepository<DataExchange, String>,
-    CoroutineSortingRepository<DataExchange, String>
+    CoroutineSortingRepository<DataExchange, String>,
+    DataExchangeInfraRepository

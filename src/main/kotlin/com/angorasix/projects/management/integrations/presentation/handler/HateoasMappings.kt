@@ -66,7 +66,7 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
             )
                 ?: emptyList()
         }.forEach { actionData ->
-            val actionLink = Link.of(actionData.value).withRel(actionData.key)
+            val actionLink = Link.of(actionData.url).withRel(actionData.key)
             add(actionLink)
         }
     } else {
