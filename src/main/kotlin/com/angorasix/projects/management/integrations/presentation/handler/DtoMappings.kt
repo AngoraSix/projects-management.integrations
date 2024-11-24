@@ -7,15 +7,15 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationConfig
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchange
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatus
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusStep
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatus
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusStep
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
-import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeDto
-import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeStatusDto
-import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeStatusStepDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncStatusDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncStatusStepDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationConfigDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationStatusDto
@@ -110,12 +110,12 @@ fun List<IntegrationDto>.convertToDto(
     )
 }
 
-fun DataExchange.convertToDto(
+fun SourceSync.convertToDto(
     contributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
-): DataExchangeDto {
-    return DataExchangeDto(
+): SourceSyncDto {
+    return SourceSyncDto(
         source,
         integrationId,
         startedInstant,
@@ -131,8 +131,8 @@ fun DataExchange.convertToDto(
     )
 }
 
-fun DataExchangeStatus.convertToDto(): DataExchangeStatusDto =
-    DataExchangeStatusDto(status, steps.map { it.convertToDto() })
+fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto =
+    SourceSyncStatusDto(status, steps.map { it.convertToDto() })
 
-fun DataExchangeStatusStep.convertToDto(): DataExchangeStatusStepDto =
-    DataExchangeStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)
+fun SourceSyncStatusStep.convertToDto(): SourceSyncStatusStepDto =
+    SourceSyncStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)

@@ -7,10 +7,10 @@ import com.angorasix.commons.domain.inputs.OptionSpec
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchange
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatus
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusStep
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatus
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusStep
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceType
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloBoardDto
@@ -30,40 +30,40 @@ import java.time.Instant
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
-interface DataExchangeStrategy {
-    suspend fun startDataExchange(
+interface SourceSyncStrategy {
+    suspend fun startSourceSync(
         integration: Integration,
         requestingContributor: SimpleContributor,
-    ): DataExchange
+    ): SourceSync
 
-    suspend fun isReadyForExchange(
-        dataExchange: DataExchange,
+    suspend fun isReadyForSyncing(
+        sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
     ): Boolean
 
     suspend fun processModification(
-        dataExchange: DataExchange,
+        sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
-    ): DataExchange
+    ): SourceSync
 
-    suspend fun exchangeData(
-        dataExchange: DataExchange,
+    suspend fun triggerSourceSync(
+        sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
     ): List<IntegrationAsset>
 }
 
-class TrelloDataExchangeStrategy(
+class TrelloSourceSyncStrategy(
     private val trelloWebClient: WebClient,
     private val integrationConfigs: SourceConfigurations,
     private val tokenEncryptionUtil: TokenEncryptionUtil,
-) : DataExchangeStrategy {
-    override suspend fun startDataExchange(
+) : SourceSyncStrategy {
+    override suspend fun startSourceSync(
         integration: Integration,
         requestingContributor: SimpleContributor,
-    ): DataExchange {
+    ): SourceSync {
         return trelloStepsFns[stepKeysInOrder[0]]?.let {
             it(
                 null,
@@ -72,44 +72,44 @@ class TrelloDataExchangeStrategy(
             )
         }
             ?: throw IllegalArgumentException(
-                "Trello Data Exchange Strategy " +
-                    "is not properly configured for startDataExchange",
+                "Trello Source Sync Strategy " +
+                    "is not properly configured for startSourceSync",
             )
     }
 
-    override suspend fun isReadyForExchange(
-        dataExchange: DataExchange,
+    override suspend fun isReadyForSyncing(
+        sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
     ): Boolean {
-        return dataExchange.status.steps.all { it.isCompleted() } &&
-            dataExchange.status.steps.map { it.stepKey }
+        return sourceSync.status.steps.all { it.isCompleted() } &&
+            sourceSync.status.steps.map { it.stepKey }
                 .containsAll(TrelloSteps.values().map { it.value })
     }
 
     override suspend fun processModification(
-        dataExchange: DataExchange,
+        sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
-    ): DataExchange {
-        val currentStep = dataExchange.status.steps.size
+    ): SourceSync {
+        val currentStep = sourceSync.status.steps.size
         return trelloStepsFns[stepKeysInOrder[currentStep]]?.let {
             it(
-                dataExchange,
+                sourceSync,
                 integration,
                 requestingContributor,
             )
         }
             ?: throw IllegalArgumentException(
-                "Trello Data Exchange Strategy" +
+                "Trello Source Sync Strategy" +
                     "is not properly configured for step [$currentStep]",
             )
     }
 
     private val trelloStepsFns: Map<
         TrelloSteps,
-        suspend (DataExchange?, Integration, SimpleContributor)
-        -> DataExchange,
+        suspend (SourceSync?, Integration, SimpleContributor)
+        -> SourceSync,
         > = mapOf(
         TrelloSteps.SELECT_BOARD to { _, integration, requestingContributor ->
             val accessToken = extractAccessToken(integration)
@@ -118,7 +118,7 @@ class TrelloDataExchangeStrategy(
                     ?.get("memberBoardsUrl")
                     ?: throw IllegalArgumentException(
                         "trello memberBoardsUrl config" +
-                            "is required for data exchange",
+                            "is required for source sync",
                     )
 
             // Call Trello to get member Boards
@@ -138,19 +138,19 @@ class TrelloDataExchangeStrategy(
                     boardsOptions,
                 )
 
-            DataExchange(
+            SourceSync(
                 Source.TRELLO,
                 integration.id
                     ?: throw IllegalArgumentException(
                         "persisted Integration" +
-                            "is required for data exchange",
+                            "is required for source sync",
                     ),
                 Instant.now(),
                 Instant.now(),
-                DataExchangeStatus(
-                    DataExchangeStatusValues.IN_PROGRESS,
+                SourceSyncStatus(
+                    SourceSyncStatusValues.IN_PROGRESS,
                     arrayListOf(
-                        DataExchangeStatusStep(
+                        SourceSyncStatusStep(
                             TrelloSteps.SELECT_BOARD.value,
                             listOf(boardFieldSpec),
                         ),
@@ -160,14 +160,14 @@ class TrelloDataExchangeStrategy(
                 mapOf("boards" to boardsDto),
             )
         },
-        TrelloSteps.RESOLVE_BOARD to { dataExchange, integration, _ ->
-            require(dataExchange != null) {
-                "dataExchange" +
+        TrelloSteps.RESOLVE_BOARD to { sourceSync, integration, _ ->
+            require(sourceSync != null) {
+                "sourceSync" +
                     "is required for step ${TrelloSteps.RESOLVE_BOARD}"
             }
 
             val selectedBoardIds =
-                dataExchange.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
+                sourceSync.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
                     .responseData?.get(TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value)
                     ?: throw IllegalArgumentException(
                         "selected board" +
@@ -178,7 +178,7 @@ class TrelloDataExchangeStrategy(
                     ?.get("boardListsUrlPattern")
                     ?: throw IllegalArgumentException(
                         "trello boardListsUrlPattern config" +
-                            "is required for data exchange",
+                            "is required for source sync",
                     )
             val accessToken = extractAccessToken(integration)
 
@@ -220,20 +220,20 @@ class TrelloDataExchangeStrategy(
                 }
             }.awaitAll()
 
-            val step = DataExchangeStatusStep(
+            val step = SourceSyncStatusStep(
                 TrelloSteps.RESOLVE_BOARD.value,
                 fieldSpecs,
             )
 
-            dataExchange.status.steps.add(step)
-            dataExchange
+            sourceSync.status.steps.add(step)
+            sourceSync
         },
     )
 
     private val stepKeysInOrder: List<TrelloSteps> = trelloStepsFns.keys.toList()
 
-    override suspend fun exchangeData(
-        dataExchange: DataExchange,
+    override suspend fun triggerSourceSync(
+        sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
     ): List<IntegrationAsset> {
@@ -244,7 +244,7 @@ class TrelloDataExchangeStrategy(
     private fun extractAccessToken(integration: Integration) =
         tokenEncryptionUtil.decrypt(
             integration.config.sourceStrategyConfigData?.get(ACCESS_TOKEN_CONFIG_PARAM) as? String
-                ?: throw IllegalArgumentException("trello access token body param is required for data exchange"),
+                ?: throw IllegalArgumentException("trello access token body param is required for source sync"),
         )
 }
 

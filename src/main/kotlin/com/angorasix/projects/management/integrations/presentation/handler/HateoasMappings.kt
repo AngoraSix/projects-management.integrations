@@ -3,12 +3,12 @@ package com.angorasix.projects.management.integrations.presentation.handler
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchange
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
-import com.angorasix.projects.management.integrations.presentation.dto.DataExchangeDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
 import com.angorasix.projects.management.integrations.presentation.utils.uriBuilder
 import org.springframework.hateoas.CollectionModel
@@ -71,17 +71,17 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
         }
     } else {
         // IMPORT DATA
-        val createDataExchangeRoute = apiConfigs.routes.createDataExchange
-        val importDataActionName = apiConfigs.integrationActions.importData
-        val createDataExchangeLink = Link.of(
-            uriBuilder(request).path(createDataExchangeRoute.resolvePath()).build()
+        val createSourceSyncRoute = apiConfigs.routes.createSourceSync
+        val syncConfigActionName = apiConfigs.integrationActions.syncConfig
+        val createSourceSyncLink = Link.of(
+            uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build()
                 .toUriString(),
-        ).withTitle(importDataActionName).withName(importDataActionName)
-            .withRel(importDataActionName).expand(integration.id)
-        val createDataExchangeAffordanceLink =
-            Affordances.of(createDataExchangeLink).afford(createDataExchangeRoute.method)
-                .withName(importDataActionName).toLink()
-        add(createDataExchangeAffordanceLink)
+        ).withTitle(syncConfigActionName).withName(syncConfigActionName)
+            .withRel(syncConfigActionName).expand(integration.id)
+        val createSourceSyncAffordanceLink =
+            Affordances.of(createSourceSyncLink).afford(createSourceSyncRoute.method)
+                .withName(syncConfigActionName).toLink()
+        add(createSourceSyncAffordanceLink)
 
         // DISABLE
         val patchIntegrationRoute = apiConfigs.routes.patchIntegration
@@ -132,42 +132,42 @@ fun CollectionModel<IntegrationDto>.resolveHypermedia(
 }
 
 /**
- * <p> Add HATEOAS links for Data Exchange.
+ * <p> Add HATEOAS links for Source Sync.
  * </p>
  *
  * @author rozagerardo
  */
-fun DataExchangeDto.resolveHypermedia(
+fun SourceSyncDto.resolveHypermedia(
     requestingContributor: SimpleContributor?,
-    dataExchange: DataExchange,
+    sourceSync: SourceSync,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
-): DataExchangeDto {
-    val getSingleRoute = apiConfigs.routes.getDataExchange
+): SourceSyncDto {
+    val getSingleRoute = apiConfigs.routes.getSourceSync
     // self
     val selfLink =
         Link.of(uriBuilder(request).path(getSingleRoute.resolvePath()).build().toUriString())
-            .withRel(getSingleRoute.name).expand(dataExchange.integrationId, id).withSelfRel()
+            .withRel(getSingleRoute.name).expand(sourceSync.integrationId, id).withSelfRel()
     val selfLinkWithDefaultAffordance =
         Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
-        if (requestingContributor.isAdminHint == true || dataExchange.isAdmin(requestingContributor.contributorId)) {
-            if (status?.status == DataExchangeStatusValues.IN_PROGRESS) {
-                val patchDataExchangeRoute = apiConfigs.routes.patchDataExchange
-                val continueDataExchangeActionName =
-                    apiConfigs.integrationActions.continueDataExchange
-                val continueDataExchangeActionLink = Link.of(
-                    uriBuilder(request).path(patchDataExchangeRoute.resolvePath()).build()
+        if (requestingContributor.isAdminHint == true || sourceSync.isAdmin(requestingContributor.contributorId)) {
+            if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
+                val patchSourceSyncRoute = apiConfigs.routes.patchSourceSync
+                val continueSourceSyncActionName =
+                    apiConfigs.integrationActions.continueSourceSync
+                val continueSourceSyncActionLink = Link.of(
+                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
                         .toUriString(),
-                ).withTitle(continueDataExchangeActionName).withName(continueDataExchangeActionName)
-                    .withRel(continueDataExchangeActionName)
-                val continueDataExchangeAffordanceLink =
-                    Affordances.of(continueDataExchangeActionLink)
-                        .afford(patchDataExchangeRoute.method)
-                        .withName(continueDataExchangeActionName).toLink()
-                add(continueDataExchangeAffordanceLink)
+                ).withTitle(continueSourceSyncActionName).withName(continueSourceSyncActionName)
+                    .withRel(continueSourceSyncActionName)
+                val continueSourceSyncAffordanceLink =
+                    Affordances.of(continueSourceSyncActionLink)
+                        .afford(patchSourceSyncRoute.method)
+                        .withName(continueSourceSyncActionName).toLink()
+                add(continueSourceSyncAffordanceLink)
             }
         }
     }

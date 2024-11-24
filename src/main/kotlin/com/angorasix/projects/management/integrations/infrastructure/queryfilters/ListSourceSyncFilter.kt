@@ -10,7 +10,7 @@ import org.springframework.util.MultiValueMap
  *
  * @author rozagerardo
  */
-data class ListDataExchangeFilter(
+data class ListSourceSyncFilter(
     val ids: Collection<String>? = null, // integration ids
     val sources: Set<String>? = null,
     val integrationId: Collection<String>? = null,

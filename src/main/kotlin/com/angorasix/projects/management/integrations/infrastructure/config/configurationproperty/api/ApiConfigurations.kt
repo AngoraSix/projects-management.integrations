@@ -30,20 +30,20 @@ data class RoutesConfigs(
     val baseListCrudRoute: String,
     val baseByIdCrudRoute: String,
     val baseByProjectManagementIdCrudRoute: String,
-    val baseDataExchangeByIntegrationIdCrudRoute: String,
-    val baseDataExchangeByIdCrudRoute: String,
+    val baseSourceSyncByIntegrationIdCrudRoute: String,
+    val baseSourceSyncByIdCrudRoute: String,
     val listIntegrationsByProjectManagementId: Route,
     val registerIntegrationForProjectManagement: Route,
     val getIntegration: Route,
     val patchIntegration: Route,
-    val createDataExchange: Route,
-    val getDataExchange: Route,
-    val patchDataExchange: Route,
+    val createSourceSync: Route,
+    val getSourceSync: Route,
+    val patchSourceSync: Route,
 )
 
 class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
-    val importData: String,
-    val continueDataExchange: String,
+    val syncConfig: String,
+    val continueSourceSync: String,
 )

@@ -1,8 +1,8 @@
 package com.angorasix.projects.management.integrations.infrastructure.persistence.repository
 
 import com.angorasix.commons.domain.SimpleContributor
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchange
-import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListDataExchangeFilter
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -10,27 +10,27 @@ import org.springframework.data.mongodb.core.ReactiveMongoOperations
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query
 
-class DataExchangeInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperations) :
-    DataExchangeInfraRepository {
+class SourceSyncInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperations) :
+    SourceSyncInfraRepository {
 
     override fun findUsingFilter(
-        filter: ListDataExchangeFilter,
+        filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor,
-    ): Flow<DataExchange> {
-        return mongoOps.find(filter.toQuery(requestingContributor), DataExchange::class.java)
+    ): Flow<SourceSync> {
+        return mongoOps.find(filter.toQuery(requestingContributor), SourceSync::class.java)
             .asFlow()
     }
 
     override suspend fun findForContributorUsingFilter(
-        filter: ListDataExchangeFilter,
+        filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor,
-    ): DataExchange? {
-        return mongoOps.find(filter.toQuery(requestingContributor), DataExchange::class.java)
+    ): SourceSync? {
+        return mongoOps.find(filter.toQuery(requestingContributor), SourceSync::class.java)
             .awaitFirstOrNull()
     }
 }
 
-private fun ListDataExchangeFilter.toQuery(requestingContributor: SimpleContributor): Query {
+private fun ListSourceSyncFilter.toQuery(requestingContributor: SimpleContributor): Query {
     val query = Query()
 
     query.addCriteria(where("admins.contributorId").`in`(requestingContributor.contributorId))

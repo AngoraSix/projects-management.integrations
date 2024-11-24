@@ -5,9 +5,9 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 
 /**
- * Data Exchange Root.
+ * Integration Asset Root.
  *
- * An exchange of data with the third-part integration.
+ * An integration asset with the third-part integration.
  *
  * @author rozagerardo
  */

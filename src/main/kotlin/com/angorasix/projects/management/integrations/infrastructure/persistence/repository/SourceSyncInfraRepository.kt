@@ -1,8 +1,8 @@
 package com.angorasix.projects.management.integrations.infrastructure.persistence.repository
 
 import com.angorasix.commons.domain.SimpleContributor
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchange
-import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListDataExchangeFilter
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -11,14 +11,14 @@ import kotlinx.coroutines.flow.Flow
  *
  * @author rozagerardo
  */
-interface DataExchangeInfraRepository {
+interface SourceSyncInfraRepository {
     fun findUsingFilter(
-        filter: ListDataExchangeFilter,
+        filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor,
-    ): Flow<DataExchange>
+    ): Flow<SourceSync>
 
     suspend fun findForContributorUsingFilter(
-        filter: ListDataExchangeFilter,
+        filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor,
-    ): DataExchange?
+    ): SourceSync?
 }
