@@ -1,45 +1,45 @@
-package com.angorasix.projects.management.integrations.domain.integration.exchange
+package com.angorasix.projects.management.integrations.domain.integration.sourcesync
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
+import org.springframework.data.mongodb.core.index.Indexed
+import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
 /**
- * Data Exchange Root.
+ * Source Sync Root.
  *
- * An exchange of data with the third-part integration.
+ * A syncing of data with the third-part integration.
  *
  * @author rozagerardo
  */
-data class DataExchange @PersistenceCreator constructor(
+@Document
+data class SourceSync @PersistenceCreator constructor(
     @field:Id val id: String?,
     val source: Source,
-    val integrationId: String,
-    val startedInstant: Instant,
-    var lastInteractionInstant: Instant,
-    var status: DataExchangeStatus,
+    @Indexed(unique = true) val integrationId: String,
+    var status: SourceSyncStatus,
     val admins: Set<SimpleContributor> = emptySet(),
+    val events: MutableList<SourceSyncEvent> = mutableListOf(),
     val sourceStrategyStateData: Any?, // any information used by the integration/source strategy to manage its state
 ) {
     constructor(
         source: Source,
         integrationId: String,
-        startedDateTime: Instant,
-        lastInteractionDateTime: Instant,
-        status: DataExchangeStatus,
+        status: SourceSyncStatus,
         admins: Set<SimpleContributor> = emptySet(),
+        events: MutableList<SourceSyncEvent> = mutableListOf(),
         sourceStrategyStateData: Any?,
     ) : this(
         null,
         source,
         integrationId,
-        startedDateTime,
-        lastInteractionDateTime,
         status,
         admins,
+        events,
         sourceStrategyStateData,
     )
 
@@ -50,14 +50,27 @@ data class DataExchange @PersistenceCreator constructor(
      */
     fun isAdmin(contributorId: String?): Boolean =
         (contributorId != null).and(admins.any { it.contributorId == contributorId })
+
+    fun addEvent(event: SourceSyncEvent) {
+        events.add(event)
+    }
 }
 
-data class DataExchangeStatus(
-    var status: DataExchangeStatusValues,
-    val steps: MutableList<DataExchangeStatusStep> = arrayListOf(),
+data class SourceSyncEvent(
+    val type: SourceSyncEventValues,
+    val eventInstant: Instant,
 )
 
-data class DataExchangeStatusStep(
+enum class SourceSyncEventValues {
+    STARTING_FULL_SYNC_CONFIG, TRIGGERED_FULL_SYNC, UPDATED_CONFIG
+}
+
+data class SourceSyncStatus(
+    var status: SourceSyncStatusValues,
+    val steps: MutableList<SourceSyncStatusStep> = arrayListOf(),
+)
+
+data class SourceSyncStatusStep(
     val stepKey: String,
     val requiredDataForStep: List<InlineFieldSpec> = emptyList(),
     var responseData: Map<String, List<String>>? = null,
@@ -68,6 +81,6 @@ data class DataExchangeStatusStep(
         }
 }
 
-enum class DataExchangeStatusValues {
+enum class SourceSyncStatusValues {
     IN_PROGRESS, COMPLETED, FAILED
 }

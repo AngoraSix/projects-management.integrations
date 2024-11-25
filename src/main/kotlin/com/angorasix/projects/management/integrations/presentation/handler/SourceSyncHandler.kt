@@ -6,10 +6,10 @@ import com.angorasix.commons.presentation.dto.Patch
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
 import com.angorasix.commons.reactive.presentation.error.resolveExceptionResponse
 import com.angorasix.commons.reactive.presentation.error.resolveNotFound
-import com.angorasix.projects.management.integrations.application.DataExchangeService
-import com.angorasix.projects.management.integrations.domain.integration.exchange.modification.DataExchangeModification
+import com.angorasix.projects.management.integrations.application.SourceSyncService
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
-import com.angorasix.projects.management.integrations.presentation.dto.SupportedDataExchangePatchOperations
+import com.angorasix.projects.management.integrations.presentation.dto.SupportedSourceSyncPatchOperations
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -30,53 +30,55 @@ import java.net.URI
  *
  * @author rozagerardo
  */
-class DataExchangeHandler(
-    private val service: DataExchangeService,
+class SourceSyncHandler(
+    private val service: SourceSyncService,
     private val apiConfigs: ApiConfigs,
     private val objectMapper: ObjectMapper,
 ) {
     /* default */
-    val logger: Logger = LoggerFactory.getLogger(DataExchangeHandler::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(SourceSyncHandler::class.java)
 
     /**
-     * Handler for the Create DataExchange endpoint for a particular Integration.
+     * Handler for the Create SourceSync endpoint for a particular Integration.
      *
      * @param request - HTTP `ServerRequest` object
      * @return the `ServerResponse`
      */
-    suspend fun createDataExchange(request: ServerRequest): ServerResponse {
+    suspend fun createSourceSync(request: ServerRequest): ServerResponse {
         val requestingContributor =
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
         val integrationId = request.pathVariable("integrationId")
 
         return if (requestingContributor is SimpleContributor) {
-            service.createDataExchange(integrationId, requestingContributor)
+            service.createSourceSync(integrationId, requestingContributor)
                 ?.convertToDto(requestingContributor, apiConfigs, request)
-                ?.let { outputDataExchangeDto ->
+                ?.let { outputSourceSyncDto ->
                     val selfLink =
-                        outputDataExchangeDto?.links?.getRequiredLink(IanaLinkRelations.SELF)?.href
-
+                        outputSourceSyncDto.links.getRequiredLink(IanaLinkRelations.SELF).href
                     created(URI.create(selfLink)).contentType(MediaTypes.HAL_FORMS_JSON)
-                        .bodyValueAndAwait(outputDataExchangeDto)
-                } ?: resolveNotFound("Can't patch this Integration", "Integration")
+                        .bodyValueAndAwait(outputSourceSyncDto)
+                } ?: resolveNotFound(
+                "Can't register Source Sync for this Integration / Source",
+                "Sync Source",
+            )
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
         }
     }
 
     /**
-     * Handler for the Get DataExchange endpoint for a particular Integration.
+     * Handler for the Get SourceSync endpoint for a particular Integration.
      *
      * @param request - HTTP `ServerRequest` object
      * @return the `ServerResponse`
      */
-    suspend fun getDataExchange(request: ServerRequest): ServerResponse {
+    suspend fun getSourceSync(request: ServerRequest): ServerResponse {
         val requestingContributor =
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
-//        val dataExchangeId = request.pathVariable("id")
+//        val sourceSyncId = request.pathVariable("id")
 
         return if (requestingContributor is SimpleContributor) {
-            // Implement the service method to get the DataExchange
+            // Implement the service method to get the SourceSync
             ok().contentType(MediaTypes.HAL_FORMS_JSON).buildAndAwait()
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
@@ -84,15 +86,15 @@ class DataExchangeHandler(
     }
 
     /**
-     * Handler for the Get DataExchange endpoint for a particular Integration.
+     * Handler for the Get SourceSync endpoint for a particular Integration.
      *
      * @param request - HTTP `ServerRequest` object
      * @return the `ServerResponse`
      */
-    suspend fun patchDataExchange(request: ServerRequest): ServerResponse {
+    suspend fun patchSourceSync(request: ServerRequest): ServerResponse {
         val requestingContributor =
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
-        val dataExchangeId = request.pathVariable("id")
+        val sourceSyncId = request.pathVariable("id")
         val patch = request.awaitBody(Patch::class)
 
         return if (requestingContributor is SimpleContributor) {
@@ -100,16 +102,16 @@ class DataExchangeHandler(
                 val modifyOperations = patch.operations.map {
                     it.toDomainObjectModification(
                         requestingContributor,
-                        SupportedDataExchangePatchOperations.values().map { o -> o.op }.toList(),
+                        SupportedSourceSyncPatchOperations.values().map { o -> o.op }.toList(),
                         objectMapper,
                     )
                 }
-                val modifyIntegrationOperations: List<DataExchangeModification<Any>> =
-                    modifyOperations.filterIsInstance<DataExchangeModification<Any>>()
+                val modifyIntegrationOperations: List<SourceSyncModification<Any>> =
+                    modifyOperations.filterIsInstance<SourceSyncModification<Any>>()
                 val serviceOutput =
-                    service.modifyDataExchange(
+                    service.modifySourceSync(
                         requestingContributor,
-                        dataExchangeId,
+                        sourceSyncId,
                         modifyIntegrationOperations,
                     )
                 serviceOutput?.convertToDto(
@@ -117,10 +119,10 @@ class DataExchangeHandler(
                     apiConfigs,
                     request,
                 )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
-                    ?: resolveNotFound("Can't patch this Data Exchange", "Data Exchange")
+                    ?: resolveNotFound("Can't patch this Source Sync", "Source Sync")
             } catch (ex: RuntimeException) {
-                logger.error("Error while patching Data Exchange", ex)
-                return resolveExceptionResponse(ex, "Data Exchange")
+                logger.error("Error while patching Source Sync", ex)
+                return resolveExceptionResponse(ex, "Source Sync")
             }
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")

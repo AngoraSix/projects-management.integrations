@@ -2,8 +2,8 @@ package com.angorasix.projects.management.integrations.presentation.router
 
 import com.angorasix.commons.reactive.presentation.filter.extractRequestingContributor
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
-import com.angorasix.projects.management.integrations.presentation.handler.DataExchangeHandler
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
+import com.angorasix.projects.management.integrations.presentation.handler.SourceSyncHandler
 import org.springframework.web.reactive.function.server.CoRouterFunctionDsl
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.coRouter
@@ -15,7 +15,7 @@ import org.springframework.web.reactive.function.server.coRouter
  */
 class ProjectManagementIntegrationsRouter(
     private val handler: ProjectManagementIntegrationsHandler,
-    private val dataExchangeHandler: DataExchangeHandler,
+    private val sourceSyncHandler: SourceSyncHandler,
     private val apiConfigs: ApiConfigs,
 ) {
     /**
@@ -35,11 +35,11 @@ class ProjectManagementIntegrationsRouter(
             apiConfigs.routes.baseByProjectManagementIdCrudRoute.nest {
                 defineByProjectManagementIdRoutes()
             }
-            apiConfigs.routes.baseDataExchangeByIdCrudRoute.nest {
-                defineDataExchangeByIdEndpoints()
+            apiConfigs.routes.baseSourceSyncByIdCrudRoute.nest {
+                defineSourceSyncByIdEndpoints()
             }
-            apiConfigs.routes.baseDataExchangeByIntegrationIdCrudRoute.nest {
-                defineDataExchangeBaseEndpoints()
+            apiConfigs.routes.baseSourceSyncByIntegrationIdCrudRoute.nest {
+                defineSourceSyncBaseEndpoints()
             }
             apiConfigs.routes.baseByIdCrudRoute.nest {
                 defineByIdEndpoints()
@@ -62,26 +62,26 @@ class ProjectManagementIntegrationsRouter(
         }
     }
 
-    private fun CoRouterFunctionDsl.defineDataExchangeBaseEndpoints() {
-        method(apiConfigs.routes.createDataExchange.method).nest {
+    private fun CoRouterFunctionDsl.defineSourceSyncBaseEndpoints() {
+        method(apiConfigs.routes.createSourceSync.method).nest {
             method(
-                apiConfigs.routes.createDataExchange.method,
-                dataExchangeHandler::createDataExchange,
+                apiConfigs.routes.createSourceSync.method,
+                sourceSyncHandler::createSourceSync,
             )
         }
     }
 
-    private fun CoRouterFunctionDsl.defineDataExchangeByIdEndpoints() {
-        method(apiConfigs.routes.getDataExchange.method).nest {
+    private fun CoRouterFunctionDsl.defineSourceSyncByIdEndpoints() {
+        method(apiConfigs.routes.getSourceSync.method).nest {
             method(
-                apiConfigs.routes.getDataExchange.method,
-                dataExchangeHandler::getDataExchange,
+                apiConfigs.routes.getSourceSync.method,
+                sourceSyncHandler::getSourceSync,
             )
         }
-        method(apiConfigs.routes.patchDataExchange.method).nest {
+        method(apiConfigs.routes.patchSourceSync.method).nest {
             method(
-                apiConfigs.routes.patchDataExchange.method,
-                dataExchangeHandler::patchDataExchange,
+                apiConfigs.routes.patchSourceSync.method,
+                sourceSyncHandler::patchSourceSync,
             )
         }
     }

@@ -8,9 +8,10 @@ import com.angorasix.commons.presentation.dto.PatchOperationSpec
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.ModifyIntegrationStatus
-import com.angorasix.projects.management.integrations.domain.integration.exchange.DataExchangeStatusValues
-import com.angorasix.projects.management.integrations.domain.integration.exchange.modification.DataExchangeModification
-import com.angorasix.projects.management.integrations.domain.integration.exchange.modification.ReplaceStepResponseData
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ReplaceStepResponseData
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.RepresentationModel
@@ -63,28 +64,32 @@ enum class SupportedIntegrationPatchOperations(val op: PatchOperationSpec) {
     ),
 }
 
-data class DataExchangeDto(
+data class SourceSyncDto(
     val source: Source? = null,
     val integrationId: String? = null,
-    val startedInstant: Instant? = null,
-    val lastInteractionInstant: Instant? = null,
-    val status: DataExchangeStatusDto? = null,
+    val status: SourceSyncStatusDto? = null,
+    val events: List<SourceSyncEventDto> = listOf(),
     val sourceStrategyStateData: Any? = null,
     val id: String? = null,
-) : RepresentationModel<DataExchangeDto>()
+) : RepresentationModel<SourceSyncDto>()
 
-data class DataExchangeStatusDto(
-    val status: DataExchangeStatusValues,
-    val steps: List<DataExchangeStatusStepDto> = emptyList(),
+data class SourceSyncEventDto(
+    val type: SourceSyncEventValues,
+    val eventInstant: Instant,
 )
 
-data class DataExchangeStatusStepDto(
+data class SourceSyncStatusDto(
+    val status: SourceSyncStatusValues,
+    val steps: List<SourceSyncStatusStepDto> = emptyList(),
+)
+
+data class SourceSyncStatusStepDto(
     val stepKey: String,
     val requiredDataForStep: List<InlineFieldSpecDto> = emptyList(),
     var responseData: Map<String, List<String>>? = null,
 )
 
-enum class SupportedDataExchangePatchOperations(val op: PatchOperationSpec) {
+enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {
     STEP_RESPONSE_DATA(
         object : PatchOperationSpec {
             override fun supportsPatchOperation(operation: PatchOperation): Boolean =
@@ -94,7 +99,7 @@ enum class SupportedDataExchangePatchOperations(val op: PatchOperationSpec) {
                 contributor: SimpleContributor,
                 operation: PatchOperation,
                 objectMapper: ObjectMapper,
-            ): DataExchangeModification<List<Map<String, List<String>>?>> {
+            ): SourceSyncModification<List<Map<String, List<String>>?>> {
                 val responseDataValue =
                     objectMapper.convertValue(
                         operation.value,

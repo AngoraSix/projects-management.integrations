@@ -5,8 +5,8 @@ configs:
     routes:
       baseListCrudRoute: ""
       baseByIdCrudRoute: "/{id}"
-      baseDataExchangeByIntegrationIdCrudRoute: "/{integrationId}/data-exchange"
-      baseDataExchangeByIdCrudRoute: "/data-exchange/{id}"
+      baseSourceSyncByIntegrationIdCrudRoute: "/{integrationId}/source-sync"
+      baseSourceSyncByIdCrudRoute: "/source-sync/{id}"
       baseByProjectManagementIdCrudRoute: "/project-management/{projectManagementId}"
       listIntegrationsByProjectManagementId:
         name: listIntegrationsByProjectManagementId
@@ -32,26 +32,26 @@ configs:
           - ${configs.api.basePaths.projectsManagementIntegration}
         method: PATCH
         path: ${configs.api.routes.baseByIdCrudRoute}
-      createDataExchange:
-        name: createDataExchange
+      createSourceSync:
+        name: createSourceSync
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
         method: POST
-        path: ${configs.api.routes.baseDataExchangeByIntegrationIdCrudRoute}
-      getDataExchange:
-        name: getDataExchange
+        path: ${configs.api.routes.baseSourceSyncByIntegrationIdCrudRoute}
+      getSourceSync:
+        name: getSourceSync
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
         method: GET
-        path: ${configs.api.routes.baseDataExchangeByIdCrudRoute}
-      patchDataExchange:
-        name: patchDataExchange
+        path: ${configs.api.routes.baseSourceSyncByIdCrudRoute}
+      patchSourceSync:
+        name: patchSourceSync
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
         method: PATCH
-        path: ${configs.api.routes.baseDataExchangeByIdCrudRoute}
+        path: ${configs.api.routes.baseSourceSyncByIdCrudRoute}
     integrationActions:
       redirectAuthorization: redirectAuthorization
       disableIntegration: disableIntegration
-      importData: importData
-      continueDataExchange: continueDataExchange
+      startSourceSync: startSourceSync
+      continueSourceSync: continueSourceSync

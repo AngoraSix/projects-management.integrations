@@ -1,16 +1,16 @@
 package com.angorasix.projects.management.integrations
 
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
-import com.angorasix.projects.management.integrations.application.DataExchangeService
 import com.angorasix.projects.management.integrations.application.IntegrationsService
-import com.angorasix.projects.management.integrations.application.strategies.DataExchangeStrategy
+import com.angorasix.projects.management.integrations.application.SourceSyncService
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
-import com.angorasix.projects.management.integrations.application.strategies.TrelloDataExchangeStrategy
+import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
 import com.angorasix.projects.management.integrations.application.strategies.TrelloRegistrationStrategy
+import com.angorasix.projects.management.integrations.application.strategies.TrelloSourceSyncStrategy
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientStrategies
 import com.angorasix.projects.management.integrations.infrastructure.security.ProjectManagementIntegrationsSecurityConfiguration
-import com.angorasix.projects.management.integrations.presentation.handler.DataExchangeHandler
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
+import com.angorasix.projects.management.integrations.presentation.handler.SourceSyncHandler
 import com.angorasix.projects.management.integrations.presentation.router.ProjectManagementIntegrationsRouter
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.support.GenericApplicationContext
@@ -30,15 +30,15 @@ val beans = beans {
         val strategies = mapOf(
             Source.TRELLO to ref<RegistrationStrategy>("trelloRegistrationStrategy"),
         )
-        IntegrationsService(ref(), ref(), strategies)
+        IntegrationsService(ref(), ref(), strategies, ref())
     }
     bean<ProjectManagementIntegrationsHandler>()
-    bean<DataExchangeHandler>()
+    bean<SourceSyncHandler>()
     bean {
         val strategies = mapOf(
-            Source.TRELLO to ref<DataExchangeStrategy>("trelloDataExchangeStrategy"),
+            Source.TRELLO to ref<SourceSyncStrategy>("trelloSourceSyncStrategy"),
         )
-        DataExchangeService(ref(), ref(), strategies)
+        SourceSyncService(ref(), ref(), strategies)
     }
     bean {
         ProjectManagementIntegrationsRouter(ref(), ref(), ref()).projectRouterFunction()
@@ -52,8 +52,8 @@ val beans = beans {
     bean("trelloRegistrationStrategy") {
         TrelloRegistrationStrategy(ref("trelloWebClient"), ref(), ref())
     }
-    bean("trelloDataExchangeStrategy") {
-        TrelloDataExchangeStrategy(ref("trelloWebClient"), ref(), ref())
+    bean("trelloSourceSyncStrategy") {
+        TrelloSourceSyncStrategy(ref("trelloWebClient"), ref(), ref())
     }
 }
 

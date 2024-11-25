@@ -26,7 +26,7 @@ class IntegrationInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperatio
         return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java).asFlow()
     }
 
-    override suspend fun findForContributorUsingFilter(
+    override suspend fun findSingleForContributorUsingFilter(
         filter: ListIntegrationFilter,
         requestingContributor: SimpleContributor,
     ): Integration? {

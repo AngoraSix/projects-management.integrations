@@ -5,7 +5,7 @@ import org.springframework.data.repository.kotlin.CoroutineSortingRepository
 
 /**
  *
- * Integration Data Exchange Repository.
+ * Integration Source Sync Repository.
  *
  * @author rozagerardo
  */
