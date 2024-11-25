@@ -8,9 +8,10 @@ import com.angorasix.commons.presentation.dto.PatchOperationSpec
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.ModifyIntegrationStatus
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
-import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ReplaceStepResponseData
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.RepresentationModel
@@ -66,12 +67,16 @@ enum class SupportedIntegrationPatchOperations(val op: PatchOperationSpec) {
 data class SourceSyncDto(
     val source: Source? = null,
     val integrationId: String? = null,
-    val startedInstant: Instant? = null,
-    val lastInteractionInstant: Instant? = null,
     val status: SourceSyncStatusDto? = null,
+    val events: List<SourceSyncEventDto> = listOf(),
     val sourceStrategyStateData: Any? = null,
     val id: String? = null,
 ) : RepresentationModel<SourceSyncDto>()
+
+data class SourceSyncEventDto(
+    val type: SourceSyncEventValues,
+    val eventInstant: Instant,
+)
 
 data class SourceSyncStatusDto(
     val status: SourceSyncStatusValues,

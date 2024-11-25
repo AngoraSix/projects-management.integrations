@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations.domain.integration.configuration
 
 import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 import org.springframework.data.mongodb.core.index.CompoundIndex
@@ -24,6 +25,9 @@ data class Integration @PersistenceCreator public constructor(
     val admins: Set<SimpleContributor> = emptySet(),
     val config: IntegrationConfig,
 ) {
+
+    @Transient var sourceSync: SourceSync? = null
+
     constructor(
         source: String,
         projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
@@ -55,12 +59,12 @@ data class IntegrationStatus(
 ) {
     companion object {
         fun registered(sourceStrategyData: Map<String, Any>?): IntegrationStatus =
-            IntegrationStatus(IntegrationStatusValues.UNSYNCED, Instant.now(), sourceStrategyData)
+            IntegrationStatus(IntegrationStatusValues.REGISTERED, Instant.now(), sourceStrategyData)
     }
 }
 
 enum class IntegrationStatusValues {
-    NOT_REGISTERED, REQUIRES_CONFIGURATION, SYNCED, UNSYNCED, DISABLED
+    NOT_REGISTERED, REGISTERED, DISABLED
 }
 
 data class IntegrationConfig(

@@ -8,8 +8,8 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
-import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncDto
 import com.angorasix.projects.management.integrations.presentation.utils.uriBuilder
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.Link
@@ -70,18 +70,22 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
             add(actionLink)
         }
     } else {
-        // IMPORT DATA
-        val createSourceSyncRoute = apiConfigs.routes.createSourceSync
-        val syncConfigActionName = apiConfigs.integrationActions.syncConfig
-        val createSourceSyncLink = Link.of(
-            uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build()
-                .toUriString(),
-        ).withTitle(syncConfigActionName).withName(syncConfigActionName)
-            .withRel(syncConfigActionName).expand(integration.id)
-        val createSourceSyncAffordanceLink =
-            Affordances.of(createSourceSyncLink).afford(createSourceSyncRoute.method)
-                .withName(syncConfigActionName).toLink()
-        add(createSourceSyncAffordanceLink)
+        // START SOURCE SYNC
+        if (integration.sourceSync?.status?.status != SourceSyncStatusValues.COMPLETED) {
+            val createSourceSyncRoute = apiConfigs.routes.createSourceSync
+            val startSourceSyncActionName = apiConfigs.integrationActions.startSourceSync
+            val createSourceSyncLink = Link.of(
+                uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build()
+                    .toUriString(),
+            ).withTitle(startSourceSyncActionName).withName(startSourceSyncActionName)
+                .withRel(startSourceSyncActionName).expand(integration.id)
+            val createSourceSyncAffordanceLink =
+                Affordances.of(createSourceSyncLink).afford(createSourceSyncRoute.method)
+                    .withName(startSourceSyncActionName).toLink()
+            add(createSourceSyncAffordanceLink)
+        } else {
+            // CHECK SOURCE SYNC WITH ID AS INPUT
+        }
 
         // DISABLE
         val patchIntegrationRoute = apiConfigs.routes.patchIntegration

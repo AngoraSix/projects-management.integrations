@@ -11,9 +11,9 @@ import org.springframework.util.MultiValueMap
  * @author rozagerardo
  */
 data class ListSourceSyncFilter(
-    val ids: Collection<String>? = null, // integration ids
-    val sources: Set<String>? = null,
+    val ids: Collection<String>? = null, // sourceSync ids
     val integrationId: Collection<String>? = null,
+    val sources: Set<String>? = null,
 ) {
     fun toMultiValueMap(): MultiValueMap<String, String> {
         val multiMap: MultiValueMap<String, String> = LinkedMultiValueMap()

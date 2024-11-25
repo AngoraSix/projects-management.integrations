@@ -15,7 +15,7 @@ class SourceSyncInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperation
 
     override fun findUsingFilter(
         filter: ListSourceSyncFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor?,
     ): Flow<SourceSync> {
         return mongoOps.find(filter.toQuery(requestingContributor), SourceSync::class.java)
             .asFlow()
@@ -30,10 +30,16 @@ class SourceSyncInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperation
     }
 }
 
-private fun ListSourceSyncFilter.toQuery(requestingContributor: SimpleContributor): Query {
+private fun ListSourceSyncFilter.toQuery(requestingContributor: SimpleContributor?): Query {
     val query = Query()
 
-    query.addCriteria(where("admins.contributorId").`in`(requestingContributor.contributorId))
+    requestingContributor?.let {
+        query.addCriteria(
+            where("admins.contributorId").`in`(
+                requestingContributor.contributorId,
+            ),
+        )
+    }
 
     ids?.let { query.addCriteria(where("_id").`in`(it)) }
     integrationId?.let { query.addCriteria(where("integrationId").`in`(it)) }

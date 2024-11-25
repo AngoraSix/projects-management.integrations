@@ -4,10 +4,13 @@ import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncRepository
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
+import java.time.Instant
 
 /**
  *
@@ -84,6 +87,12 @@ class SourceSyncService(
                 // update assets status (waiting sync) (esto con post-processing domain event)
                 // Maybe as Domain Event / AOP?
                 patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
+                patchedSourceSync.addEvent(
+                    SourceSyncEvent(
+                        SourceSyncEventValues.TRIGGERED_FULL_SYNC,
+                        Instant.now(),
+                    ),
+                )
                 patchedSourceSync
             } else {
                 sourceSyncStrategy.processModification(

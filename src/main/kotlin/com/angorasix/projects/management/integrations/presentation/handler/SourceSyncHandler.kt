@@ -54,11 +54,13 @@ class SourceSyncHandler(
                 ?.convertToDto(requestingContributor, apiConfigs, request)
                 ?.let { outputSourceSyncDto ->
                     val selfLink =
-                        outputSourceSyncDto?.links?.getRequiredLink(IanaLinkRelations.SELF)?.href
-
+                        outputSourceSyncDto.links.getRequiredLink(IanaLinkRelations.SELF).href
                     created(URI.create(selfLink)).contentType(MediaTypes.HAL_FORMS_JSON)
                         .bodyValueAndAwait(outputSourceSyncDto)
-                } ?: resolveNotFound("Can't patch this Integration", "Integration")
+                } ?: resolveNotFound(
+                "Can't register Source Sync for this Integration / Source",
+                "Sync Source",
+            )
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
         }

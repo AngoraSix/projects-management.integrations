@@ -1,16 +1,16 @@
 package com.angorasix.projects.management.integrations
 
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
-import com.angorasix.projects.management.integrations.application.SourceSyncService
 import com.angorasix.projects.management.integrations.application.IntegrationsService
-import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
+import com.angorasix.projects.management.integrations.application.SourceSyncService
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
-import com.angorasix.projects.management.integrations.application.strategies.TrelloSourceSyncStrategy
+import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
 import com.angorasix.projects.management.integrations.application.strategies.TrelloRegistrationStrategy
+import com.angorasix.projects.management.integrations.application.strategies.TrelloSourceSyncStrategy
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientStrategies
 import com.angorasix.projects.management.integrations.infrastructure.security.ProjectManagementIntegrationsSecurityConfiguration
-import com.angorasix.projects.management.integrations.presentation.handler.SourceSyncHandler
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
+import com.angorasix.projects.management.integrations.presentation.handler.SourceSyncHandler
 import com.angorasix.projects.management.integrations.presentation.router.ProjectManagementIntegrationsRouter
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.support.GenericApplicationContext
@@ -30,7 +30,7 @@ val beans = beans {
         val strategies = mapOf(
             Source.TRELLO to ref<RegistrationStrategy>("trelloRegistrationStrategy"),
         )
-        IntegrationsService(ref(), ref(), strategies)
+        IntegrationsService(ref(), ref(), strategies, ref())
     }
     bean<ProjectManagementIntegrationsHandler>()
     bean<SourceSyncHandler>()

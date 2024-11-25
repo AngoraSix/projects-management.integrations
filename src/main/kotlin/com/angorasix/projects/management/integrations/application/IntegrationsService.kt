@@ -9,8 +9,10 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncRepository
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
+import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 
@@ -23,15 +25,16 @@ class IntegrationsService(
     private val repository: IntegrationRepository,
     private val sourceConfigs: SourceConfigurations,
     private val registrationStrategies: Map<Source, RegistrationStrategy>,
+    private val sourceSyncRepository: SourceSyncRepository,
 ) {
     suspend fun findSingleIntegration(
         id: String,
         requestingContributor: SimpleContributor,
-    ): Integration? =
-        repository.findForContributorUsingFilter(
-            ListIntegrationFilter(listOf(id)),
-            requestingContributor,
-        )
+    ): Integration? = repository.findSingleForContributorUsingFilter(
+        ListIntegrationFilter(listOf(id)),
+        requestingContributor,
+    )?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
+
 
     fun findIntegrationsForProjectManagement(
         projectManagementId: String,
@@ -40,7 +43,8 @@ class IntegrationsService(
         val filter = ListIntegrationFilter(null, null, listOf(projectManagementId))
         val integrationList = repository.findUsingFilter(filter, requestingContributor).toList()
         sourceConfigs.supported.map { source ->
-            integrationList.find { it.source == source } ?: Integration(
+            integrationList.find { it.source == source }
+                ?.includeSourceSyncData(requestingContributor, sourceSyncRepository) ?: Integration(
                 source,
                 projectManagementId,
                 IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED),
@@ -55,7 +59,7 @@ class IntegrationsService(
         requestingContributor: SimpleContributor,
     ): Integration {
         val source = Source.valueOf(newIntegrationData.source.uppercase())
-        val existingIntegration = repository.findForContributorUsingFilter(
+        val existingIntegration = repository.findSingleForContributorUsingFilter(
             ListIntegrationFilter(
                 null,
                 setOf(source.value),
@@ -70,6 +74,7 @@ class IntegrationsService(
                 existingIntegration,
             ) ?: throw IllegalArgumentException("Source not supported")
         return repository.save(processedRegisterIntegration)
+            .includeSourceSyncData(requestingContributor, sourceSyncRepository)
     }
 
     /**
@@ -81,7 +86,7 @@ class IntegrationsService(
         integrationId: String,
         modificationOperations: List<IntegrationModification<out Any>>,
     ): Integration? {
-        val integration = repository.findForContributorUsingFilter(
+        val integration = repository.findSingleForContributorUsingFilter(
             ListIntegrationFilter(listOf(integrationId)),
             requestingContributor,
         )
@@ -94,5 +99,21 @@ class IntegrationsService(
             }
         }
         return updatedIntegration?.let { repository.save(it) }
+            ?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
     }
+}
+
+
+private suspend fun Integration.includeSourceSyncData(
+    requestingContributor: SimpleContributor,
+    sourceSyncRepository: SourceSyncRepository,
+): Integration {
+    this.id?.let {
+        val sourceSyncs = sourceSyncRepository.findForContributorUsingFilter(
+            ListSourceSyncFilter(null, listOf(it)),
+            requestingContributor,
+        )
+        this.sourceSync = sourceSyncs
+    }
+    return this;
 }

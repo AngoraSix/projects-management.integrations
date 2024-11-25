@@ -18,4 +18,4 @@ spring:
   data:
     mongodb:
       uri: ${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_URI:mongodb://localhost:27017/}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_NAME:a6-projects-integrations}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_PARAMS:?}
-#      auto-index-creation: true
+      auto-index-creation: true

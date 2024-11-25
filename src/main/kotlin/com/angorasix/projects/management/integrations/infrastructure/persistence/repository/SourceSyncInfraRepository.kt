@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 interface SourceSyncInfraRepository {
     fun findUsingFilter(
         filter: ListSourceSyncFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor? = null,
     ): Flow<SourceSync>
 
     suspend fun findForContributorUsingFilter(

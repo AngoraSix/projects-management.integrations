@@ -8,6 +8,8 @@ import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatus
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusStep
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
@@ -145,8 +147,6 @@ class TrelloSourceSyncStrategy(
                         "persisted Integration" +
                             "is required for source sync",
                     ),
-                Instant.now(),
-                Instant.now(),
                 SourceSyncStatus(
                     SourceSyncStatusValues.IN_PROGRESS,
                     arrayListOf(
@@ -157,6 +157,7 @@ class TrelloSourceSyncStrategy(
                     ),
                 ),
                 setOf(requestingContributor),
+                mutableListOf(SourceSyncEvent(SourceSyncEventValues.STARTING_FULL_SYNC_CONFIG, Instant.now())),
                 mapOf("boards" to boardsDto),
             )
         },
@@ -224,7 +225,6 @@ class TrelloSourceSyncStrategy(
                 TrelloSteps.RESOLVE_BOARD.value,
                 fieldSpecs,
             )
-
             sourceSync.status.steps.add(step)
             sourceSync
         },

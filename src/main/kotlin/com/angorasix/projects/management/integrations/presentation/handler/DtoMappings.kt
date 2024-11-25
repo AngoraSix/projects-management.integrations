@@ -8,17 +8,19 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatus
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusStep
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
-import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncDto
-import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncStatusDto
-import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncStatusStepDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationConfigDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationDto
 import com.angorasix.projects.management.integrations.presentation.dto.IntegrationStatusDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncEventDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncStatusDto
+import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncStatusStepDto
 import org.springframework.hateoas.CollectionModel
 import org.springframework.web.reactive.function.server.ServerRequest
 
@@ -118,9 +120,8 @@ fun SourceSync.convertToDto(
     return SourceSyncDto(
         source,
         integrationId,
-        startedInstant,
-        lastInteractionInstant,
         status.convertToDto(),
+        events.map { it.convertToDto() },
         sourceStrategyStateData,
         id,
     ).resolveHypermedia(
@@ -130,6 +131,9 @@ fun SourceSync.convertToDto(
         request,
     )
 }
+
+fun SourceSyncEvent.convertToDto(): SourceSyncEventDto =
+    SourceSyncEventDto(type, eventInstant)
 
 fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto =
     SourceSyncStatusDto(status, steps.map { it.convertToDto() })
