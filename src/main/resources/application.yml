@@ -6,7 +6,7 @@ server:
 
 logging:
   level:
-    root: DEBUG
+    root: INFO
     reactor.netty: INFO
     org.springframework.web.reactive.function.client: INFO
 

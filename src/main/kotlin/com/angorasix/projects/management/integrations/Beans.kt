@@ -7,7 +7,7 @@ import com.angorasix.projects.management.integrations.application.SourceSyncServ
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
 import com.angorasix.projects.management.integrations.application.strategies.TrelloRegistrationStrategy
-import com.angorasix.projects.management.integrations.application.strategies.TrelloSourceSyncStrategy
+import com.angorasix.projects.management.integrations.application.strategies.source.TrelloSourceSyncStrategy
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientStrategies
 import com.angorasix.projects.management.integrations.infrastructure.security.ProjectManagementIntegrationsSecurityConfiguration
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler

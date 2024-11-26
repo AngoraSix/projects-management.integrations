@@ -10,6 +10,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
+import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
 /**
@@ -21,12 +22,19 @@ class SourceSyncService(
     private val repository: SourceSyncRepository,
     private val integrationsService: IntegrationsService,
     private val sourceSyncStrategies: Map<Source, SourceSyncStrategy>,
-    private val assetsService: IntegrationAssetService
+    private val assetsService: IntegrationAssetService,
 ) {
     suspend fun createSourceSync(
         integrationId: String,
         requestingContributor: SimpleContributor,
     ): SourceSync? {
+        val existingSourceSyncList = repository.findUsingFilter(
+            ListSourceSyncFilter(null, listOf(integrationId)),
+        ).toList()
+
+        if (existingSourceSyncList.isNotEmpty() && existingSourceSyncList.first().status.status == SourceSyncStatusValues.COMPLETED) {
+            throw IllegalArgumentException("There is already a SourceSync completed for integration [$integrationId]")
+        }
         val integration =
             integrationsService.findSingleIntegration(integrationId, requestingContributor)
         return integration?.let {
@@ -34,6 +42,7 @@ class SourceSyncService(
             val sourceSync = sourceSyncStrategies[source]?.startSourceSync(
                 integration,
                 requestingContributor,
+                existingSourceSyncList.firstOrNull(),
             )
             sourceSync?.let { repository.save(it) }
         }
