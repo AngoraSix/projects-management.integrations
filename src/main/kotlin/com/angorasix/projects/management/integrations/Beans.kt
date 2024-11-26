@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations
 
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
+import com.angorasix.projects.management.integrations.application.IntegrationAssetService
 import com.angorasix.projects.management.integrations.application.IntegrationsService
 import com.angorasix.projects.management.integrations.application.SourceSyncService
 import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
@@ -38,8 +39,9 @@ val beans = beans {
         val strategies = mapOf(
             Source.TRELLO to ref<SourceSyncStrategy>("trelloSourceSyncStrategy"),
         )
-        SourceSyncService(ref(), ref(), strategies)
+        SourceSyncService(ref(), ref(), strategies, ref())
     }
+    bean<IntegrationAssetService>()
     bean {
         ProjectManagementIntegrationsRouter(ref(), ref(), ref()).projectRouterFunction()
     }

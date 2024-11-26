@@ -21,6 +21,7 @@ class SourceSyncService(
     private val repository: SourceSyncRepository,
     private val integrationsService: IntegrationsService,
     private val sourceSyncStrategies: Map<Source, SourceSyncStrategy>,
+    private val assetsService: IntegrationAssetService
 ) {
     suspend fun createSourceSync(
         integrationId: String,
@@ -77,15 +78,13 @@ class SourceSyncService(
                     requestingContributor,
                 )
             ) {
-//                val assets = sourceSyncStrategy.sourceSync(
-//                    patchedSourceSync,
-//                    integration,
-//                    requestingContributor,
-//                )
-                // persist assets (created)
-                // send assets to message queue (esto con event / domain event)
-                // update assets status (waiting sync) (esto con post-processing domain event)
-                // Maybe as Domain Event / AOP?
+                val assets = sourceSyncStrategy.triggerSourceSync(
+                    patchedSourceSync,
+                    integration,
+                    requestingContributor,
+                )
+                assetsService.processAssets(assets, requestingContributor)
+
                 patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
                 patchedSourceSync.addEvent(
                     SourceSyncEvent(

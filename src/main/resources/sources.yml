@@ -13,5 +13,6 @@ configs:
           memberUrl: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_MEMBERURL:https://api.trello.com/1/members/me}
           memberBoardsUrl: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_MEMBERBOARDSURL:https://api.trello.com/1/members/me/boards}
           boardListsUrlPattern: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_BOARDLISTSURLPATTERN:https://api.trello.com/1/boards/:boardId/lists?filter=open}
+          boardCardsUrlPattern: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_BOARDCARDSURLPATTERN:https://api.trello.com/1/boards/:boardId/cards?filter=open&limit=100}
     supported:
       - trello
