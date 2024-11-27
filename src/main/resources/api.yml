@@ -53,5 +53,7 @@ configs:
     integrationActions:
       redirectAuthorization: redirectAuthorization
       disableIntegration: disableIntegration
-      startSourceSync: startSourceSync
+      configSourceSync: configSourceSync
       continueSourceSync: continueSourceSync
+      requestFullSync: requestFullSync
+      updateSourceSyncConfig: updateSourceSyncConfig

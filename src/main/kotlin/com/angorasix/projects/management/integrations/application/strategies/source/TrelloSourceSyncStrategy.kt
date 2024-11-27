@@ -9,8 +9,8 @@ import com.angorasix.projects.management.integrations.application.strategies.Sou
 import com.angorasix.projects.management.integrations.application.strategies.typeReference
 import com.angorasix.projects.management.integrations.domain.integration.asset.AssetStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetData
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
@@ -51,7 +51,7 @@ class TrelloSourceSyncStrategy(
 ) : SourceSyncStrategy {
     private val pagingLimit = 1000
 
-    override suspend fun startSourceSync(
+    override suspend fun configSourceSync(
         integration: Integration,
         requestingContributor: SimpleContributor,
         existingInProgressSourceSync: SourceSync?,
@@ -65,7 +65,7 @@ class TrelloSourceSyncStrategy(
         }
             ?: throw IllegalArgumentException(
                 "Trello Source Sync Strategy " +
-                    "is not properly configured for startSourceSync",
+                    "is not properly configured for configSourceSync",
             )
     }
 
@@ -132,7 +132,7 @@ class TrelloSourceSyncStrategy(
 
             SourceSync(
                 existingInProgressSourceSync?.id,
-                Source.TRELLO,
+                Source.TRELLO.value,
                 integration.id
                     ?: throw IllegalArgumentException(
                         "persisted Integration" +
@@ -274,7 +274,7 @@ class TrelloSourceSyncStrategy(
                         sourceSync.source,
                         integration.id,
                         sourceSync.id,
-                        IntegrationStatus(IntegrationAssetStatusValues.UNSYNCED),
+                        IntegrationStatus(IntegrationStatusValues.UNSYNCED),
                         AssetStatus(it.idList == doneListId),
                         SourceAssetData(it.id, TrelloCardDto::class.java.name),
                         it,

@@ -103,7 +103,6 @@ class IntegrationsService(
     }
 }
 
-
 private suspend fun Integration.includeSourceSyncData(
     requestingContributor: SimpleContributor,
     sourceSyncRepository: SourceSyncRepository,

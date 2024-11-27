@@ -1,6 +1,5 @@
 package com.angorasix.projects.management.integrations.domain.integration.asset
 
-import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 import java.time.Instant
@@ -14,17 +13,17 @@ import java.time.Instant
  */
 data class IntegrationAsset @PersistenceCreator constructor(
     @field:Id val id: String?,
-    val source: Source,
+    val source: String,
     val integrationId: String,
     val sourceSyncId: String,
-    var integrationStatus: IntegrationStatus,
-    var assetStatus: AssetStatus,
+    val integrationStatus: IntegrationStatus,
+    val assetStatus: AssetStatus,
     val sourceData: SourceAssetData,
     val sourceDto: Any,
     val angoraSixData: A6AssetData?,
 ) {
     constructor(
-        source: Source,
+        source: String,
         integrationId: String,
         sourceSyncId: String,
         integrationStatus: IntegrationStatus,
@@ -42,14 +41,18 @@ data class IntegrationAsset @PersistenceCreator constructor(
         sourceDto,
         null,
     )
+
+    fun requiresUpdate(existing: IntegrationAsset): Boolean {
+        return assetStatus != existing.assetStatus || sourceDto != existing.sourceDto
+    }
 }
 
 data class IntegrationStatus(
-    var status: IntegrationAssetStatusValues,
+    val status: IntegrationStatusValues,
     val lastSyncingRequestInstant: Instant? = null,
 )
 
-enum class IntegrationAssetStatusValues {
+enum class IntegrationStatusValues {
     UNSYNCED, SYNCING_IN_PROGRESS, SYNCED
 }
 

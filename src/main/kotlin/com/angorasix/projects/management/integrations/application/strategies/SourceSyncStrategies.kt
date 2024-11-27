@@ -9,10 +9,10 @@ import org.springframework.core.ParameterizedTypeReference
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
 
 interface SourceSyncStrategy {
-    suspend fun startSourceSync(
+    suspend fun configSourceSync(
         integration: Integration,
         requestingContributor: SimpleContributor,
-        existingInProgressSourceSync: SourceSync?
+        existingInProgressSourceSync: SourceSync?,
     ): SourceSync
 
     suspend fun isReadyForSyncing(

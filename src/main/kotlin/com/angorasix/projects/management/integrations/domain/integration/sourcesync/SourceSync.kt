@@ -2,7 +2,6 @@ package com.angorasix.projects.management.integrations.domain.integration.source
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
-import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 import org.springframework.data.mongodb.core.index.Indexed
@@ -19,7 +18,7 @@ import java.time.Instant
 @Document
 data class SourceSync @PersistenceCreator constructor(
     @field:Id val id: String?,
-    val source: Source,
+    val source: String,
     @Indexed(unique = true) val integrationId: String,
     var status: SourceSyncStatus,
     val admins: Set<SimpleContributor> = emptySet(),
@@ -27,7 +26,7 @@ data class SourceSync @PersistenceCreator constructor(
     val sourceStrategyStateData: Any?, // any information used by the integration/source strategy to manage its state
 ) {
     constructor(
-        source: Source,
+        source: String,
         integrationId: String,
         status: SourceSyncStatus,
         admins: Set<SimpleContributor> = emptySet(),
@@ -54,6 +53,9 @@ data class SourceSync @PersistenceCreator constructor(
     fun addEvent(event: SourceSyncEvent) {
         events.add(event)
     }
+
+    fun wasRequestedFullSync(): Boolean =
+        status.status === SourceSyncStatusValues.COMPLETED && events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
 }
 
 data class SourceSyncEvent(
@@ -62,7 +64,7 @@ data class SourceSyncEvent(
 )
 
 enum class SourceSyncEventValues {
-    STARTING_FULL_SYNC_CONFIG, TRIGGERED_FULL_SYNC, UPDATED_CONFIG
+    STARTING_FULL_SYNC_CONFIG, REQUEST_FULL_SYNC, TRIGGERED_FULL_SYNC, REQUEST_UPDATE_SYNC_CONFIG
 }
 
 data class SourceSyncStatus(

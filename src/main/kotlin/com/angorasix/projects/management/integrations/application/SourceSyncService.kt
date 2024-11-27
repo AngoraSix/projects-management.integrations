@@ -39,7 +39,7 @@ class SourceSyncService(
             integrationsService.findSingleIntegration(integrationId, requestingContributor)
         return integration?.let {
             val source = Source.valueOf(integration.source.uppercase())
-            val sourceSync = sourceSyncStrategies[source]?.startSourceSync(
+            val sourceSync = sourceSyncStrategies[source]?.configSourceSync(
                 integration,
                 requestingContributor,
                 existingSourceSyncList.firstOrNull(),
@@ -70,7 +70,7 @@ class SourceSyncService(
                     )
                 }
             val source = persistedSourceSync.source
-            val sourceSyncStrategy = sourceSyncStrategies[source]
+            val sourceSyncStrategy = sourceSyncStrategies[Source.valueOf(source.uppercase())]
                 ?: throw IllegalArgumentException("Source not supported for SourceSync operations: $source")
             val integration = integrationsService.findSingleIntegration(
                 persistedSourceSync.integrationId,
@@ -80,35 +80,35 @@ class SourceSyncService(
                     "Couldn't find associated integration" +
                         "[${persistedSourceSync.integrationId}] for sourceSync [$sourceSyncId] }",
                 )
+            val updatedSourceSync =
+                if (patchedSourceSync.wasRequestedFullSync() || sourceSyncStrategy.isReadyForSyncing(
+                        patchedSourceSync,
+                        integration,
+                        requestingContributor,
+                    )
+                ) {
+                    val assets = sourceSyncStrategy.triggerSourceSync(
+                        patchedSourceSync,
+                        integration,
+                        requestingContributor,
+                    )
+                    assetsService.processAssets(assets, sourceSyncId)
 
-            val updatedSourceSync = if (sourceSyncStrategy.isReadyForSyncing(
-                    patchedSourceSync,
-                    integration,
-                    requestingContributor,
-                )
-            ) {
-                val assets = sourceSyncStrategy.triggerSourceSync(
-                    patchedSourceSync,
-                    integration,
-                    requestingContributor,
-                )
-                assetsService.processAssets(assets, requestingContributor)
-
-                patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
-                patchedSourceSync.addEvent(
-                    SourceSyncEvent(
-                        SourceSyncEventValues.TRIGGERED_FULL_SYNC,
-                        Instant.now(),
-                    ),
-                )
-                patchedSourceSync
-            } else {
-                sourceSyncStrategy.processModification(
-                    patchedSourceSync,
-                    integration,
-                    requestingContributor,
-                )
-            }
+                    patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
+                    patchedSourceSync.addEvent(
+                        SourceSyncEvent(
+                            SourceSyncEventValues.TRIGGERED_FULL_SYNC,
+                            Instant.now(),
+                        ),
+                    )
+                    patchedSourceSync
+                } else {
+                    sourceSyncStrategy.processModification(
+                        patchedSourceSync,
+                        integration,
+                        requestingContributor,
+                    )
+                }
             repository.save(updatedSourceSync)
         }
     }

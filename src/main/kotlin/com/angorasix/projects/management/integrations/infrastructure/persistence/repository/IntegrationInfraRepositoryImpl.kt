@@ -23,7 +23,8 @@ class IntegrationInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperatio
         filter: ListIntegrationFilter,
         requestingContributor: SimpleContributor,
     ): Flow<Integration> {
-        return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java).asFlow()
+        return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java)
+            .asFlow()
     }
 
     override suspend fun findSingleForContributorUsingFilter(
@@ -33,26 +34,7 @@ class IntegrationInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperatio
         return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java)
             .awaitFirstOrNull()
     }
-
-//    override suspend fun updateOrCreate(integrations: List<IntegrationAsset>): BulkResult {
-//        val bulkOps = mongoOps.bulkOps(
-//            BulkOperations.BulkMode.UNORDERED, IntegrationAsset::class.java,
-//        )
-//        integrations.forEach {
-//            if (it.id != null) {
-//                bulkOps.updateOne(Query(where("id").`is`(it.id)), updateDefinition(it)) //, Integration::class.java)
-//            } else {
-//                bulkOps.insert(it)
-//            }
-//        }
-//        return bulkOps.execute().awaitFirst().toDto()
-//    }
 }
-
-// private fun updateDefinition(integration: IntegrationAsset): UpdateDefinition =
-//    Update().set("title", integration.title).set("description", integration.description)
-//    .set("estimation", integration.estimation)
-//        .set("assignees", integration.assignees)
 
 private fun ListIntegrationFilter.toQuery(requestingContributor: SimpleContributor): Query {
     val query = Query()
@@ -65,10 +47,3 @@ private fun ListIntegrationFilter.toQuery(requestingContributor: SimpleContribut
 
     return query
 }
-
-// data class BulkResult(
-//    val inserted: Int,
-//    val modified: Int,
-// )
-
-// private fun BulkWriteResult.toDto() = BulkResult(insertedCount, modifiedCount)
