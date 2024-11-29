@@ -1,5 +1,6 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
+import com.angorasix.commons.domain.DetailedContributor
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.infrastructure.constants.AngoraSixInfrastructure
 import com.angorasix.commons.presentation.dto.Patch
@@ -97,7 +98,7 @@ class SourceSyncHandler(
         val sourceSyncId = request.pathVariable("id")
         val patch = request.awaitBody(Patch::class)
 
-        return if (requestingContributor is SimpleContributor) {
+        return if (requestingContributor is DetailedContributor) {
             try {
                 val modifyOperations = patch.operations.map {
                     it.toDomainObjectModification(

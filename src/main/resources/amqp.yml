@@ -4,22 +4,29 @@ spring:
   cloud:
     stream:
       bindings:
-        mgmtupdate-in-0:
-          destination: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_EVENTS_INPUT_EXCHANGE:mgmt-integrations} # existing exchange (or creates)?
-          group: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_EVENTS_INPUT_QUEUE:integrations.mgmtupdate} # queue = a6-exchange.a6-queue - whole project management update (batch)
+        sync-in-0:
+          destination: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_EVENTS_INPUT_EXCHANGE:mgmt-integrations} # existing exchange (or creates)?
+          group: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_EVENTS_INPUT_QUEUE:integrations.sync} # queue = a6-exchange.a6-queue - whole project management update (batch)
       binders:
         a6Rabbit:
           type: rabbit
           environment:
             spring:
               rabbitmq:
-                host: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_HOST:localhost}
-                port: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_PORT:5672}
-                username: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_USER:guest}
-                password: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_PASSWORD:guest}
-                virtual-host: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_VHOST:/}
-    function:
-      definition: projectsmanagement.integrations # to be used if we use Spring Cloud Function support https://docs.spring.io/spring-cloud-stream/reference/spring-cloud-stream/producing-and-consuming-messages.html#spring_cloud_function
+                host: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_HOST:localhost}
+                port: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_PORT:5672}
+                username: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_USER:guest}
+                password: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_PASSWORD:guest}
+                virtual-host: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_VHOST:/}
+                #    function:
+                #      definition: projectsmanagement.integrations # to be used if we use Spring Cloud Function support https://docs.spring.io/spring-cloud-stream/reference/spring-cloud-stream/producing-and-consuming-messages.html#spring_cloud_function
+configs:
+  amqp:
+    bindings:
+      sourceSyncingInwards: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_BINDINGS_SOURCESYNCINGINWARDS:sourceSyncingAssets-inwards}
+
+
+
 #    stream:
 #      function:
 #        autodetect: false
@@ -30,7 +37,7 @@ spring:
 #        bindings:
 #          notifications-in-0:
 ##            consumer:
-##              bindingRoutingKey: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_INPUT_ROUTINGKEY:#} # defaults to '#'
+##              bindingRoutingKey: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_INPUT_ROUTINGKEY:#} # defaults to '#'
 #              auto-bind-dlq: true
 #              dlq-ttl: true
 #              dlq-dead-letter-exchange:

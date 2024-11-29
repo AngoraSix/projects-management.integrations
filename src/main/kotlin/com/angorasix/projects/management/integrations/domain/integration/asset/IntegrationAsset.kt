@@ -17,7 +17,6 @@ data class IntegrationAsset @PersistenceCreator constructor(
     val integrationId: String,
     val sourceSyncId: String,
     val integrationStatus: IntegrationStatus,
-    val assetStatus: AssetStatus,
     val sourceData: SourceAssetData,
     val sourceDto: Any,
     val angoraSixData: A6AssetData?,
@@ -27,7 +26,6 @@ data class IntegrationAsset @PersistenceCreator constructor(
         integrationId: String,
         sourceSyncId: String,
         integrationStatus: IntegrationStatus,
-        assetStatus: AssetStatus,
         sourceData: SourceAssetData,
         sourceDto: Any,
     ) : this(
@@ -36,14 +34,13 @@ data class IntegrationAsset @PersistenceCreator constructor(
         integrationId,
         sourceSyncId,
         integrationStatus,
-        assetStatus,
         sourceData,
         sourceDto,
         null,
     )
 
     fun requiresUpdate(existing: IntegrationAsset): Boolean {
-        return assetStatus != existing.assetStatus || sourceDto != existing.sourceDto
+        return sourceData != existing.sourceData
     }
 }
 
@@ -56,13 +53,15 @@ enum class IntegrationStatusValues {
     UNSYNCED, SYNCING_IN_PROGRESS, SYNCED
 }
 
-data class AssetStatus(
-    val done: Boolean,
-)
-
 data class SourceAssetData(
     val id: String,
     val type: String,
+    // TASK
+    val title: String,
+    val description: String?,
+    val dueInstant: Instant?,
+    val assigneeIds: List<String> = emptyList(),
+    val done: Boolean = false,
 )
 
 data class A6AssetData(

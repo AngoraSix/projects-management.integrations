@@ -1,14 +1,20 @@
 package com.angorasix.projects.management.integrations.application
 
+import com.angorasix.commons.domain.DetailedContributor
+import com.angorasix.commons.infrastructure.intercommunication.dto.A6DomainResource
+import com.angorasix.commons.infrastructure.intercommunication.dto.A6InfraTopics
+import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraBulkResourceDto
+import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraTaskDto
+import com.angorasix.commons.infrastructure.intercommunication.dto.messaging.A6InfraMessageDto
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp.AmqpConfigs
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import kotlinx.coroutines.flow.toList
 import org.springframework.cloud.stream.function.StreamBridge
-import java.time.Instant
+import org.springframework.messaging.support.MessageBuilder
 
 /**
  *
@@ -18,6 +24,7 @@ import java.time.Instant
 class IntegrationAssetService(
     private val repository: IntegrationAssetRepository,
     private val streamBridge: StreamBridge,
+    private val amqpConfigs: AmqpConfigs,
 ) {
 
     /**
@@ -27,7 +34,9 @@ class IntegrationAssetService(
     suspend fun processAssets(
         assets: List<IntegrationAsset>,
         sourceSyncId: String,
-    ): List<IntegrationAsset> {
+        projectManagementId: String,
+        requestingContributor: DetailedContributor,
+    ) {
         val existingSourceSyncAssets = repository.findUsingFilter(
             ListIntegrationAssetFilter(
                 null,
@@ -42,18 +51,40 @@ class IntegrationAssetService(
             )
         }
         val persistedAssets = repository.saveAll(updatedAssets).toList()
-        println("ACA PASA ALGO QUE PUEDE FALLAR")
-//        streamBridge.send()
-        return repository.saveAll(
+
+        val messageData = A6InfraBulkResourceDto(
+            A6DomainResource.Task,
             persistedAssets.map {
-                it.copy(
-                    integrationStatus = IntegrationStatus(
-                        IntegrationStatusValues.SYNCING_IN_PROGRESS,
-                        Instant.now(),
-                    ),
+                val sourceData = it.sourceData
+                A6InfraTaskDto(
+                    sourceData.id,
+                    sourceData.type,
+                    sourceData.title,
+                    sourceData.description,
+                    sourceData.dueInstant,
+                    emptyList(),
+                    sourceData.done,
                 )
             },
-        ).toList()
+        )
+        streamBridge.send(
+            amqpConfigs.bindings.sourceSyncingInwards,
+            MessageBuilder.withPayload(
+                A6InfraMessageDto(
+                    projectManagementId,
+                    A6DomainResource.ProjectManagement,
+                    sourceSyncId,
+                    A6DomainResource.IntegrationSourceSync.value,
+                    A6InfraTopics.INTEGRATION_FULL_SYNCING.value,
+                    requestingContributor,
+                    messageData.toMap(),
+                ),
+            ).build(),
+        )
+        repository.updateAllStatus(
+            ListIntegrationAssetFilter(persistedAssets.mapNotNull { it.id }),
+            IntegrationStatusValues.SYNCING_IN_PROGRESS,
+        )
     }
 }
 

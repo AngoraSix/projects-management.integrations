@@ -7,7 +7,6 @@ import com.angorasix.commons.domain.inputs.OptionSpec
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
 import com.angorasix.projects.management.integrations.application.strategies.typeReference
-import com.angorasix.projects.management.integrations.domain.integration.asset.AssetStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
@@ -38,11 +37,14 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.reactive.function.client.bodyToFlow
 import java.time.Instant
+import java.time.format.DateTimeParseException
 
 class TrelloSourceSyncStrategy(
     private val trelloWebClient: WebClient,
@@ -50,6 +52,9 @@ class TrelloSourceSyncStrategy(
     private val tokenEncryptionUtil: TokenEncryptionUtil,
 ) : SourceSyncStrategy {
     private val pagingLimit = 1000
+
+    /* default */
+    private val logger: Logger = LoggerFactory.getLogger(TrelloSourceSyncStrategy::class.java)
 
     override suspend fun configSourceSync(
         integration: Integration,
@@ -275,8 +280,15 @@ class TrelloSourceSyncStrategy(
                         integration.id,
                         sourceSync.id,
                         IntegrationStatus(IntegrationStatusValues.UNSYNCED),
-                        AssetStatus(it.idList == doneListId),
-                        SourceAssetData(it.id, TrelloCardDto::class.java.name),
+                        SourceAssetData(
+                            it.id,
+                            TrelloCardDto::class.java.name,
+                            it.name,
+                            it.desc,
+                            parseDueDate(it.due),
+                            emptyList(),
+                            it.idList == doneListId,
+                        ),
                         it,
                     )
                 }
@@ -299,6 +311,15 @@ class TrelloSourceSyncStrategy(
             integration.config.sourceStrategyConfigData?.get(ACCESS_TOKEN_CONFIG_PARAM) as? String
                 ?: throw IllegalArgumentException("trello access token body param is required for source sync"),
         )
+
+    private fun parseDueDate(due: String?): Instant? {
+        return try {
+            due?.let { Instant.parse(due) }
+        } catch (e: DateTimeParseException) {
+            logger.error("Invalid due date format for Trello card: $due")
+            null
+        }
+    }
 }
 
 suspend fun fetchAllCards(
@@ -331,9 +352,7 @@ suspend fun fetchAllCards(
         } while (cards.size == limit)
     }
 
-    return fetchPaginatedCards(null)//.collect { allCards.add(it) }
-
-//    return allCards
+    return fetchPaginatedCards(null)
 }
 
 enum class TrelloSteps(val value: String) {

@@ -1,5 +1,6 @@
 package com.angorasix.projects.management.integrations.application
 
+import com.angorasix.commons.domain.DetailedContributor
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
@@ -53,7 +54,7 @@ class SourceSyncService(
      *
      */
     suspend fun modifySourceSync(
-        requestingContributor: SimpleContributor,
+        requestingContributor: DetailedContributor,
         sourceSyncId: String,
         modificationOperations: List<SourceSyncModification<out Any>>,
     ): SourceSync? {
@@ -92,7 +93,12 @@ class SourceSyncService(
                         integration,
                         requestingContributor,
                     )
-                    assetsService.processAssets(assets, sourceSyncId)
+                    assetsService.processAssets(
+                        assets,
+                        sourceSyncId,
+                        integration.projectManagementId,
+                        requestingContributor,
+                    )
 
                     patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
                     patchedSourceSync.addEvent(
