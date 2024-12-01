@@ -10,6 +10,7 @@ import com.angorasix.projects.management.integrations.application.strategies.Tre
 import com.angorasix.projects.management.integrations.application.strategies.source.TrelloSourceSyncStrategy
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientStrategies
 import com.angorasix.projects.management.integrations.infrastructure.security.ProjectManagementIntegrationsSecurityConfiguration
+import com.angorasix.projects.management.integrations.messaging.handler.ProjectsManagementIntegrationsMessagingHandler
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
 import com.angorasix.projects.management.integrations.presentation.handler.SourceSyncHandler
 import com.angorasix.projects.management.integrations.presentation.router.ProjectManagementIntegrationsRouter
@@ -41,6 +42,7 @@ val beans = beans {
         )
         SourceSyncService(ref(), ref(), strategies, ref())
     }
+    bean<ProjectsManagementIntegrationsMessagingHandler>()
     bean<IntegrationAssetService>()
     bean {
         ProjectManagementIntegrationsRouter(ref(), ref(), ref()).projectRouterFunction()

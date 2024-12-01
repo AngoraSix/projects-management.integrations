@@ -1,6 +1,5 @@
 package com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp
 
-import com.angorasix.commons.infrastructure.config.configurationproperty.api.Route
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 
@@ -19,5 +18,6 @@ data class AmqpConfigs(
 )
 
 class BindingConfigs(
-    val sourceSyncingInwards: String,
+    val mgmtIntegrationSyncing: String,
+    val pendingSyncingOut: String,
 )

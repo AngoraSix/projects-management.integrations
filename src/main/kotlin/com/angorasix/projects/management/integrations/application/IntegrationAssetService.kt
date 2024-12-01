@@ -44,47 +44,81 @@ class IntegrationAssetService(
                 listOf(sourceSyncId),
             ),
         ).toList()
-        val updatedAssets = assets.mapNotNull {
-            updatedAssetOrNull(
-                it,
-                existingSourceSyncAssets.find { existing -> existing.sourceData.id == it.sourceData.id },
-            )
+        val updatedAssets = mutableListOf<IntegrationAsset>()
+        val pendingUpdatedAssets =
+            mutableListOf<IntegrationAsset>() // unsynced assets
+
+        assets.forEach { asset ->
+            val existing =
+                existingSourceSyncAssets.find { existing -> existing.sourceData.id == asset.sourceData.id }
+            updatedAssetOrNull(asset, existing)?.let {
+                if (existing == null || existing.integrationStatus.status == IntegrationStatusValues.SYNCED) {
+                    updatedAssets.add(it)
+                } else {
+                    pendingUpdatedAssets.add(it)
+                }
+            }
         }
         val persistedAssets = repository.saveAll(updatedAssets).toList()
-
-        val messageData = A6InfraBulkResourceDto(
-            A6DomainResource.Task,
-            persistedAssets.map {
-                val sourceData = it.sourceData
-                A6InfraTaskDto(
-                    sourceData.id,
-                    sourceData.type,
-                    sourceData.title,
-                    sourceData.description,
-                    sourceData.dueInstant,
-                    emptyList(),
-                    sourceData.done,
-                )
-            },
-        )
-        streamBridge.send(
-            amqpConfigs.bindings.sourceSyncingInwards,
-            MessageBuilder.withPayload(
-                A6InfraMessageDto(
-                    projectManagementId,
-                    A6DomainResource.ProjectManagement,
-                    sourceSyncId,
-                    A6DomainResource.IntegrationSourceSync.value,
-                    A6InfraTopics.INTEGRATION_FULL_SYNCING.value,
-                    requestingContributor,
-                    messageData.toMap(),
-                ),
-            ).build(),
+        publishUpdatedAssets(
+            persistedAssets,
+            amqpConfigs.bindings.mgmtIntegrationSyncing,
+            projectManagementId,
+            sourceSyncId,
+            requestingContributor,
         )
         repository.updateAllStatus(
             ListIntegrationAssetFilter(persistedAssets.mapNotNull { it.id }),
             IntegrationStatusValues.SYNCING_IN_PROGRESS,
         )
+
+        publishUpdatedAssets(
+            pendingUpdatedAssets,
+            amqpConfigs.bindings.pendingSyncingOut,
+            projectManagementId,
+            sourceSyncId,
+            requestingContributor,
+        )
+    }
+
+    private suspend fun publishUpdatedAssets(
+        updatedAssets: List<IntegrationAsset>,
+        bindingKey: String,
+        projectManagementId: String,
+        sourceSyncId: String,
+        requestingContributor: DetailedContributor,
+    ) {
+        if (updatedAssets.isNotEmpty()) {
+            val messageData = A6InfraBulkResourceDto(
+                A6DomainResource.Task,
+                updatedAssets.map {
+                    val sourceData = it.sourceData
+                    A6InfraTaskDto(
+                        sourceData.title,
+                        sourceData.description,
+                        sourceData.dueInstant,
+                        emptySet(),
+                        sourceData.done,
+                        sourceData.id,
+                        sourceData.type,
+                    )
+                },
+            )
+            streamBridge.send(
+                bindingKey,
+                MessageBuilder.withPayload(
+                    A6InfraMessageDto(
+                        projectManagementId,
+                        A6DomainResource.ProjectManagement,
+                        sourceSyncId,
+                        A6DomainResource.IntegrationSourceSync.value,
+                        A6InfraTopics.TASKS_INTEGRATION_FULL_SYNCING.value,
+                        requestingContributor,
+                        messageData.toMap(),
+                    ),
+                ).build(),
+            )
+        }
     }
 }
 
