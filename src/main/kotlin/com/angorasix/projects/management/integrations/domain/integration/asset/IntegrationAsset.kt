@@ -66,9 +66,9 @@ data class SourceAssetData(
 
 data class A6AssetData(
     val id: String,
-    val type: A6AssetTypeValues,
+//    val type: A6AssetTypeValues,
 )
 
-enum class A6AssetTypeValues(value: String) {
-    TASK("task")
-}
+// enum class A6AssetTypeValues(value: String) {
+//    TASK("task"),
+// }

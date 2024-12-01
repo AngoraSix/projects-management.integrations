@@ -51,8 +51,6 @@ class TrelloSourceSyncStrategy(
     private val integrationConfigs: SourceConfigurations,
     private val tokenEncryptionUtil: TokenEncryptionUtil,
 ) : SourceSyncStrategy {
-    private val pagingLimit = 1000
-
     /* default */
     private val logger: Logger = LoggerFactory.getLogger(TrelloSourceSyncStrategy::class.java)
 
@@ -239,16 +237,7 @@ class TrelloSourceSyncStrategy(
         integration: Integration,
         requestingContributor: SimpleContributor,
     ): List<IntegrationAsset> {
-        requireNotNull(integration.id) { "integration.id is required for triggerSourceSync" }
-        requireNotNull(sourceSync.id) { "sourceSync.id is required for triggerSourceSync" }
         val accessToken = extractAccessToken(integration)
-        val selectedBoardIds =
-            sourceSync.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
-                .responseData?.get(TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value)
-                ?: throw IllegalArgumentException(
-                    "selected board" +
-                        "is required for triggerSourceSync",
-                )
         val boardCardsUrlPattern =
             integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs
                 ?.get("boardCardsUrlPattern")
@@ -256,15 +245,29 @@ class TrelloSourceSyncStrategy(
                     "trello boardCardsUrlPattern config" +
                         "is required for triggerSourceSync",
                 )
+        return obtainIntegrationAssets(sourceSync, integration, accessToken, boardCardsUrlPattern)
+    }
+
+    @OptIn(FlowPreview::class)
+    private suspend fun obtainIntegrationAssets(
+        sourceSync: SourceSync,
+        integration: Integration,
+        accessToken: String,
+        boardCardsUrlPattern: String,
+    ): List<IntegrationAsset> {
+        requireNotNull(integration.id) { "integration.id is required for triggerSourceSync" }
+        requireNotNull(sourceSync.id) { "sourceSync.id is required for triggerSourceSync" }
+        val selectedBoardIds =
+            sourceSync.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
+                .responseData?.get(TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value)
+
+        requireNotNull(selectedBoardIds) { "selected board is required for triggerSourceSync" }
         return selectedBoardIds.asFlow().flatMapMerge { selectedBoardId ->
             val doneListId =
                 sourceSync.status.steps.first { it.stepKey == TrelloSteps.RESOLVE_BOARD.value }
                     .responseData?.get("${TrelloResponseFieldKeys.SELECT_DONE_LIST_PREFIX.value}$selectedBoardId")
                     ?.first()
-                    ?: throw IllegalArgumentException(
-                        "selected done list id" +
-                            "is required for triggerSourceSync",
-                    )
+            requireNotNull(doneListId) { "selected done list id is required for triggerSourceSync" }
 
             try {
                 // Call Trello to get board cards List
@@ -273,7 +276,7 @@ class TrelloSourceSyncStrategy(
                     accessToken,
                     boardCardsUrlPattern,
                     selectedBoardId,
-                    pagingLimit,
+                    PAGING_LIMIT,
                 ).map {
                     IntegrationAsset(
                         sourceSync.source,
@@ -319,6 +322,10 @@ class TrelloSourceSyncStrategy(
             logger.error("Invalid due date format for Trello card: $due")
             null
         }
+    }
+
+    companion object {
+        private const val PAGING_LIMIT = 1000
     }
 }
 

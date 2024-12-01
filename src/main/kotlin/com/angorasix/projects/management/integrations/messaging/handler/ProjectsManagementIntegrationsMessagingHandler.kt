@@ -9,11 +9,10 @@ import kotlinx.coroutines.runBlocking
  *
  * @author rozagerardo
  */
-class ProjectsManagementIntegrationsMessagingHandler(
-) {
+class ProjectsManagementIntegrationsMessagingHandler {
     fun reprocessPendingAssets(message: A6InfraMessageDto) = runBlocking {
         if (message.topic.any()) {
-            throw IllegalStateException("Not re-processing at the moment - move to DLQ")
+            error("Not re-processing at the moment - move to DLQ")
         }
     }
 }

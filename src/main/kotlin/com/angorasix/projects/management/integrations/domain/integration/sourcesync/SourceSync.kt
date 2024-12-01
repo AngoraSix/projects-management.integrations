@@ -23,7 +23,7 @@ data class SourceSync @PersistenceCreator constructor(
     var status: SourceSyncStatus,
     val admins: Set<SimpleContributor> = emptySet(),
     val events: MutableList<SourceSyncEvent> = mutableListOf(),
-    val sourceStrategyStateData: Any?, // any information used by the integration/source strategy to manage its state
+    val sourceStrategyStateData: Any?, // any sate information used by the source strategy
 ) {
     constructor(
         source: String,
@@ -55,7 +55,8 @@ data class SourceSync @PersistenceCreator constructor(
     }
 
     fun wasRequestedFullSync(): Boolean =
-        status.status === SourceSyncStatusValues.COMPLETED && events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
+        status.status === SourceSyncStatusValues.COMPLETED &&
+            events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
 }
 
 data class SourceSyncEvent(

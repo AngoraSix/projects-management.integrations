@@ -4,6 +4,7 @@ import com.angorasix.commons.domain.DetailedContributor
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
+import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
@@ -33,8 +34,13 @@ class SourceSyncService(
             ListSourceSyncFilter(null, listOf(integrationId)),
         ).toList()
 
-        if (existingSourceSyncList.isNotEmpty() && existingSourceSyncList.first().status.status == SourceSyncStatusValues.COMPLETED) {
-            throw IllegalArgumentException("There is already a SourceSync completed for integration [$integrationId]")
+        if (existingSourceSyncList.isNotEmpty() &&
+            existingSourceSyncList.first().status.status == SourceSyncStatusValues.COMPLETED
+        ) {
+            throw IllegalArgumentException(
+                "There is already a Completed SourceSync " +
+                    "for integration [$integrationId]",
+            )
         }
         val integration =
             integrationsService.findSingleIntegration(integrationId, requestingContributor)
@@ -88,26 +94,13 @@ class SourceSyncService(
                         requestingContributor,
                     )
                 ) {
-                    val assets = sourceSyncStrategy.triggerSourceSync(
+                    triggerFullSync(
+                        sourceSyncStrategy,
                         patchedSourceSync,
                         integration,
                         requestingContributor,
-                    )
-                    assetsService.processAssets(
-                        assets,
                         sourceSyncId,
-                        integration.projectManagementId,
-                        requestingContributor,
                     )
-
-                    patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
-                    patchedSourceSync.addEvent(
-                        SourceSyncEvent(
-                            SourceSyncEventValues.TRIGGERED_FULL_SYNC,
-                            Instant.now(),
-                        ),
-                    )
-                    patchedSourceSync
                 } else {
                     sourceSyncStrategy.processModification(
                         patchedSourceSync,
@@ -117,5 +110,34 @@ class SourceSyncService(
                 }
             repository.save(updatedSourceSync)
         }
+    }
+
+    private suspend fun triggerFullSync(
+        sourceSyncStrategy: SourceSyncStrategy,
+        patchedSourceSync: SourceSync,
+        integration: Integration,
+        requestingContributor: DetailedContributor,
+        sourceSyncId: String,
+    ): SourceSync {
+        val assets = sourceSyncStrategy.triggerSourceSync(
+            patchedSourceSync,
+            integration,
+            requestingContributor,
+        )
+        assetsService.processAssets(
+            assets,
+            sourceSyncId,
+            integration.projectManagementId,
+            requestingContributor,
+        )
+
+        patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
+        patchedSourceSync.addEvent(
+            SourceSyncEvent(
+                SourceSyncEventValues.TRIGGERED_FULL_SYNC,
+                Instant.now(),
+            ),
+        )
+        return patchedSourceSync
     }
 }
