@@ -44,6 +44,8 @@ data class RoutesConfigs(
 class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
-    val startSourceSync: String,
+    val configSourceSync: String,
     val continueSourceSync: String,
+    val requestFullSync: String,
+    val updateSourceSyncConfig: String,
 )

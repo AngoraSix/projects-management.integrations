@@ -2,12 +2,12 @@ package com.angorasix.projects.management.integrations.domain.integration.source
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
-import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
+import java.util.*
 
 /**
  * Source Sync Root.
@@ -19,15 +19,15 @@ import java.time.Instant
 @Document
 data class SourceSync @PersistenceCreator constructor(
     @field:Id val id: String?,
-    val source: Source,
+    val source: String,
     @Indexed(unique = true) val integrationId: String,
     var status: SourceSyncStatus,
     val admins: Set<SimpleContributor> = emptySet(),
     val events: MutableList<SourceSyncEvent> = mutableListOf(),
-    val sourceStrategyStateData: Any?, // any information used by the integration/source strategy to manage its state
+    val sourceStrategyStateData: Any?, // any sate information used by the source strategy
 ) {
     constructor(
-        source: Source,
+        source: String,
         integrationId: String,
         status: SourceSyncStatus,
         admins: Set<SimpleContributor> = emptySet(),
@@ -54,15 +54,25 @@ data class SourceSync @PersistenceCreator constructor(
     fun addEvent(event: SourceSyncEvent) {
         events.add(event)
     }
+
+    fun wasRequestedFullSync(): Boolean =
+        status.status === SourceSyncStatusValues.COMPLETED &&
+            events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
 }
 
 data class SourceSyncEvent(
     val type: SourceSyncEventValues,
-    val eventInstant: Instant,
+    val syncEventId: String = UUID.randomUUID().toString(),
+    val correspondenceQty: Int? = null,
+    val eventInstant: Instant = Instant.now(),
 )
 
 enum class SourceSyncEventValues {
-    STARTING_FULL_SYNC_CONFIG, TRIGGERED_FULL_SYNC, UPDATED_CONFIG
+    STARTING_FULL_SYNC_CONFIG,
+    REQUEST_FULL_SYNC,
+    TRIGGERED_FULL_SYNC,
+    REQUEST_UPDATE_SYNC_CONFIG,
+    FULL_SYNC_CORRESPONDENCE,
 }
 
 data class SourceSyncStatus(

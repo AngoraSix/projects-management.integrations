@@ -6,7 +6,7 @@ server:
 
 logging:
   level:
-    root: DEBUG
+    root: INFO
     reactor.netty: INFO
     org.springframework.web.reactive.function.client: INFO
 
@@ -17,5 +17,5 @@ spring:
     name: ${APP_NAME:projects.management.integrations}
   data:
     mongodb:
-      uri: ${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_URI:mongodb://localhost:27017/}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_NAME:a6-projects-integrations}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_PARAMS:?}
+      uri: ${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_URI:mongodb://localhost:27017/}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_NAME:a6-management-integrations}${A6_PROJECTS_MGMT_INTEGRATIONS_MONGO_DB_PARAMS:?}
       auto-index-creation: true

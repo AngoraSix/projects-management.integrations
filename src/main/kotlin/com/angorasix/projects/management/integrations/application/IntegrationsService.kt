@@ -35,7 +35,6 @@ class IntegrationsService(
         requestingContributor,
     )?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
 
-
     fun findIntegrationsForProjectManagement(
         projectManagementId: String,
         requestingContributor: SimpleContributor,
@@ -103,7 +102,6 @@ class IntegrationsService(
     }
 }
 
-
 private suspend fun Integration.includeSourceSyncData(
     requestingContributor: SimpleContributor,
     sourceSyncRepository: SourceSyncRepository,
@@ -115,5 +113,5 @@ private suspend fun Integration.includeSourceSyncData(
         )
         this.sourceSync = sourceSyncs
     }
-    return this;
+    return this
 }

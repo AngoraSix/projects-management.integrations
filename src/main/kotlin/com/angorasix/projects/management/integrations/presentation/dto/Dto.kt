@@ -1,16 +1,18 @@
 package com.angorasix.projects.management.integrations.presentation.dto
 
 import com.angorasix.commons.domain.SimpleContributor
-import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.commons.presentation.dto.InlineFieldSpecDto
 import com.angorasix.commons.presentation.dto.PatchOperation
 import com.angorasix.commons.presentation.dto.PatchOperationSpec
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
 import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.ModifyIntegrationStatus
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ReplaceStepResponseData
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.RequestFullSyncEvent
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.RequestSyncConfigUpdate
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -30,6 +32,7 @@ data class IntegrationDto(
     val status: IntegrationStatusDto? = null,
     val admins: Set<SimpleContributor>? = emptySet(),
     val config: IntegrationConfigDto? = null,
+    val sourceSync: SourceSyncDto? = null,
     val id: String? = null,
 ) : RepresentationModel<IntegrationDto>()
 
@@ -65,7 +68,7 @@ enum class SupportedIntegrationPatchOperations(val op: PatchOperationSpec) {
 }
 
 data class SourceSyncDto(
-    val source: Source? = null,
+    val source: String? = null,
     val integrationId: String? = null,
     val status: SourceSyncStatusDto? = null,
     val events: List<SourceSyncEventDto> = listOf(),
@@ -75,7 +78,7 @@ data class SourceSyncDto(
 
 data class SourceSyncEventDto(
     val type: SourceSyncEventValues,
-    val eventInstant: Instant,
+    val eventInstant: Instant? = null,
 )
 
 data class SourceSyncStatusDto(
@@ -113,6 +116,43 @@ enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {
                 val indexedResponse = MutableList<Map<String, List<String>>?>(index + 1) { null }
                 indexedResponse.add(index, responseDataValue)
                 return ReplaceStepResponseData(indexedResponse)
+            }
+        },
+    ),
+    REQUEST_FULL_SYNC_EVENT(
+        object : PatchOperationSpec {
+            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
+                operation.op == "add" && operation.path == "/events/+"
+
+            override fun mapToObjectModification(
+                contributor: SimpleContributor,
+                operation: PatchOperation,
+                objectMapper: ObjectMapper,
+            ): SourceSyncModification<SourceSyncEvent> {
+                val eventValue =
+                    objectMapper.treeToValue(operation.value, SourceSyncEventDto::class.java)
+
+                return RequestFullSyncEvent(
+                    SourceSyncEvent(
+                        eventValue.type,
+                    ),
+                )
+            }
+        },
+    ),
+    REQUEST_SYNC_CONFIG_UPDATE(
+        object : PatchOperationSpec {
+            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
+                operation.op == "replace" && operation.path == "/status/status"
+
+            override fun mapToObjectModification(
+                contributor: SimpleContributor,
+                operation: PatchOperation,
+                objectMapper: ObjectMapper,
+            ): SourceSyncModification<SourceSyncStatusValues> {
+                val statusValue =
+                    objectMapper.treeToValue(operation.value, SourceSyncStatusValues::class.java)
+                return RequestSyncConfigUpdate(statusValue)
             }
         },
     ),

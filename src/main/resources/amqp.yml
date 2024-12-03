@@ -1,36 +1,53 @@
 # https://docs.spring.io/spring-cloud-stream/reference/rabbit/rabbit_overview/putting-it-all-together.html#page-title
+configs:
+  amqp:
+    bindings:
+      mgmtIntegrationSyncing: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_BINDINGS_MGMTINTEGRATIONSYNCING:mgmtIntegrationSyncing}
+      pendingSyncingOut: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_BINDINGS_PENDINGSYNCINGOUT:pendingSyncingOut}
 
 spring:
   cloud:
     stream:
+      output-bindings: # we need explicit bindings bc we use StreamBridge
+        - ${configs.amqp.bindings.mgmtIntegrationSyncing}
+        - ${configs.amqp.bindings.pendingSyncingOut}
       bindings:
-        mgmtupdate-in-0:
-          destination: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_EVENTS_INPUT_EXCHANGE:mgmt-integrations} # existing exchange (or creates)?
-          group: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_EVENTS_INPUT_QUEUE:integrations.mgmtupdate} # queue = a6-exchange.a6-queue - whole project management update (batch)
+        mgmtIntegrationSyncing:
+          destination: ${A6_MGMT_INTEGRATIONS_RABBITMQ_OUTPUT_MGMTINTEGRATIONSYNCING_EXCHANGE:mgmtIntegrationSyncing} # existing exchange
+        pendingSyncingOut:
+          destination: ${A6_MGMT_INTEGRATIONS_RABBITMQ_OUTPUT_PENDINGSYNCINGOUT_EXCHANGE:pendingSyncing} # existing exchange
+        pendingSyncing-in-0:
+          destination: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_PENDINGINTEGRATIONS_INPUT_EXCHANGE:pendingSyncing} # existing exchange (or creates)?
+          group: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_PENDINGINTEGRATIONS_INPUT_QUEUE:reprocessing}
+          binder: a6Rabbit
+        syncingCorrespondence-in-0:
+          destination: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_SYNCINGCORRESPONDENCE_INPUT_EXCHANGE:syncingCorrespondence} # existing exchange (or creates)?
+          group: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_SYNCINGCORRESPONDENCE_INPUT_QUEUE:processing}
+          binder: a6Rabbit
+      rabbit:
+        bindings:
+          mgmtIntegrationSyncing:
+            producer:
+              republishToDlq: false
+          pendingSyncing-in-0:
+            consumer:
+              republishToDlq: false
+          syncingCorrespondence-in-0:
+            consumer:
+              republishToDlq: false
+          pendingSyncingOut:
+            producer:
+              republishToDlq: false
       binders:
         a6Rabbit:
           type: rabbit
           environment:
             spring:
               rabbitmq:
-                host: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_HOST:localhost}
-                port: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_PORT:5672}
-                username: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_USER:guest}
-                password: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_PASSWORD:guest}
-                virtual-host: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_VHOST:/}
+                host: ${A6_MGMT_INTEGRATIONS_RABBITMQ_HO  ST:localhost}
+                port: ${A6_MGMT_INTEGRATIONS_RABBITMQ_PORT:5672}
+                username: ${A6_MGMT_INTEGRATIONS_RABBITMQ_USER:guest}
+                password: ${A6_MGMT_INTEGRATIONS_RABBITMQ_PASSWORD:guest}
+                virtual-host: ${A6_MGMT_INTEGRATIONS_RABBITMQ_VHOST:/}
     function:
-      definition: projectsmanagement.integrations # to be used if we use Spring Cloud Function support https://docs.spring.io/spring-cloud-stream/reference/spring-cloud-stream/producing-and-consuming-messages.html#spring_cloud_function
-#    stream:
-#      function:
-#        autodetect: false
-#          consumer:
-#            max-attempts: 1
-      #          binder: a6Rabbit
-#      rabbit:
-#        bindings:
-#          notifications-in-0:
-##            consumer:
-##              bindingRoutingKey: ${A6_PROJECTS_MGMT_TASKS_RABBITMQ_INPUT_ROUTINGKEY:#} # defaults to '#'
-#              auto-bind-dlq: true
-#              dlq-ttl: true
-#              dlq-dead-letter-exchange:
+      definition: pendingSyncing;syncingCorrespondence
