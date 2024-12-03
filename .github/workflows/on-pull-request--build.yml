@@ -1,0 +1,9 @@
+name: Workflow executed when doing a pull request (open, reopen or update)
+
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+
+jobs:
+  build-test-artifact:
+    uses: AngoraSix/infra/.github/workflows/action-build-test-maven.yml@main

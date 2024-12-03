@@ -1,0 +1,22 @@
+name: Workflow executed when pushing git tag for a new version
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  build-test-artifact:
+    uses: AngoraSix/infra/.github/workflows/action-build-test-maven.yml@main
+  publish-docker-image:
+    needs: build-test-artifact
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    uses: AngoraSix/infra/.github/workflows/action-push-gcp-maven.yml@main
+    with:
+      app: projects-management.integrations
+      cloud-service: projects-management-integrations
+    secrets:
+      wif-provider: ${{ secrets.WIF_PROVIDER }}
+      wif-service-account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
