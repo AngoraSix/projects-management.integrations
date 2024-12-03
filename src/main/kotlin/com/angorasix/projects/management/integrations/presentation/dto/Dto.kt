@@ -135,7 +135,6 @@ enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {
                 return RequestFullSyncEvent(
                     SourceSyncEvent(
                         eventValue.type,
-                        eventValue.eventInstant ?: Instant.now(),
                     ),
                 )
             }

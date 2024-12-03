@@ -3,6 +3,7 @@ package com.angorasix.projects.management.integrations.domain.integration.asset
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 import java.time.Instant
+import java.util.*
 
 /**
  * Integration Asset Root.
@@ -45,9 +46,55 @@ data class IntegrationAsset @PersistenceCreator constructor(
 }
 
 data class IntegrationStatus(
-    val status: IntegrationStatusValues,
-    val lastSyncingRequestInstant: Instant? = null,
-)
+    val events: MutableList<IntegrationAssetSyncEvent> = mutableListOf(),
+) {
+    fun currentStatus(): IntegrationStatusValues {
+        val lastEvent = events.last { it.type != IntegrationAssetSyncEventValues.POSTPONED }
+        return when (lastEvent.type) {
+            IntegrationAssetSyncEventValues.IMPORT -> IntegrationStatusValues.UNSYNCED
+            IntegrationAssetSyncEventValues.SYNCING -> IntegrationStatusValues.SYNCING_IN_PROGRESS
+            IntegrationAssetSyncEventValues.UPDATE -> IntegrationStatusValues.SYNCING_IN_PROGRESS
+            IntegrationAssetSyncEventValues.ACK -> IntegrationStatusValues.SYNCED
+            IntegrationAssetSyncEventValues.UNSYNC -> IntegrationStatusValues.UNSYNCED
+            else -> {
+                error("Invalid status based on events [$events]")
+            }
+        }
+    }
+}
+
+data class IntegrationAssetSyncEvent(
+    val type: IntegrationAssetSyncEventValues,
+    val syncEventId: String = UUID.randomUUID().toString(),
+    val eventInstant: Instant = Instant.now(),
+) {
+    constructor(type: IntegrationAssetSyncEventValues, syncEventId: String?) : this(
+        type,
+        syncEventId ?: UUID.randomUUID().toString(),
+    )
+
+    companion object {
+        fun import(syncEventId: String? = null): IntegrationAssetSyncEvent {
+            return IntegrationAssetSyncEvent(IntegrationAssetSyncEventValues.IMPORT, syncEventId)
+        }
+
+        fun syncing(syncEventId: String? = null): IntegrationAssetSyncEvent {
+            return IntegrationAssetSyncEvent(IntegrationAssetSyncEventValues.SYNCING, syncEventId)
+        }
+
+        fun ack(syncEventId: String? = null): IntegrationAssetSyncEvent {
+            return IntegrationAssetSyncEvent(IntegrationAssetSyncEventValues.ACK, syncEventId)
+        }
+
+        fun postponed(syncEventId: String? = null): IntegrationAssetSyncEvent {
+            return IntegrationAssetSyncEvent(IntegrationAssetSyncEventValues.POSTPONED, syncEventId)
+        }
+    }
+}
+
+enum class IntegrationAssetSyncEventValues {
+    IMPORT, SYNCING, UPDATE, POSTPONED, ACK, UNSYNC
+}
 
 enum class IntegrationStatusValues {
     UNSYNCED, SYNCING_IN_PROGRESS, SYNCED
@@ -65,10 +112,16 @@ data class SourceAssetData(
 )
 
 data class A6AssetData(
-    val id: String,
-//    val type: A6AssetTypeValues,
-)
+    val a6Id: String,
+    val type: A6AssetTypeValues,
+) {
+    companion object {
+        fun task(a6Id: String): A6AssetData {
+            return A6AssetData(a6Id, A6AssetTypeValues.TASK)
+        }
+    }
+}
 
-// enum class A6AssetTypeValues(value: String) {
-//    TASK("task"),
-// }
+enum class A6AssetTypeValues(val value: String) {
+    TASK("task"),
+}

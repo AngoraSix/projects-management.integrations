@@ -13,7 +13,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.toList
-import java.time.Instant
+import java.util.*
 
 /**
  *
@@ -119,12 +119,14 @@ class SourceSyncService(
         requestingContributor: DetailedContributor,
         sourceSyncId: String,
     ): SourceSync {
+        val syncEventId = UUID.randomUUID().toString()
         val assets = sourceSyncStrategy.triggerSourceSync(
             patchedSourceSync,
             integration,
             requestingContributor,
+            syncEventId,
         )
-        assetsService.processAssets(
+        val updatedAssets = assetsService.processAssets(
             assets,
             sourceSyncId,
             integration.projectManagementId,
@@ -135,9 +137,39 @@ class SourceSyncService(
         patchedSourceSync.addEvent(
             SourceSyncEvent(
                 SourceSyncEventValues.TRIGGERED_FULL_SYNC,
-                Instant.now(),
+                syncEventId,
+                updatedAssets.size,
             ),
         )
         return patchedSourceSync
+    }
+
+    suspend fun processFullSyncCorrespondence(
+        correspondences: List<Pair<String, String>>,
+        sourceSyncId: String,
+        syncingEventId: String,
+        requestingContributor: DetailedContributor,
+    ): SourceSync {
+        val sourceSync = repository.findForContributorUsingFilter(
+            ListSourceSyncFilter((listOf(sourceSyncId))),
+            requestingContributor,
+        )
+            ?: throw IllegalArgumentException("SourceSync [$sourceSyncId] not found for contributor")
+
+        assetsService.processSyncingCorrespondence(
+            correspondences,
+            sourceSyncId,
+            syncingEventId,
+        )
+
+        sourceSync.addEvent(
+            SourceSyncEvent(
+                SourceSyncEventValues.FULL_SYNC_CORRESPONDENCE,
+                syncingEventId,
+                correspondences.size,
+            ),
+        )
+        val updatedSourceSync = repository.save(sourceSync)
+        return updatedSourceSync
     }
 }

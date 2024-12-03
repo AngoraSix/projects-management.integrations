@@ -8,8 +8,8 @@ import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
 import com.angorasix.projects.management.integrations.application.strategies.typeReference
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetData
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
@@ -154,7 +154,6 @@ class TrelloSourceSyncStrategy(
                 mutableListOf(
                     SourceSyncEvent(
                         SourceSyncEventValues.STARTING_FULL_SYNC_CONFIG,
-                        Instant.now(),
                     ),
                 ),
                 mapOf("boards" to boardsDto),
@@ -236,6 +235,7 @@ class TrelloSourceSyncStrategy(
         sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
+        syncEventId: String,
     ): List<IntegrationAsset> {
         val accessToken = extractAccessToken(integration)
         val boardCardsUrlPattern =
@@ -245,7 +245,13 @@ class TrelloSourceSyncStrategy(
                     "trello boardCardsUrlPattern config" +
                         "is required for triggerSourceSync",
                 )
-        return obtainIntegrationAssets(sourceSync, integration, accessToken, boardCardsUrlPattern)
+        return obtainIntegrationAssets(
+            sourceSync,
+            integration,
+            accessToken,
+            boardCardsUrlPattern,
+            syncEventId,
+        )
     }
 
     @OptIn(FlowPreview::class)
@@ -254,6 +260,7 @@ class TrelloSourceSyncStrategy(
         integration: Integration,
         accessToken: String,
         boardCardsUrlPattern: String,
+        syncEventId: String,
     ): List<IntegrationAsset> {
         requireNotNull(integration.id) { "integration.id is required for triggerSourceSync" }
         requireNotNull(sourceSync.id) { "sourceSync.id is required for triggerSourceSync" }
@@ -282,7 +289,7 @@ class TrelloSourceSyncStrategy(
                         sourceSync.source,
                         integration.id,
                         sourceSync.id,
-                        IntegrationStatus(IntegrationStatusValues.UNSYNCED),
+                        IntegrationStatus(mutableListOf(IntegrationAssetSyncEvent.import(syncEventId))),
                         SourceAssetData(
                             it.id,
                             TrelloCardDto::class.java.name,

@@ -7,6 +7,7 @@ import org.springframework.data.annotation.PersistenceCreator
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
+import java.util.*
 
 /**
  * Source Sync Root.
@@ -61,11 +62,17 @@ data class SourceSync @PersistenceCreator constructor(
 
 data class SourceSyncEvent(
     val type: SourceSyncEventValues,
-    val eventInstant: Instant,
+    val syncEventId: String = UUID.randomUUID().toString(),
+    val correspondenceQty: Int? = null,
+    val eventInstant: Instant = Instant.now(),
 )
 
 enum class SourceSyncEventValues {
-    STARTING_FULL_SYNC_CONFIG, REQUEST_FULL_SYNC, TRIGGERED_FULL_SYNC, REQUEST_UPDATE_SYNC_CONFIG
+    STARTING_FULL_SYNC_CONFIG,
+    REQUEST_FULL_SYNC,
+    TRIGGERED_FULL_SYNC,
+    REQUEST_UPDATE_SYNC_CONFIG,
+    FULL_SYNC_CORRESPONDENCE,
 }
 
 data class SourceSyncStatus(

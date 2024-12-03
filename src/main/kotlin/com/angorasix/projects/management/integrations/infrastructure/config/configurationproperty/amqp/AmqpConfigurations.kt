@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  * @author rozagerardo
  */
 @ConfigurationProperties(prefix = "configs.amqp")
-data class AmqpConfigs(
+data class AmqpConfigurations(
 
     @NestedConfigurationProperty
     var bindings: BindingConfigs,

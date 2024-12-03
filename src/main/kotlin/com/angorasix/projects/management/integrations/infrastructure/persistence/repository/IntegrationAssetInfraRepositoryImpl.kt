@@ -1,18 +1,18 @@
 package com.angorasix.projects.management.integrations.infrastructure.persistence.repository
 
 import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.projects.management.integrations.domain.integration.asset.A6AssetData
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import org.springframework.data.mongodb.core.BulkOperations
 import org.springframework.data.mongodb.core.ReactiveMongoOperations
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
-import java.time.Instant
 
 class IntegrationAssetInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperations) :
     IntegrationAssetInfraRepository {
@@ -33,16 +33,44 @@ class IntegrationAssetInfraRepositoryImpl(private val mongoOps: ReactiveMongoOpe
             .awaitFirstOrNull()
     }
 
-    override suspend fun updateAllStatus(
+    override suspend fun registerEvent(
         filter: ListIntegrationAssetFilter,
-        status: IntegrationStatusValues,
+        event: IntegrationAssetSyncEvent,
     ) {
         mongoOps.updateMulti(
             filter.toAllByIdQuery(),
-            statusUpdate(status),
+            addEvent(event),
             IntegrationAsset::class.java,
         ).awaitFirstOrNull()
     }
+
+    override suspend fun registerCorrespondences(
+        correspondences: List<Pair<String, String>>,
+        sourceSyncId: String,
+        syncingEventId: String,
+    ) {
+        val bulkOps =
+            mongoOps.bulkOps(BulkOperations.BulkMode.UNORDERED, IntegrationAsset::class.java)
+        val ackEvent = IntegrationAssetSyncEvent.ack(syncingEventId)
+
+        correspondences.forEach {
+            val query = correspondenceQuery(it.first, sourceSyncId)
+            val update = Update().push("integrationStatus.events", ackEvent)
+                .set("angoraSixData", A6AssetData.task(it.second))
+            bulkOps.updateOne(query, update)
+        }
+        bulkOps.execute().awaitFirstOrNull()
+    }
+}
+
+private fun correspondenceQuery(
+    id: String,
+    sourceSyncId: String,
+): Query {
+    val query = Query()
+    query.addCriteria(where("_id").`is`(id))
+    query.addCriteria(where("sourceSyncId").`is`(sourceSyncId))
+    return query
 }
 
 private fun ListIntegrationAssetFilter.toQuery(requestingContributor: SimpleContributor?): Query {
@@ -71,6 +99,6 @@ private fun ListIntegrationAssetFilter.toAllByIdQuery(): Query {
     return query
 }
 
-private fun statusUpdate(statusValue: IntegrationStatusValues): Update {
-    return Update().set("status", IntegrationStatus(statusValue, Instant.now()))
+private fun addEvent(event: IntegrationAssetSyncEvent): Update {
+    return Update().push("integrationStatus.events", event)
 }

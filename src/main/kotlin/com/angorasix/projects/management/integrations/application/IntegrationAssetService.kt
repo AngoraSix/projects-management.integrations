@@ -8,13 +8,15 @@ import com.angorasix.commons.infrastructure.intercommunication.dto.domainresourc
 import com.angorasix.commons.infrastructure.intercommunication.dto.messaging.A6InfraMessageDto
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
-import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp.AmqpConfigs
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp.AmqpConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import kotlinx.coroutines.flow.toList
 import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.messaging.support.MessageBuilder
+import java.util.*
 
 /**
  *
@@ -24,7 +26,7 @@ import org.springframework.messaging.support.MessageBuilder
 class IntegrationAssetService(
     private val repository: IntegrationAssetRepository,
     private val streamBridge: StreamBridge,
-    private val amqpConfigs: AmqpConfigs,
+    private val amqpConfigs: AmqpConfigurations,
 ) {
 
     /**
@@ -36,7 +38,7 @@ class IntegrationAssetService(
         sourceSyncId: String,
         projectManagementId: String,
         requestingContributor: DetailedContributor,
-    ) {
+    ): List<IntegrationAsset> {
         val existingSourceSyncAssets = repository.findUsingFilter(
             ListIntegrationAssetFilter(
                 null,
@@ -52,7 +54,7 @@ class IntegrationAssetService(
             val existing =
                 existingSourceSyncAssets.find { existing -> existing.sourceData.id == asset.sourceData.id }
             updatedAssetOrNull(asset, existing)?.let {
-                if (existing == null || existing.integrationStatus.status == IntegrationStatusValues.SYNCED) {
+                if (existing == null || existing.integrationStatus.currentStatus() == IntegrationStatusValues.SYNCED) {
                     updatedAssets.add(it)
                 } else {
                     pendingUpdatedAssets.add(it)
@@ -60,18 +62,22 @@ class IntegrationAssetService(
             }
         }
         val persistedAssets = repository.saveAll(updatedAssets).toList()
+
+        val syncingEventId = UUID.randomUUID().toString()
+        // Start Syncing
         publishUpdatedAssets(
             persistedAssets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
             projectManagementId,
-            sourceSyncId,
+            "$sourceSyncId:$syncingEventId",
             requestingContributor,
         )
-        repository.updateAllStatus(
+        repository.registerEvent(
             ListIntegrationAssetFilter(persistedAssets.mapNotNull { it.id }),
-            IntegrationStatusValues.SYNCING_IN_PROGRESS,
+            IntegrationAssetSyncEvent.syncing(syncingEventId),
         )
 
+        // Updates not ready to be processed, for later
         publishUpdatedAssets(
             pendingUpdatedAssets,
             amqpConfigs.bindings.pendingSyncingOut,
@@ -79,9 +85,26 @@ class IntegrationAssetService(
             sourceSyncId,
             requestingContributor,
         )
+        repository.registerEvent(
+            ListIntegrationAssetFilter(pendingUpdatedAssets.mapNotNull { it.id }),
+            IntegrationAssetSyncEvent.postponed(syncingEventId),
+        )
+        return persistedAssets
     }
 
-    private suspend fun publishUpdatedAssets(
+    suspend fun processSyncingCorrespondence(
+        correspondences: List<Pair<String, String>>,
+        sourceSyncId: String,
+        syncingEventId: String,
+    ) {
+        repository.registerCorrespondences(
+            correspondences,
+            sourceSyncId,
+            syncingEventId,
+        )
+    }
+
+    private fun publishUpdatedAssets(
         updatedAssets: List<IntegrationAsset>,
         bindingKey: String,
         projectManagementId: String,
@@ -92,15 +115,17 @@ class IntegrationAssetService(
             val messageData = A6InfraBulkResourceDto(
                 A6DomainResource.Task,
                 updatedAssets.map {
+                    requireNotNull(it.id)
                     val sourceData = it.sourceData
                     A6InfraTaskDto(
+                        it.id,
                         sourceData.title,
                         sourceData.description,
                         sourceData.dueInstant,
                         emptySet(),
                         sourceData.done,
-                        sourceData.id,
                         sourceData.type,
+                        sourceData.id,
                     )
                 },
             )

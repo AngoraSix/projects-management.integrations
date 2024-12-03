@@ -6,7 +6,6 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
-import java.time.Instant
 
 abstract class SourceSyncModification<U>(modifyValue: U) :
     DomainObjectModification<SourceSync, U>(modifyValue)
@@ -52,7 +51,6 @@ class RequestSyncConfigUpdate(status: SourceSyncStatusValues) :
             domainObject.addEvent(
                 SourceSyncEvent(
                     SourceSyncEventValues.REQUEST_UPDATE_SYNC_CONFIG,
-                    Instant.now(),
                 ),
             )
             domainObject.status.status = modifyValue

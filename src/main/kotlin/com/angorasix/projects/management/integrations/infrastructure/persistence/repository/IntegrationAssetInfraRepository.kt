@@ -2,7 +2,7 @@ package com.angorasix.projects.management.integrations.infrastructure.persistenc
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import kotlinx.coroutines.flow.Flow
 
@@ -23,8 +23,14 @@ interface IntegrationAssetInfraRepository {
         requestingContributor: SimpleContributor,
     ): IntegrationAsset?
 
-    suspend fun updateAllStatus(
+    suspend fun registerEvent(
         filter: ListIntegrationAssetFilter,
-        status: IntegrationStatusValues,
+        event: IntegrationAssetSyncEvent,
+    )
+
+    suspend fun registerCorrespondences(
+        correspondences: List<Pair<String, String>>,
+        sourceSyncId: String,
+        syncingEventId: String,
     )
 }

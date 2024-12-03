@@ -31,5 +31,6 @@ interface SourceSyncStrategy {
         sourceSync: SourceSync,
         integration: Integration,
         requestingContributor: SimpleContributor,
+        syncEventId: String,
     ): List<IntegrationAsset>
 }
