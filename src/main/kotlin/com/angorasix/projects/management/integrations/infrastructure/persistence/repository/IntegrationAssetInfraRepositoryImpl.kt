@@ -77,25 +77,21 @@ private fun ListIntegrationAssetFilter.toQuery(requestingContributor: SimpleCont
     val query = Query()
 
     requestingContributor?.let {
-        query.addCriteria(
-            where("admins.contributorId").`in`(
-                requestingContributor.contributorId,
-            ),
-        )
+        query.addCriteria(where("admins.contributorId").`is`(it.contributorId))
     }
 
-    ids?.let { query.addCriteria(where("_id").`in`(it)) }
-    assetDataId?.let { query.addCriteria(where("sourceData.id").`in`(it)) }
-    sourceSyncId?.let { query.addCriteria(where("sourceSyncId").`in`(it)) }
-    integrationId?.let { query.addCriteria(where("integrationId").`in`(it)) }
-    sources?.let { query.addCriteria(where("source").`in`(it)) }
+    ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
+    assetDataId?.let { query.addCriteria(where("sourceData.id").`in`(it as Collection<Any>)) }
+    sourceSyncId?.let { query.addCriteria(where("sourceSyncId").`in`(it as Collection<Any>)) }
+    integrationId?.let { query.addCriteria(where("integrationId").`in`(it as Collection<Any>)) }
+    sources?.let { query.addCriteria(where("source").`in`(it as Collection<Any>)) }
 
     return query
 }
 
 private fun ListIntegrationAssetFilter.toAllByIdQuery(): Query {
     val query = Query()
-    ids?.let { query.addCriteria(where("_id").`in`(it)) }
+    ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
     return query
 }
 

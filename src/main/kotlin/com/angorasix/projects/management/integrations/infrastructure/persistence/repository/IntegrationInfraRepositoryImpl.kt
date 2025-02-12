@@ -39,11 +39,11 @@ class IntegrationInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperatio
 private fun ListIntegrationFilter.toQuery(requestingContributor: SimpleContributor): Query {
     val query = Query()
 
-    query.addCriteria(where("admins.contributorId").`in`(requestingContributor.contributorId))
+    query.addCriteria(where("admins.contributorId").`is`(requestingContributor.contributorId))
 
-    ids?.let { query.addCriteria(where("_id").`in`(it)) }
-    projectManagementId?.let { query.addCriteria(where("projectManagementId").`in`(it)) }
-    sources?.let { query.addCriteria(where("source").`in`(it)) }
+    ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
+    projectManagementId?.let { query.addCriteria(where("projectManagementId").`in`(it as Collection<Any>)) }
+    sources?.let { query.addCriteria(where("source").`in`(it as Collection<Any>)) }
 
     return query
 }

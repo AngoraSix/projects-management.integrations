@@ -41,7 +41,7 @@ data class RoutesConfigs(
     val patchSourceSync: Route,
 )
 
-class IntegrationActions(
+data class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
     val configSourceSync: String,
