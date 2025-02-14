@@ -109,6 +109,15 @@ data class SourceAssetData(
     val dueInstant: Instant?,
     val assigneeIds: List<String> = emptyList(),
     val done: Boolean = false,
+    // TASK ESTIMATION (CAPS)
+    val estimations: SourceAssetEstimationData? = null,
+)
+
+data class SourceAssetEstimationData(
+    val caps: Double,
+    val effort: Double?,
+    val complexity: Double?,
+    val industry: String?,
 )
 
 data class A6AssetData(
