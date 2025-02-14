@@ -19,5 +19,5 @@ class ProjectsManagementIntegrationsMessagingRouter(
     fun pendingSyncing(): (A6InfraMessageDto) -> Unit = { handler.reprocessPendingAssets(it) }
 
     @Bean
-    fun syncingCorrespondence(): (A6InfraMessageDto) -> Unit = { handler.processSyncingCorrespondence(it) }
+    fun tasksSyncingCorrespondence(): (A6InfraMessageDto) -> Unit = { handler.processSyncingCorrespondence(it) }
 }

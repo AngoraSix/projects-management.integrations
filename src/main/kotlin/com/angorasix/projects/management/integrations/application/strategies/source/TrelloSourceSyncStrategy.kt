@@ -235,7 +235,6 @@ class TrelloSourceSyncStrategy(
 
     private val stepKeysInOrder: List<TrelloSteps> = trelloStepsFns.keys.toList()
 
-    @OptIn(FlowPreview::class)
     override suspend fun triggerSourceSync(
         sourceSync: SourceSync,
         integration: Integration,
