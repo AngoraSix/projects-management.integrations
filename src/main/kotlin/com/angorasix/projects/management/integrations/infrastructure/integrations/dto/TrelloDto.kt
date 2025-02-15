@@ -40,4 +40,26 @@ data class TrelloCardDto(
     val due: String?,
     val dueComplete: Boolean?,
     val idMembers: List<String>?,
+    val pluginData: List<TrelloPluginDataDto>?,
+)
+
+data class TrelloPluginDataDto(
+    val id: String,
+    val idPlugin: String,
+    val value: String?,
+)
+
+data class TrelloPluginDataA6ValueDto(
+    val capsParams: TrelloPluginDataA6ValueCapsParams,
+)
+
+data class TrelloPluginDataA6ValueCapsParams(
+    val caps: Double?,
+    val strategy: String?,
+
+    val effort: Double?,
+    val complexity: Double?,
+    val industry: String?,
+    val industryModifier: Double?,
+    val moneyPayment: Double?,
 )

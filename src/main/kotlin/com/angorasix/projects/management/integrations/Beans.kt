@@ -57,7 +57,7 @@ val beans = beans {
         TrelloRegistrationStrategy(ref("trelloWebClient"), ref(), ref())
     }
     bean("trelloSourceSyncStrategy") {
-        TrelloSourceSyncStrategy(ref("trelloWebClient"), ref(), ref())
+        TrelloSourceSyncStrategy(ref("trelloWebClient"), ref(), ref(), ref())
     }
 }
 

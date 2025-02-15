@@ -5,11 +5,13 @@ import com.angorasix.commons.infrastructure.intercommunication.dto.A6DomainResou
 import com.angorasix.commons.infrastructure.intercommunication.dto.A6InfraTopics
 import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraBulkResourceDto
 import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraTaskDto
+import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraTaskEstimationDto
 import com.angorasix.commons.infrastructure.intercommunication.dto.messaging.A6InfraMessageDto
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp.AmqpConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
@@ -126,6 +128,7 @@ class IntegrationAssetService(
                         sourceData.done,
                         sourceData.type,
                         sourceData.id,
+                        sourceData.estimations?.toDto(),
                     )
                 },
             )
@@ -160,4 +163,16 @@ private fun updatedAssetOrNull(
     } else {
         asset
     }
+}
+
+private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto {
+    return A6InfraTaskEstimationDto(
+        caps,
+        strategy,
+        effort,
+        complexity,
+        industry,
+        industryModifier,
+        moneyPayment,
+    )
 }

@@ -11,6 +11,7 @@ import com.angorasix.projects.management.integrations.domain.integration.asset.I
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetData
+import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
@@ -23,9 +24,12 @@ import com.angorasix.projects.management.integrations.infrastructure.config.conf
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloBoardDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloCardDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloListDto
+import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloPluginDataA6ValueDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_TOKEN_CONFIG_PARAM
 import com.angorasix.projects.management.integrations.infrastructure.security.TokenEncryptionUtil
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -50,6 +54,7 @@ class TrelloSourceSyncStrategy(
     private val trelloWebClient: WebClient,
     private val integrationConfigs: SourceConfigurations,
     private val tokenEncryptionUtil: TokenEncryptionUtil,
+    private val objectMapper: ObjectMapper,
 ) : SourceSyncStrategy {
     /* default */
     private val logger: Logger = LoggerFactory.getLogger(TrelloSourceSyncStrategy::class.java)
@@ -230,7 +235,6 @@ class TrelloSourceSyncStrategy(
 
     private val stepKeysInOrder: List<TrelloSteps> = trelloStepsFns.keys.toList()
 
-    @OptIn(FlowPreview::class)
     override suspend fun triggerSourceSync(
         sourceSync: SourceSync,
         integration: Integration,
@@ -264,6 +268,9 @@ class TrelloSourceSyncStrategy(
     ): List<IntegrationAsset> {
         requireNotNull(integration.id) { "integration.id is required for triggerSourceSync" }
         requireNotNull(sourceSync.id) { "sourceSync.id is required for triggerSourceSync" }
+        val trelloPluginId =
+            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("pluginId")
+        requireNotNull(trelloPluginId) { "trello pluginId config is required for triggerSourceSync" }
         val selectedBoardIds =
             sourceSync.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
                 .responseData?.get(TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value)
@@ -291,13 +298,14 @@ class TrelloSourceSyncStrategy(
                         sourceSync.id,
                         IntegrationStatus(mutableListOf(IntegrationAssetSyncEvent.import(syncEventId))),
                         SourceAssetData(
-                            it.id,
-                            TrelloCardDto::class.java.name,
-                            it.name,
-                            it.desc,
-                            parseDueDate(it.due),
-                            emptyList(),
-                            it.idList == doneListId,
+                            id = it.id,
+                            type = TrelloCardDto::class.java.name,
+                            title = it.name,
+                            description = it.desc,
+                            dueInstant = parseDueDate(it.due),
+                            assigneeIds = emptyList(),
+                            done = it.idList == doneListId,
+                            estimations = extractEstimationData(it, trelloPluginId),
                         ),
                         it,
                     )
@@ -315,6 +323,36 @@ class TrelloSourceSyncStrategy(
             }
         }.toList()
     }
+
+    private fun extractEstimationData(
+        it: TrelloCardDto,
+        trelloPluginId: String,
+    ): SourceAssetEstimationData? =
+        it.pluginData
+            ?.firstOrNull { pd -> pd.idPlugin == trelloPluginId }
+            ?.value
+            ?.takeIf { it.isNotBlank() }
+            ?.let { json ->
+                try {
+                    val pluginValueDto = objectMapper.readValue(
+                        json,
+                        TrelloPluginDataA6ValueDto::class.java,
+                    )
+                    SourceAssetEstimationData(
+                        caps = pluginValueDto.capsParams.caps,
+                        strategy = pluginValueDto.capsParams.strategy,
+
+                        effort = pluginValueDto.capsParams.effort,
+                        complexity = pluginValueDto.capsParams.complexity,
+                        industry = pluginValueDto.capsParams.industry,
+                        industryModifier = pluginValueDto.capsParams.industryModifier,
+                        moneyPayment = pluginValueDto.capsParams.moneyPayment,
+                    )
+                } catch (ex: JsonProcessingException) {
+                    logger.error("Error parsing plugin data for card: ${it.id}. Data: $json", ex)
+                    null
+                }
+            }
 
     private fun extractAccessToken(integration: Integration) =
         tokenEncryptionUtil.decrypt(

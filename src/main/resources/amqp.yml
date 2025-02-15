@@ -20,9 +20,9 @@ spring:
           destination: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_PENDINGINTEGRATIONS_INPUT_EXCHANGE:pendingSyncing} # existing exchange (or creates)?
           group: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_PENDINGINTEGRATIONS_INPUT_QUEUE:reprocessing}
           binder: a6Rabbit
-        syncingCorrespondence-in-0:
-          destination: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_SYNCINGCORRESPONDENCE_INPUT_EXCHANGE:syncingCorrespondence} # existing exchange (or creates)?
-          group: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_SYNCINGCORRESPONDENCE_INPUT_QUEUE:processing}
+        tasksSyncingCorrespondence-in-0:
+          destination: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_TASKSSYNCINGCORRESPONDENCE_INPUT_EXCHANGE:mgmtTasksSyncing} # existing exchange (or creates)?
+          group: ${A6_PROJECTS_MGMT_INTEGRATIONS_RABBITMQ_TASKSSYNCINGCORRESPONDENCE_INPUT_QUEUE:mgmtIntegrationCorrespondence}
           binder: a6Rabbit
       rabbit:
         bindings:
@@ -32,7 +32,7 @@ spring:
           pendingSyncing-in-0:
             consumer:
               republishToDlq: false
-          syncingCorrespondence-in-0:
+          tasksSyncingCorrespondence-in-0:
             consumer:
               republishToDlq: false
           pendingSyncingOut:
@@ -50,4 +50,4 @@ spring:
                 password: ${A6_MGMT_INTEGRATIONS_RABBITMQ_PASSWORD:guest}
                 virtual-host: ${A6_MGMT_INTEGRATIONS_RABBITMQ_VHOST:/}
     function:
-      definition: pendingSyncing;syncingCorrespondence
+      definition: pendingSyncing;tasksSyncingCorrespondence
