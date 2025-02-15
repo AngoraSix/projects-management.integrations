@@ -340,9 +340,13 @@ class TrelloSourceSyncStrategy(
                     )
                     SourceAssetEstimationData(
                         caps = pluginValueDto.capsParams.caps,
+                        strategy = pluginValueDto.capsParams.strategy,
+
                         effort = pluginValueDto.capsParams.effort,
                         complexity = pluginValueDto.capsParams.complexity,
                         industry = pluginValueDto.capsParams.industry,
+                        industryModifier = pluginValueDto.capsParams.industryModifier,
+                        moneyPayment = pluginValueDto.capsParams.moneyPayment,
                     )
                 } catch (ex: JsonProcessingException) {
                     logger.error("Error parsing plugin data for card: ${it.id}. Data: $json", ex)

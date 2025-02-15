@@ -54,8 +54,12 @@ data class TrelloPluginDataA6ValueDto(
 )
 
 data class TrelloPluginDataA6ValueCapsParams(
-    val caps: Double,
+    val caps: Double?,
+    val strategy: String?,
+
     val effort: Double?,
     val complexity: Double?,
     val industry: String?,
+    val industryModifier: Double?,
+    val moneyPayment: Double?,
 )
