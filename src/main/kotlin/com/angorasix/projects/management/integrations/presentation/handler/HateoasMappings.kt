@@ -157,6 +157,7 @@ fun SourceSyncDto.resolveHypermedia(
     requestingContributor?.let {
         if (requestingContributor.isAdminHint == true || sourceSync.isAdmin(requestingContributor.contributorId)) {
             if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
+                // CONTINUE SYNC
                 val patchSourceSyncRoute = apiConfigs.routes.patchSourceSync
                 val continueSourceSyncActionName =
                     apiConfigs.integrationActions.continueSourceSync
@@ -200,6 +201,21 @@ fun SourceSyncDto.resolveHypermedia(
                         .afford(patchSourceSyncRoute.method)
                         .withName(updateSourceSyncConfigActionName).toLink()
                 add(updateSourceSyncConfigAffordanceLink)
+
+                // MATCH PLATFORM USERS
+                val matchPlatformUsersActionName =
+                    apiConfigs.integrationActions.matchPlatformUsers
+                val matchPlatformUsersActionLink = Link.of(
+                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
+                        .toUriString(),
+                ).withTitle(matchPlatformUsersActionName)
+                    .withName(matchPlatformUsersActionName)
+                    .withRel(matchPlatformUsersActionName)
+                val matchPlatformUsersAffordanceLink =
+                    Affordances.of(matchPlatformUsersActionLink)
+                        .afford(patchSourceSyncRoute.method)
+                        .withName(matchPlatformUsersActionName).toLink()
+                add(matchPlatformUsersAffordanceLink)
             }
         }
     }

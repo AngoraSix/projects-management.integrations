@@ -57,3 +57,4 @@ configs:
       continueSourceSync: continueSourceSync
       requestFullSync: requestFullSync
       updateSourceSyncConfig: updateSourceSyncConfig
+      matchPlatformUsers: matchPlatformUsers
