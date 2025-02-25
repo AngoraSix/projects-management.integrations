@@ -23,7 +23,6 @@ import com.angorasix.projects.management.integrations.infrastructure.config.conf
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceType
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloBoardDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloCardDto
-import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloListDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloPluginDataA6ValueDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_TOKEN_CONFIG_PARAM
@@ -31,9 +30,6 @@ import com.angorasix.projects.management.integrations.infrastructure.security.To
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapMerge
