@@ -164,73 +164,6 @@ class TrelloSourceSyncStrategy(
                 mapOf("boards" to boardsDto),
             )
         },
-        TrelloSteps.RESOLVE_BOARD to { sourceSync, integration, _ ->
-            require(sourceSync != null) {
-                "sourceSync" +
-                    "is required for step ${TrelloSteps.RESOLVE_BOARD}"
-            }
-
-            val selectedBoardIds =
-                sourceSync.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
-                    .responseData?.get(TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value)
-                    ?: throw IllegalArgumentException(
-                        "selected board" +
-                            "is required for ResolveBoard step",
-                    )
-            val boardListsUrlPattern =
-                integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs
-                    ?.get("boardListsUrlPattern")
-                    ?: throw IllegalArgumentException(
-                        "trello boardListsUrlPattern config" +
-                            "is required for source sync",
-                    )
-            val accessToken = extractAccessToken(integration)
-
-            val fieldSpecs = coroutineScope {
-                selectedBoardIds.map { selectedBoardId ->
-                    async {
-                        val boardListsUrl =
-                            boardListsUrlPattern.replace(":boardId", selectedBoardId)
-                        try {
-                            // Call Trello to get board Lists
-                            val listsDto = trelloWebClient.get()
-                                .uri(boardListsUrl)
-                                .attributes { attrs ->
-                                    attrs[IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
-                                        accessToken
-                                }
-                                .retrieve().bodyToMono(typeReference<List<TrelloListDto>>())
-                                .awaitSingle()
-                            val doneListOptions = listsDto.map { OptionSpec(it.id, it.name) }
-                            InlineFieldSpec(
-                                "${TrelloResponseFieldKeys.SELECT_DONE_LIST_PREFIX.value}$selectedBoardId",
-                                FieldSpec.SELECT,
-                                doneListOptions,
-                            )
-                        } catch (e: WebClientResponseException) {
-                            throw IllegalArgumentException(
-                                "Error while fetching board lists for boardId: $selectedBoardId." +
-                                    "Are you sure board has lists?",
-                                e,
-                            )
-                        } catch (e: WebClientRequestException) {
-                            throw IllegalArgumentException(
-                                "Error making board lists request for boardId: $selectedBoardId." +
-                                    "Are you sure board has lists?",
-                                e,
-                            )
-                        }
-                    }
-                }
-            }.awaitAll()
-
-            val step = SourceSyncStatusStep(
-                TrelloSteps.RESOLVE_BOARD.value,
-                fieldSpecs,
-            )
-            sourceSync.status.steps.add(step)
-            sourceSync
-        },
     )
 
     private val stepKeysInOrder: List<TrelloSteps> = trelloStepsFns.keys.toList()
@@ -277,12 +210,6 @@ class TrelloSourceSyncStrategy(
 
         requireNotNull(selectedBoardIds) { "selected board is required for triggerSourceSync" }
         return selectedBoardIds.asFlow().flatMapMerge { selectedBoardId ->
-            val doneListId =
-                sourceSync.status.steps.first { it.stepKey == TrelloSteps.RESOLVE_BOARD.value }
-                    .responseData?.get("${TrelloResponseFieldKeys.SELECT_DONE_LIST_PREFIX.value}$selectedBoardId")
-                    ?.first()
-            requireNotNull(doneListId) { "selected done list id is required for triggerSourceSync" }
-
             try {
                 // Call Trello to get board cards List
                 fetchAllCards(
@@ -304,7 +231,7 @@ class TrelloSourceSyncStrategy(
                             description = it.desc,
                             dueInstant = parseDueDate(it.due),
                             assigneeIds = emptyList(),
-                            done = it.idList == doneListId,
+                            done = it.dueComplete == true,
                             estimations = extractEstimationData(it, trelloPluginId),
                         ),
                         it,
@@ -408,9 +335,9 @@ suspend fun fetchAllCards(
 }
 
 enum class TrelloSteps(val value: String) {
-    SELECT_BOARD("SELECT_BOARD"), RESOLVE_BOARD("RESOLVE_BOARD_MAPPING"),
+    SELECT_BOARD("SELECT_BOARD"),
 }
 
 private enum class TrelloResponseFieldKeys(val value: String) {
-    SELECT_BOARD_FIELD("SELECT_BOARD_FIELD"), SELECT_DONE_LIST_PREFIX("SELECT_DONE_LIST_FIELD:"),
+    SELECT_BOARD_FIELD("SELECT_BOARD_FIELD"),
 }
