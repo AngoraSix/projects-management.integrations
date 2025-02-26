@@ -156,6 +156,21 @@ fun SourceSyncDto.resolveHypermedia(
 
     requestingContributor?.let {
         if (requestingContributor.isAdminHint == true || sourceSync.isAdmin(requestingContributor.contributorId)) {
+
+            // getSourceSync
+            val getSourceSyncRoute = apiConfigs.routes.getSourceSync
+            val getSourceSyncActionName = apiConfigs.integrationActions.getSourceSync
+            val getSourceSyncActionLink = Link.of(
+                uriBuilder(request).path(getSourceSyncRoute.resolvePath()).build()
+                    .toUriString(),
+            ).withTitle(getSourceSyncActionName).withName(getSourceSyncActionName)
+                .withRel(getSourceSyncActionName)
+            val getSourceSyncAffordanceLink =
+                Affordances.of(getSourceSyncActionLink).afford(getSourceSyncRoute.method)
+                    .withName(getSourceSyncActionName).toLink()
+            add(getSourceSyncAffordanceLink)
+
+
             if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
                 val patchSourceSyncRoute = apiConfigs.routes.patchSourceSync
                 val continueSourceSyncActionName =
