@@ -22,6 +22,7 @@ fun SourceSync.convertToDto(
     contributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
+    isIntegrationActive: Boolean,
 ): SourceSyncDto {
     return SourceSyncDto(
         source,
@@ -35,6 +36,7 @@ fun SourceSync.convertToDto(
         this,
         apiConfigs,
         request,
+        isIntegrationActive,
     )
 }
 

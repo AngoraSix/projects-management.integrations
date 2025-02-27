@@ -24,6 +24,7 @@ data class SourceSync @PersistenceCreator constructor(
     var status: SourceSyncStatus,
     val admins: Set<SimpleContributor> = emptySet(),
     val events: MutableList<SourceSyncEvent> = mutableListOf(),
+    val mappings: SourceSyncMappings = SourceSyncMappings(),
     val sourceStrategyStateData: Any?, // any sate information used by the source strategy
 ) {
     constructor(
@@ -32,6 +33,7 @@ data class SourceSync @PersistenceCreator constructor(
         status: SourceSyncStatus,
         admins: Set<SimpleContributor> = emptySet(),
         events: MutableList<SourceSyncEvent> = mutableListOf(),
+        mappings: SourceSyncMappings = SourceSyncMappings(),
         sourceStrategyStateData: Any?,
     ) : this(
         null,
@@ -40,6 +42,7 @@ data class SourceSync @PersistenceCreator constructor(
         status,
         admins,
         events,
+        mappings,
         sourceStrategyStateData,
     )
 
@@ -73,6 +76,7 @@ enum class SourceSyncEventValues {
     TRIGGERED_FULL_SYNC,
     REQUEST_UPDATE_SYNC_CONFIG,
     FULL_SYNC_CORRESPONDENCE,
+    STARTING_MEMBER_MATCH,
 }
 
 data class SourceSyncStatus(
@@ -93,4 +97,12 @@ data class SourceSyncStatusStep(
 
 enum class SourceSyncStatusValues {
     IN_PROGRESS, COMPLETED, FAILED
+}
+
+data class SourceSyncMappings(
+    val users: MutableMap<String, SourceUser?> = mutableMapOf(), // A6 Contributor id to Source User
+) {
+    fun addUserMappings(newUserMappings: Map<String, SourceUser?>) {
+        users.putAll(newUserMappings)
+    }
 }

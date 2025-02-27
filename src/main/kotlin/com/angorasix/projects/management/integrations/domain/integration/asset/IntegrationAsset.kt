@@ -17,7 +17,7 @@ data class IntegrationAsset @PersistenceCreator constructor(
     val source: String,
     val integrationId: String,
     val sourceSyncId: String,
-    val integrationStatus: IntegrationStatus,
+    val integrationAssetStatus: IntegrationAssetStatus,
     val sourceData: SourceAssetData,
     val sourceDto: Any,
     val angoraSixData: A6AssetData?,
@@ -26,7 +26,7 @@ data class IntegrationAsset @PersistenceCreator constructor(
         source: String,
         integrationId: String,
         sourceSyncId: String,
-        integrationStatus: IntegrationStatus,
+        integrationAssetStatus: IntegrationAssetStatus,
         sourceData: SourceAssetData,
         sourceDto: Any,
     ) : this(
@@ -34,7 +34,7 @@ data class IntegrationAsset @PersistenceCreator constructor(
         source,
         integrationId,
         sourceSyncId,
-        integrationStatus,
+        integrationAssetStatus,
         sourceData,
         sourceDto,
         null,
@@ -45,7 +45,7 @@ data class IntegrationAsset @PersistenceCreator constructor(
     }
 }
 
-data class IntegrationStatus(
+data class IntegrationAssetStatus(
     val events: MutableList<IntegrationAssetSyncEvent> = mutableListOf(),
 ) {
     fun currentStatus(): IntegrationStatusValues {

@@ -68,7 +68,7 @@ fun Integration.convertToDto(
         status.convertToDto(),
         admins,
         config.convertToDto(),
-        sourceSync?.convertToDto(contributor, apiConfigs, request),
+        sourceSync?.convertToDto(contributor, apiConfigs, request, this.isActive()),
         id,
     ).resolveHypermedia(
         contributor,

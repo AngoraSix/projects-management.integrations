@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
 import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.infrastructure.config.configurationproperty.api.Route
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
@@ -73,15 +74,16 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
         // START SOURCE SYNC
         if (integration.sourceSync?.status?.status != SourceSyncStatusValues.COMPLETED) {
             val createSourceSyncRoute = apiConfigs.routes.createSourceSync
-            val configSourceSyncActionName = apiConfigs.integrationActions.configSourceSync
+            val startConfigSourceSyncActionName =
+                apiConfigs.integrationActions.startConfigSourceSync
             val createSourceSyncLink = Link.of(
                 uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build()
                     .toUriString(),
-            ).withTitle(configSourceSyncActionName).withName(configSourceSyncActionName)
-                .withRel(configSourceSyncActionName).expand(integration.id)
+            ).withTitle(startConfigSourceSyncActionName).withName(startConfigSourceSyncActionName)
+                .withRel(startConfigSourceSyncActionName).expand(integration.id)
             val createSourceSyncAffordanceLink =
                 Affordances.of(createSourceSyncLink).afford(createSourceSyncRoute.method)
-                    .withName(configSourceSyncActionName).toLink()
+                    .withName(startConfigSourceSyncActionName).toLink()
             add(createSourceSyncAffordanceLink)
         }
 
@@ -144,6 +146,7 @@ fun SourceSyncDto.resolveHypermedia(
     sourceSync: SourceSync,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
+    isIntegrationActive: Boolean,
 ): SourceSyncDto {
     val getSingleRoute = apiConfigs.routes.getSourceSync
     // self
@@ -155,69 +158,56 @@ fun SourceSyncDto.resolveHypermedia(
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
-        if (requestingContributor.isAdminHint == true || sourceSync.isAdmin(requestingContributor.contributorId)) {
+        if (
+            (
+                requestingContributor.isAdminHint == true ||
+                    sourceSync.isAdmin(requestingContributor.contributorId)
+                ) &&
+            isIntegrationActive
+        ) {
             if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
                 // CONTINUE SYNC
-                val patchSourceSyncRoute = apiConfigs.routes.patchSourceSync
-                val continueSourceSyncActionName =
-                    apiConfigs.integrationActions.continueSourceSync
-                val continueSourceSyncActionLink = Link.of(
-                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
-                        .toUriString(),
-                ).withTitle(continueSourceSyncActionName).withName(continueSourceSyncActionName)
-                    .withRel(continueSourceSyncActionName)
-                val continueSourceSyncAffordanceLink =
-                    Affordances.of(continueSourceSyncActionLink)
-                        .afford(patchSourceSyncRoute.method)
-                        .withName(continueSourceSyncActionName).toLink()
-                add(continueSourceSyncAffordanceLink)
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.continueSourceSync,
+                    request,
+                )
             } else if (status?.status == SourceSyncStatusValues.COMPLETED) {
                 // REQUEST FULL SYNC
-                val patchSourceSyncRoute = apiConfigs.routes.patchSourceSync
-                val requestFullSyncActionName =
-                    apiConfigs.integrationActions.requestFullSync
-                val requestFullSyncActionLink = Link.of(
-                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
-                        .toUriString(),
-                ).withTitle(requestFullSyncActionName).withName(requestFullSyncActionName)
-                    .withRel(requestFullSyncActionName)
-                val requestFullSyncAffordanceLink =
-                    Affordances.of(requestFullSyncActionLink)
-                        .afford(patchSourceSyncRoute.method)
-                        .withName(requestFullSyncActionName).toLink()
-                add(requestFullSyncAffordanceLink)
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.requestFullSync,
+                    request,
+                )
 
                 // UPDATE SYNC CONFIG
-                val updateSourceSyncConfigActionName =
-                    apiConfigs.integrationActions.updateSourceSyncConfig
-                val updateSourceSyncConfigActionLink = Link.of(
-                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
-                        .toUriString(),
-                ).withTitle(updateSourceSyncConfigActionName)
-                    .withName(updateSourceSyncConfigActionName)
-                    .withRel(updateSourceSyncConfigActionName)
-                val updateSourceSyncConfigAffordanceLink =
-                    Affordances.of(updateSourceSyncConfigActionLink)
-                        .afford(patchSourceSyncRoute.method)
-                        .withName(updateSourceSyncConfigActionName).toLink()
-                add(updateSourceSyncConfigAffordanceLink)
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.updateSourceSyncConfig,
+                    request,
+                )
 
                 // MATCH PLATFORM USERS
-                val matchPlatformUsersActionName =
-                    apiConfigs.integrationActions.matchPlatformUsers
-                val matchPlatformUsersActionLink = Link.of(
-                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
-                        .toUriString(),
-                ).withTitle(matchPlatformUsersActionName)
-                    .withName(matchPlatformUsersActionName)
-                    .withRel(matchPlatformUsersActionName)
-                val matchPlatformUsersAffordanceLink =
-                    Affordances.of(matchPlatformUsersActionLink)
-                        .afford(patchSourceSyncRoute.method)
-                        .withName(matchPlatformUsersActionName).toLink()
-                add(matchPlatformUsersAffordanceLink)
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.startMatchPlatformUsers,
+                    request,
+                )
             }
         }
     }
     return this
+}
+
+private fun SourceSyncDto.addLink(route: Route, actionName: String, request: ServerRequest) {
+    val actionLink = Link.of(
+        uriBuilder(request).path(route.resolvePath()).build()
+            .toUriString(),
+    ).withTitle(actionName).withName(actionName)
+        .withRel(actionName)
+    val affordanceLink =
+        Affordances.of(actionLink)
+            .afford(route.method)
+            .withName(actionName).toLink()
+    add(affordanceLink)
 }

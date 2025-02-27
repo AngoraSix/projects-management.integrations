@@ -26,7 +26,8 @@ data class Integration @PersistenceCreator public constructor(
     val config: IntegrationConfig,
 ) {
 
-    @Transient var sourceSync: SourceSync? = null
+    @Transient
+    var sourceSync: SourceSync? = null
 
     constructor(
         source: String,
@@ -50,6 +51,8 @@ data class Integration @PersistenceCreator public constructor(
      */
     fun isAdmin(contributorId: String?): Boolean =
         (contributorId != null).and(admins.any { it.contributorId == contributorId })
+
+    fun isActive(): Boolean = status.status == IntegrationStatusValues.REGISTERED
 }
 
 data class IntegrationStatus(

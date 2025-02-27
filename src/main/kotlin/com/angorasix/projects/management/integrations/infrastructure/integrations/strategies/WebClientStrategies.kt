@@ -36,8 +36,6 @@ class WebClientStrategies {
                 integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("apiKey")
                     ?: throw IllegalArgumentException("trello apiKey config is required")
 
-//    val trelloApiSecret = integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("apiSecret")
-//        ?: throw IllegalArgumentException("trello apiSecret config is required")
             return WebClient.builder()
                 .defaultUriVariables(mapOf("key" to trelloApiKey))
                 .defaultHeader(HttpHeaders.ACCEPT, "application/json")

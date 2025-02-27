@@ -1,5 +1,6 @@
 package com.angorasix.projects.management.integrations.presentation.dto
 
+import com.angorasix.commons.domain.DetailedContributor
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.presentation.dto.InlineFieldSpecDto
 import com.angorasix.commons.presentation.dto.PatchOperation
@@ -90,6 +91,10 @@ data class SourceSyncStatusStepDto(
     val stepKey: String,
     val requiredDataForStep: List<InlineFieldSpecDto> = emptyList(),
     var responseData: Map<String, List<String>>? = null,
+)
+
+data class ProjectContributorsToMatchDto(
+    val projectContributors: List<DetailedContributor>,
 )
 
 enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {

@@ -8,8 +8,8 @@ import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
 import com.angorasix.projects.management.integrations.application.strategies.typeReference
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetData
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
@@ -19,11 +19,13 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatus
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusStep
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceUser
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceType
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloBoardDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloCardDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloListDto
+import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloMemberDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.dto.TrelloPluginDataA6ValueDto
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.IntegrationConstants.Companion.ACCESS_TOKEN_CONFIG_PARAM
@@ -137,16 +139,15 @@ class TrelloSourceSyncStrategy(
                     FieldSpec.SELECT,
                     boardsOptions,
                 )
-
             SourceSync(
-                existingInProgressSourceSync?.id,
-                Source.TRELLO.value,
-                integration.id
+                id = existingInProgressSourceSync?.id,
+                source = Source.TRELLO.value,
+                integrationId = integration.id
                     ?: throw IllegalArgumentException(
                         "persisted Integration" +
                             "is required for source sync",
                     ),
-                SourceSyncStatus(
+                status = SourceSyncStatus(
                     SourceSyncStatusValues.IN_PROGRESS,
                     arrayListOf(
                         SourceSyncStatusStep(
@@ -155,13 +156,13 @@ class TrelloSourceSyncStrategy(
                         ),
                     ),
                 ),
-                setOf(requestingContributor),
-                mutableListOf(
+                admins = setOf(requestingContributor),
+                events = mutableListOf(
                     SourceSyncEvent(
                         SourceSyncEventValues.STARTING_FULL_SYNC_CONFIG,
                     ),
                 ),
-                mapOf("boards" to boardsDto),
+                sourceStrategyStateData = mapOf("boards" to boardsDto),
             )
         },
         TrelloSteps.RESOLVE_BOARD to { sourceSync, integration, _ ->
@@ -274,7 +275,6 @@ class TrelloSourceSyncStrategy(
         val selectedBoardIds =
             sourceSync.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
                 .responseData?.get(TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value)
-
         requireNotNull(selectedBoardIds) { "selected board is required for triggerSourceSync" }
         return selectedBoardIds.asFlow().flatMapMerge { selectedBoardId ->
             val doneListId =
@@ -296,7 +296,13 @@ class TrelloSourceSyncStrategy(
                         sourceSync.source,
                         integration.id,
                         sourceSync.id,
-                        IntegrationStatus(mutableListOf(IntegrationAssetSyncEvent.import(syncEventId))),
+                        IntegrationAssetStatus(
+                            mutableListOf(
+                                IntegrationAssetSyncEvent.import(
+                                    syncEventId,
+                                ),
+                            ),
+                        ),
                         SourceAssetData(
                             id = it.id,
                             type = TrelloCardDto::class.java.name,
@@ -339,14 +345,14 @@ class TrelloSourceSyncStrategy(
                         TrelloPluginDataA6ValueDto::class.java,
                     )
                     SourceAssetEstimationData(
-                        caps = pluginValueDto.capsParams.caps,
-                        strategy = pluginValueDto.capsParams.strategy,
+                        caps = pluginValueDto.capsParams?.caps,
+                        strategy = pluginValueDto.capsParams?.strategy,
 
-                        effort = pluginValueDto.capsParams.effort,
-                        complexity = pluginValueDto.capsParams.complexity,
-                        industry = pluginValueDto.capsParams.industry,
-                        industryModifier = pluginValueDto.capsParams.industryModifier,
-                        moneyPayment = pluginValueDto.capsParams.moneyPayment,
+                        effort = pluginValueDto.capsParams?.effort,
+                        complexity = pluginValueDto.capsParams?.complexity,
+                        industry = pluginValueDto.capsParams?.industry,
+                        industryModifier = pluginValueDto.capsParams?.industryModifier,
+                        moneyPayment = pluginValueDto.capsParams?.moneyPayment,
                     )
                 } catch (ex: JsonProcessingException) {
                     logger.error("Error parsing plugin data for card: ${it.id}. Data: $json", ex)
@@ -367,6 +373,58 @@ class TrelloSourceSyncStrategy(
             logger.error("Invalid due date format for Trello card: $due")
             null
         }
+    }
+
+    @OptIn(FlowPreview::class)
+    override suspend fun obtainUsersMatchOptions(
+        sourceSync: SourceSync,
+        integration: Integration,
+        requestingContributor: SimpleContributor,
+    ): List<SourceUser> {
+        val accessToken = extractAccessToken(integration)
+        val boardMembersUrlPattern =
+            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs
+                ?.get("boardMembersUrlPattern")
+                ?: throw IllegalArgumentException(
+                    "trello boardCardsUrlPattern config" +
+                        "is required for triggerSourceSync",
+                )
+
+        val selectedBoardIds =
+            sourceSync.status.steps.first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
+                .responseData?.get(TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value)
+        requireNotNull(selectedBoardIds) { "selected board is required for triggerSourceSync" }
+
+        return selectedBoardIds.asFlow().flatMapMerge { selectedBoardId ->
+            try {
+                // Call Trello to get board cards List
+                fetchAllMembers(
+                    trelloWebClient,
+                    accessToken,
+                    boardMembersUrlPattern,
+                    selectedBoardId,
+                ).map {
+                    SourceUser(
+                        sourceUserId = it.id,
+                        name = it.fullName,
+                        username = it.username,
+                        email = it.email,
+                        profileUrl = it.url,
+                        profileMediaUrl = it.avatarUrl?.let { avatarUrlPattern -> "$avatarUrlPattern/50.png" },
+                    )
+                }
+            } catch (e: WebClientResponseException) {
+                throw IllegalArgumentException(
+                    "Error while fetching members for boardId: $selectedBoardId.",
+                    e,
+                )
+            } catch (e: WebClientRequestException) {
+                throw IllegalArgumentException(
+                    "Error making members request for boardId: $selectedBoardId.",
+                    e,
+                )
+            }
+        }.toList()
     }
 
     companion object {
@@ -405,6 +463,23 @@ suspend fun fetchAllCards(
     }
 
     return fetchPaginatedCards(null)
+}
+
+fun fetchAllMembers(
+    trelloWebClient: WebClient,
+    accessToken: String,
+    boardMembersUrlPattern: String,
+    selectedBoardId: String,
+): Flow<TrelloMemberDto> {
+    val boardMembersUrl =
+        boardMembersUrlPattern.replace(":boardId", selectedBoardId)
+    return trelloWebClient.get()
+        .uri(boardMembersUrl)
+        .attributes { attrs ->
+            attrs[IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
+                accessToken
+        }
+        .retrieve().bodyToFlow<TrelloMemberDto>()
 }
 
 enum class TrelloSteps(val value: String) {
