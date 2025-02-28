@@ -74,7 +74,51 @@ data class SourceSyncDto(
     val events: List<SourceSyncEventDto> = listOf(),
     val sourceStrategyStateData: Any? = null,
     val id: String? = null,
+    val sourceAssets: List<IntegrationAssetDto> = emptyList(),
 ) : RepresentationModel<SourceSyncDto>()
+
+data class IntegrationAssetDto(
+    val id: String? = null,
+    val integrationStatus: IntegrationAssetStatusDto,
+    val sourceData: SourceAssetDataDto,
+
+    val source: String,
+    val integrationId: String,
+    val sourceSyncId: String,
+)
+
+data class SourceAssetDataDto(
+    val id: String,
+    val type: String,
+    // TASK
+    val title: String,
+    val description: String?,
+    val dueInstant: Instant?,
+    val assigneeIds: List<String> = emptyList(),
+    val done: Boolean = false,
+    // TASK ESTIMATION (CAPS)
+    val estimations: SourceAssetEstimationDataDto? = null,
+)
+
+data class SourceAssetEstimationDataDto(
+    val caps: Double?,
+    val strategy: String?,
+    val effort: Double?,
+    val complexity: Double?,
+    val industry: String?,
+    val industryModifier: Double?,
+    val moneyPayment: Double?,
+)
+
+data class IntegrationAssetStatusDto(
+    val events: List<IntegrationAssetSyncEventDto> = emptyList(),
+)
+
+data class IntegrationAssetSyncEventDto(
+    val type: String,
+    val syncEventId: String,
+    val eventInstant: String,
+)
 
 data class SourceSyncEventDto(
     val type: SourceSyncEventValues,

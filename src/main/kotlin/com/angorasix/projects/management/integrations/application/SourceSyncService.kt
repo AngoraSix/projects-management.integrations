@@ -4,6 +4,7 @@ import com.angorasix.commons.domain.DetailedContributor
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
@@ -11,7 +12,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncRepository
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
-import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
+import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.toList
 import java.util.*
@@ -26,6 +27,7 @@ class SourceSyncService(
     private val integrationsService: IntegrationsService,
     private val sourceSyncStrategies: Map<Source, SourceSyncStrategy>,
     private val assetsService: IntegrationAssetService,
+    private val assetRepository: IntegrationAssetRepository,
 ) {
 
     suspend fun findSingleSourceSync(
@@ -34,7 +36,7 @@ class SourceSyncService(
     ): SourceSync? = repository.findForContributorUsingFilter(
         ListSourceSyncFilter(listOf(id)),
         requestingContributor,
-    )
+    )?.includeSourceSyncAssets(requestingContributor, assetRepository)
 
     suspend fun createSourceSync(
         integrationId: String,
@@ -120,6 +122,19 @@ class SourceSyncService(
                 }
             repository.save(updatedSourceSync)
         }
+    }
+
+    private suspend fun SourceSync.includeSourceSyncAssets(
+        requestingContributor: SimpleContributor,
+        assetRepository: IntegrationAssetRepository,
+    ): SourceSync {
+        this.id?.let {
+            val assets = assetRepository.findUsingFilter(
+                ListIntegrationAssetFilter(null, null, listOf(it)),
+            ).toList()
+            this.assets = assets
+        }
+        return this
     }
 
     private suspend fun triggerFullSync(

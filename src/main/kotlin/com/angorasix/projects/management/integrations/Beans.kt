@@ -40,7 +40,7 @@ val beans = beans {
         val strategies = mapOf(
             Source.TRELLO to ref<SourceSyncStrategy>("trelloSourceSyncStrategy"),
         )
-        SourceSyncService(ref(), ref(), strategies, ref())
+        SourceSyncService(ref(), ref(), strategies, ref(), ref())
     }
     bean<ProjectsManagementIntegrationsMessagingHandler>()
     bean<IntegrationAssetService>()
