@@ -11,6 +11,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncRepository
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
+import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationFilter
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.toList
 import java.util.*
@@ -26,6 +27,15 @@ class SourceSyncService(
     private val sourceSyncStrategies: Map<Source, SourceSyncStrategy>,
     private val assetsService: IntegrationAssetService,
 ) {
+
+    suspend fun findSingleSourceSync(
+        id: String,
+        requestingContributor: SimpleContributor,
+    ): SourceSync? = repository.findForContributorUsingFilter(
+        ListSourceSyncFilter(listOf(id)),
+        requestingContributor,
+    )
+
     suspend fun createSourceSync(
         integrationId: String,
         requestingContributor: SimpleContributor,

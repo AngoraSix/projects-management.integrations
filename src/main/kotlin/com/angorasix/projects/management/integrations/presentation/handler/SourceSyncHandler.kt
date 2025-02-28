@@ -22,7 +22,6 @@ import org.springframework.web.reactive.function.server.ServerResponse.created
 import org.springframework.web.reactive.function.server.ServerResponse.ok
 import org.springframework.web.reactive.function.server.awaitBody
 import org.springframework.web.reactive.function.server.bodyValueAndAwait
-import org.springframework.web.reactive.function.server.buildAndAwait
 import java.net.URI
 
 /**
@@ -76,11 +75,18 @@ class SourceSyncHandler(
     suspend fun getSourceSync(request: ServerRequest): ServerResponse {
         val requestingContributor =
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
-//        val sourceSyncId = request.pathVariable("id")
+        val sourceSyncId = request.pathVariable("id")
 
         return if (requestingContributor is SimpleContributor) {
-            // Implement the service method to get the SourceSync
-            ok().contentType(MediaTypes.HAL_FORMS_JSON).buildAndAwait()
+            service.findSingleSourceSync(sourceSyncId, requestingContributor)?.let {
+                val outputSourceSync =
+                    it.convertToDto(
+                        requestingContributor as? SimpleContributor,
+                        apiConfigs,
+                        request,
+                    )
+                ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(outputSourceSync)
+            } ?: resolveBadRequest("Non-existing SourceSync", "SourceSync")
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
         }
