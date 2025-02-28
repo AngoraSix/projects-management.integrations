@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
 import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.infrastructure.config.configurationproperty.api.Route
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
@@ -63,8 +64,7 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
         sourceConfigurations.supported.flatMap {
             sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions(
                 apiConfigs,
-            )
-                ?: emptyList()
+            ) ?: emptyList()
         }.forEach { actionData ->
             val actionLink = Link.of(actionData.url).withRel(actionData.key)
             add(actionLink)
@@ -75,8 +75,7 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
             val createSourceSyncRoute = apiConfigs.routes.createSourceSync
             val configSourceSyncActionName = apiConfigs.integrationActions.configSourceSync
             val createSourceSyncLink = Link.of(
-                uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build()
-                    .toUriString(),
+                uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build().toUriString(),
             ).withTitle(configSourceSyncActionName).withName(configSourceSyncActionName)
                 .withRel(configSourceSyncActionName).expand(integration.id)
             val createSourceSyncAffordanceLink =
@@ -89,10 +88,8 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
         val patchIntegrationRoute = apiConfigs.routes.patchIntegration
         val disableActionName = apiConfigs.integrationActions.disableIntegration
         val disableActionLink = Link.of(
-            uriBuilder(request).path(patchIntegrationRoute.resolvePath()).build()
-                .toUriString(),
-        ).withTitle(disableActionName).withName(disableActionName)
-            .withRel(disableActionName)
+            uriBuilder(request).path(patchIntegrationRoute.resolvePath()).build().toUriString(),
+        ).withTitle(disableActionName).withName(disableActionName).withRel(disableActionName)
         val disableAffordanceLink =
             Affordances.of(disableActionLink).afford(patchIntegrationRoute.method)
                 .withName(disableActionName).toLink()
@@ -121,8 +118,7 @@ fun CollectionModel<IntegrationDto>.resolveHypermedia(
     // self
     val selfLink = Link.of(
         uriBuilder(request).path(getByProjectManagementId.resolvePath())
-            .queryParams(filter.toMultiValueMap()).build()
-            .toUriString(),
+            .queryParams(filter.toMultiValueMap()).build().toUriString(),
     ).withSelfRel()
     val selfLinkWithDefaultAffordance =
         Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
@@ -157,64 +153,55 @@ fun SourceSyncDto.resolveHypermedia(
     requestingContributor?.let {
         if (requestingContributor.isAdminHint == true || sourceSync.isAdmin(requestingContributor.contributorId)) {
             // getSourceSync
-            val getSourceSyncRoute = apiConfigs.routes.getSourceSync
-            val getSourceSyncActionName = apiConfigs.integrationActions.getSourceSync
-            val getSourceSyncActionLink = Link.of(
-                uriBuilder(request).path(getSourceSyncRoute.resolvePath()).build()
-                    .toUriString(),
-            ).withTitle(getSourceSyncActionName).withName(getSourceSyncActionName)
-                .withRel(getSourceSyncActionName)
-            val getSourceSyncAffordanceLink =
-                Affordances.of(getSourceSyncActionLink).afford(getSourceSyncRoute.method)
-                    .withName(getSourceSyncActionName).toLink()
-            add(getSourceSyncAffordanceLink)
+            add(
+                getActionLink(
+                    apiConfigs.routes.getSourceSync,
+                    apiConfigs.integrationActions.getSourceSync,
+                    request,
+                ),
+            )
 
             if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
-                val patchSourceSyncRoute = apiConfigs.routes.patchSourceSync
-                val continueSourceSyncActionName =
-                    apiConfigs.integrationActions.continueSourceSync
-                val continueSourceSyncActionLink = Link.of(
-                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
-                        .toUriString(),
-                ).withTitle(continueSourceSyncActionName).withName(continueSourceSyncActionName)
-                    .withRel(continueSourceSyncActionName)
-                val continueSourceSyncAffordanceLink =
-                    Affordances.of(continueSourceSyncActionLink)
-                        .afford(patchSourceSyncRoute.method)
-                        .withName(continueSourceSyncActionName).toLink()
-                add(continueSourceSyncAffordanceLink)
+                add(
+                    getActionLink(
+                        apiConfigs.routes.patchSourceSync,
+                        apiConfigs.integrationActions.continueSourceSync,
+                        request,
+                    ),
+                )
             } else if (status?.status == SourceSyncStatusValues.COMPLETED) {
                 // REQUEST FULL SYNC
-                val patchSourceSyncRoute = apiConfigs.routes.patchSourceSync
-                val requestFullSyncActionName =
-                    apiConfigs.integrationActions.requestFullSync
-                val requestFullSyncActionLink = Link.of(
-                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
-                        .toUriString(),
-                ).withTitle(requestFullSyncActionName).withName(requestFullSyncActionName)
-                    .withRel(requestFullSyncActionName)
-                val requestFullSyncAffordanceLink =
-                    Affordances.of(requestFullSyncActionLink)
-                        .afford(patchSourceSyncRoute.method)
-                        .withName(requestFullSyncActionName).toLink()
-                add(requestFullSyncAffordanceLink)
+                add(
+                    getActionLink(
+                        apiConfigs.routes.patchSourceSync,
+                        apiConfigs.integrationActions.requestFullSync,
+                        request,
+                    ),
+                )
 
                 // UPDATE SYNC CONFIG
-                val updateSourceSyncConfigActionName =
-                    apiConfigs.integrationActions.updateSourceSyncConfig
-                val updateSourceSyncConfigActionLink = Link.of(
-                    uriBuilder(request).path(patchSourceSyncRoute.resolvePath()).build()
-                        .toUriString(),
-                ).withTitle(updateSourceSyncConfigActionName)
-                    .withName(updateSourceSyncConfigActionName)
-                    .withRel(updateSourceSyncConfigActionName)
-                val updateSourceSyncConfigAffordanceLink =
-                    Affordances.of(updateSourceSyncConfigActionLink)
-                        .afford(patchSourceSyncRoute.method)
-                        .withName(updateSourceSyncConfigActionName).toLink()
-                add(updateSourceSyncConfigAffordanceLink)
+                add(
+                    getActionLink(
+                        apiConfigs.routes.patchSourceSync,
+                        apiConfigs.integrationActions.updateSourceSyncConfig,
+                        request,
+                    ),
+                )
             }
         }
     }
     return this
+}
+
+fun getActionLink(
+    route: Route,
+    actionName: String,
+    request: ServerRequest,
+): Link {
+    val actionLink = Link.of(
+        uriBuilder(request).path(route.resolvePath()).build().toUriString(),
+    ).withTitle(actionName).withName(actionName).withRel(actionName)
+    val actionAffordanceLink =
+        Affordances.of(actionLink).afford(route.method).withName(actionName).toLink()
+    return actionAffordanceLink
 }

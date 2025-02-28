@@ -36,7 +36,7 @@ class SourceSyncService(
     ): SourceSync? = repository.findForContributorUsingFilter(
         ListSourceSyncFilter(listOf(id)),
         requestingContributor,
-    )?.includeSourceSyncAssets(requestingContributor, assetRepository)
+    )?.includeSourceSyncAssets(assetRepository)
 
     suspend fun createSourceSync(
         integrationId: String,
@@ -125,7 +125,6 @@ class SourceSyncService(
     }
 
     private suspend fun SourceSync.includeSourceSyncAssets(
-        requestingContributor: SimpleContributor,
         assetRepository: IntegrationAssetRepository,
     ): SourceSync {
         this.id?.let {
