@@ -26,6 +26,18 @@ class ReplaceStepResponseData(stepResponses: List<Map<String, List<String>>?>) :
     }
 }
 
+class ReplaceMappingUsersData(stepResponses: Map<String, String>) :
+    SourceSyncModification<Map<String, String>>(stepResponses) {
+    override fun modify(
+        simpleContributor: SimpleContributor,
+        domainObject: SourceSync,
+    ): SourceSync {
+        require(domainObject.isAdmin(simpleContributor.contributorId)) { "Requesting contributor is not admin" }
+        domainObject.mappings.addUserMappings(modifyValue)
+        return domainObject
+    }
+}
+
 class RequestFullSyncEvent(newEvent: SourceSyncEvent) :
     SourceSyncModification<SourceSyncEvent>(newEvent) {
     override fun modify(

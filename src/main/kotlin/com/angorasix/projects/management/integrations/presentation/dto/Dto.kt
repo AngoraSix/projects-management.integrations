@@ -11,6 +11,7 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ReplaceMappingUsersData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ReplaceStepResponseData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.RequestFullSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.RequestSyncConfigUpdate
@@ -121,6 +122,27 @@ enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {
                 val indexedResponse = MutableList<Map<String, List<String>>?>(index + 1) { null }
                 indexedResponse.add(index, responseDataValue)
                 return ReplaceStepResponseData(indexedResponse)
+            }
+        },
+    ),
+    MAPPINGS_UPDATE_DATA(
+        object : PatchOperationSpec {
+            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
+                operation.op == "replace" && operation.path == "/mappings/users"
+
+            override fun mapToObjectModification(
+                contributor: SimpleContributor,
+                operation: PatchOperation,
+                objectMapper: ObjectMapper,
+            ): SourceSyncModification<Map<String, String>> {
+                    val mappingValueData =
+                    objectMapper.convertValue(
+                        operation.value,
+                        object : TypeReference<Map<String, String>>() {},
+                    )
+                        ?: throw IllegalArgumentException(
+                            "Not supported value: ${operation.value}.")
+                return ReplaceMappingUsersData(mappingValueData)
             }
         },
     ),

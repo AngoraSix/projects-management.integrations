@@ -100,9 +100,19 @@ enum class SourceSyncStatusValues {
 }
 
 data class SourceSyncMappings(
-    val users: MutableMap<String, SourceUser?> = mutableMapOf(), // A6 Contributor id to Source User
+    val users: MutableMap<String, String?> = mutableMapOf(), // A6 Contributor id to Source User
 ) {
-    fun addUserMappings(newUserMappings: Map<String, SourceUser?>) {
+    fun addUserMappings(newUserMappings: Map<String, String?>) {
         users.putAll(newUserMappings)
+    }
+
+    fun addNewUserMappings(newUserMappings: Map<String, String?>) {
+        users.putAllIfAbsent(newUserMappings)
+    }
+}
+
+private fun <K, V> MutableMap<K, V>.putAllIfAbsent(other: Map<K, V>) {
+    for ((key, value) in other) {
+        this.putIfAbsent(key, value)
     }
 }
