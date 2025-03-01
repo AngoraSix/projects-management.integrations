@@ -91,7 +91,7 @@ class SourceSyncHandler(
                         true,
                     )
                 ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(outputSourceSync)
-            } ?: resolveBadRequest("Non-existing SourceSync", "SourceSync")
+            } ?: resolveNotFound("Non-existing SourceSync", "SourceSync")
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
         }
