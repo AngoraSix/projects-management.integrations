@@ -36,10 +36,16 @@ class TrelloRegistrationStrategy(
     ): Integration {
         val accessToken =
             integrationData.config.sourceStrategyConfigData?.get(TRELLO_TOKEN_BODY_FIELD) as? String
-                ?: throw IllegalArgumentException("trello access token body param is required for registration")
+                ?: throw IllegalArgumentException(
+                    "trello access token body param is required for registration",
+                )
         val memberUri =
-            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("memberUrl")
-                ?: throw IllegalArgumentException("trello memberUrl config is required for registration")
+            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
+                "memberUrl",
+            )
+                ?: throw IllegalArgumentException(
+                    "trello memberUrl config is required for registration",
+                )
 
         // Call Trello to get User data
         val trelloMemberDto =
@@ -57,7 +63,9 @@ class TrelloRegistrationStrategy(
             existingIntegration?.id,
             Source.TRELLO.value,
             integrationData.projectManagementId,
-            IntegrationStatus.registered(extractStatusData(integrationData.status.sourceStrategyStatusData)),
+            IntegrationStatus.registered(
+                extractStatusData(integrationData.status.sourceStrategyStatusData),
+            ),
             setOf(requestingContributor),
             IntegrationConfig(
                 extractConfigData(
@@ -73,5 +81,9 @@ class TrelloRegistrationStrategy(
     private fun extractConfigData(
         accessToken: String,
         userData: TrelloMemberDto,
-    ): Map<String, Any> = mapOf(ACCESS_TOKEN_CONFIG_PARAM to accessToken, ACCESS_USER_CONFIG_PARAM to userData)
+    ): Map<String, Any> =
+        mapOf(
+            ACCESS_TOKEN_CONFIG_PARAM to accessToken,
+            ACCESS_USER_CONFIG_PARAM to userData,
+        )
 }

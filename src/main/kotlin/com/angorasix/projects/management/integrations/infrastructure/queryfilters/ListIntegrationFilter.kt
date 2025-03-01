@@ -17,7 +17,9 @@ data class ListIntegrationFilter(
 ) {
     fun toMultiValueMap(): MultiValueMap<String, String> {
         val multiMap: MultiValueMap<String, String> = LinkedMultiValueMap()
-        projectManagementId?.let { multiMap.add("projectManagementId", projectManagementId.joinToString(",")) }
+        projectManagementId?.let {
+            multiMap.add("projectManagementId", projectManagementId.joinToString(","))
+        }
         sources?.let { multiMap.add("sources", sources.joinToString(",")) }
         ids?.let { multiMap.add("ids", ids.joinToString(",")) }
         return multiMap

@@ -50,7 +50,9 @@ fun IntegrationDto.resolveHypermedia(
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
-        if (requestingContributor.isAdminHint == true || integration.isAdmin(requestingContributor.contributorId)) {
+        if (requestingContributor.isAdminHint == true ||
+            integration.isAdmin(requestingContributor.contributorId)
+        ) {
             addIntegrationDtoAdminLinks(integration, apiConfigs, sourceConfigurations, request)
         }
     }
@@ -73,7 +75,8 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
             .flatMap {
                 sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions(
                     apiConfigs,
-                ) ?: emptyList()
+                )
+                    ?: emptyList()
             }.forEach { actionData ->
                 val actionLink = Link.of(actionData.url).withRel(actionData.key)
                 add(actionLink)
@@ -82,20 +85,24 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
         // START SOURCE SYNC
         if (integration.sourceSync?.status?.status != SourceSyncStatusValues.COMPLETED) {
             val createSourceSyncRoute = apiConfigs.routes.createSourceSync
-            val configSourceSyncActionName = apiConfigs.integrationActions.configSourceSync
+            val startConfigSourceSyncActionName =
+                apiConfigs.integrationActions.startConfigSourceSync
             val createSourceSyncLink =
                 Link
                     .of(
-                        uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build().toUriString(),
-                    ).withTitle(configSourceSyncActionName)
-                    .withName(configSourceSyncActionName)
-                    .withRel(configSourceSyncActionName)
+                        uriBuilder(request)
+                            .path(createSourceSyncRoute.resolvePath())
+                            .build()
+                            .toUriString(),
+                    ).withTitle(startConfigSourceSyncActionName)
+                    .withName(startConfigSourceSyncActionName)
+                    .withRel(startConfigSourceSyncActionName)
                     .expand(integration.id)
             val createSourceSyncAffordanceLink =
                 Affordances
                     .of(createSourceSyncLink)
                     .afford(createSourceSyncRoute.method)
-                    .withName(configSourceSyncActionName)
+                    .withName(startConfigSourceSyncActionName)
                     .toLink()
             add(createSourceSyncAffordanceLink)
         }
@@ -106,7 +113,10 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
         val disableActionLink =
             Link
                 .of(
-                    uriBuilder(request).path(patchIntegrationRoute.resolvePath()).build().toUriString(),
+                    uriBuilder(request)
+                        .path(patchIntegrationRoute.resolvePath())
+                        .build()
+                        .toUriString(),
                 ).withTitle(disableActionName)
                 .withName(disableActionName)
                 .withRel(disableActionName)
@@ -173,6 +183,7 @@ fun SourceSyncDto.resolveHypermedia(
     sourceSync: SourceSync,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
+    isIntegrationActive: Boolean,
 ): SourceSyncDto {
     val getSingleRoute = apiConfigs.routes.getSourceSync
     // self
@@ -191,65 +202,66 @@ fun SourceSyncDto.resolveHypermedia(
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
-        if (requestingContributor.isAdminHint == true || sourceSync.isAdmin(requestingContributor.contributorId)) {
-            // getSourceSync
-            add(
-                getActionLink(
-                    apiConfigs.routes.getSourceSync,
-                    apiConfigs.integrationActions.getSourceSync,
-                    request,
-                ),
-            )
-
+        if (
+            (
+                requestingContributor.isAdminHint == true ||
+                    sourceSync.isAdmin(requestingContributor.contributorId)
+            ) &&
+            isIntegrationActive
+        ) {
             if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
-                add(
-                    getActionLink(
-                        apiConfigs.routes.patchSourceSync,
-                        apiConfigs.integrationActions.continueSourceSync,
-                        request,
-                    ),
+                // CONTINUE SYNC
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.continueSourceSync,
+                    request,
                 )
             } else if (status?.status == SourceSyncStatusValues.COMPLETED) {
                 // REQUEST FULL SYNC
-                add(
-                    getActionLink(
-                        apiConfigs.routes.patchSourceSync,
-                        apiConfigs.integrationActions.requestFullSync,
-                        request,
-                    ),
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.requestFullSync,
+                    request,
                 )
 
                 // UPDATE SYNC CONFIG
-                add(
-                    getActionLink(
-                        apiConfigs.routes.patchSourceSync,
-                        apiConfigs.integrationActions.updateSourceSyncConfig,
-                        request,
-                    ),
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.updateSourceSyncConfig,
+                    request,
+                )
+
+                // MATCH PLATFORM USERS
+                addLink(
+                    apiConfigs.routes.patchSourceSync,
+                    apiConfigs.integrationActions.startMatchPlatformUsers,
+                    request,
                 )
             }
         }
     }
     return this
 }
-
-fun getActionLink(
+private fun SourceSyncDto.addLink(
     route: Route,
     actionName: String,
     request: ServerRequest,
-): Link {
+) {
     val actionLink =
         Link
             .of(
-                uriBuilder(request).path(route.resolvePath()).build().toUriString(),
+                uriBuilder(request)
+                    .path(route.resolvePath())
+                    .build()
+                    .toUriString(),
             ).withTitle(actionName)
             .withName(actionName)
             .withRel(actionName)
-    val actionAffordanceLink =
+    val affordanceLink =
         Affordances
             .of(actionLink)
             .afford(route.method)
             .withName(actionName)
             .toLink()
-    return actionAffordanceLink
+    add(affordanceLink)
 }

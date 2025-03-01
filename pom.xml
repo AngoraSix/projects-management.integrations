@@ -64,7 +64,7 @@
         <dependency>
             <groupId>com.angorasix</groupId>
             <artifactId>commons.core</artifactId>
-            <version>0.3.1</version>
+            <version>0.3.2</version>
         </dependency>
 
         <!-- check if necessary with newer versions https://github.com/Playtika/testcontainers-spring-boot/issues/562 -->

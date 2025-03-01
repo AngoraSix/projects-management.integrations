@@ -27,6 +27,7 @@ data class SourceSync
         var status: SourceSyncStatus,
         val admins: Set<SimpleContributor> = emptySet(),
         val events: MutableList<SourceSyncEvent> = mutableListOf(),
+        val mappings: SourceSyncMappings = SourceSyncMappings(),
         val sourceStrategyStateData: Any?, // any sate information used by the source strategy
     ) {
         @Transient
@@ -38,6 +39,7 @@ data class SourceSync
             status: SourceSyncStatus,
             admins: Set<SimpleContributor> = emptySet(),
             events: MutableList<SourceSyncEvent> = mutableListOf(),
+            mappings: SourceSyncMappings = SourceSyncMappings(),
             sourceStrategyStateData: Any?,
         ) : this(
             null,
@@ -46,6 +48,7 @@ data class SourceSync
             status,
             admins,
             events,
+            mappings,
             sourceStrategyStateData,
         )
 
@@ -54,7 +57,13 @@ data class SourceSync
          *
          * @param contributorId - contributor candidate to check.
          */
-        fun isAdmin(contributorId: String?): Boolean = (contributorId != null).and(admins.any { it.contributorId == contributorId })
+        fun isAdmin(contributorId: String?): Boolean =
+            (contributorId != null).and(
+                admins.any {
+                    it.contributorId ==
+                        contributorId
+                },
+            )
 
         fun addEvent(event: SourceSyncEvent) {
             events.add(event)
@@ -78,6 +87,7 @@ enum class SourceSyncEventValues {
     TRIGGERED_FULL_SYNC,
     REQUEST_UPDATE_SYNC_CONFIG,
     FULL_SYNC_CORRESPONDENCE,
+    STARTING_MEMBER_MATCH,
 }
 
 data class SourceSyncStatus(
@@ -101,4 +111,22 @@ enum class SourceSyncStatusValues {
     IN_PROGRESS,
     COMPLETED,
     FAILED,
+}
+
+data class SourceSyncMappings(
+    val users: MutableMap<String, String?> = mutableMapOf(), // A6 Contributor id to Source User
+) {
+    fun addUserMappings(newUserMappings: Map<String, String?>) {
+        users.putAll(newUserMappings)
+    }
+
+    fun addNewUserMappings(newUserMappings: Map<String, String?>) {
+        users.putAllIfAbsent(newUserMappings)
+    }
+}
+
+private fun <K, V> MutableMap<K, V>.putAllIfAbsent(other: Map<K, V>) {
+    for ((key, value) in other) {
+        this.putIfAbsent(key, value)
+    }
 }

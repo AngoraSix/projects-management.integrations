@@ -38,14 +38,16 @@ data class RoutesConfigs(
     val createSourceSync: Route,
     val getSourceSync: Route,
     val patchSourceSync: Route,
+    val startSourceSyncUsersMatch: Route,
 )
 
 data class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
-    val configSourceSync: String,
+    val startConfigSourceSync: String,
     val continueSourceSync: String,
     val requestFullSync: String,
     val updateSourceSyncConfig: String,
     val getSourceSync: String,
+    val startMatchPlatformUsers: String,
 )

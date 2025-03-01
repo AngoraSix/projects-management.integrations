@@ -19,7 +19,7 @@ data class IntegrationAsset
         val source: String,
         val integrationId: String,
         val sourceSyncId: String,
-        val integrationStatus: IntegrationStatus,
+        val integrationAssetStatus: IntegrationAssetStatus,
         val sourceData: SourceAssetData,
         val sourceDto: Any,
         val angoraSixData: A6AssetData?,
@@ -28,7 +28,7 @@ data class IntegrationAsset
             source: String,
             integrationId: String,
             sourceSyncId: String,
-            integrationStatus: IntegrationStatus,
+            integrationAssetStatus: IntegrationAssetStatus,
             sourceData: SourceAssetData,
             sourceDto: Any,
         ) : this(
@@ -36,7 +36,7 @@ data class IntegrationAsset
             source,
             integrationId,
             sourceSyncId,
-            integrationStatus,
+            integrationAssetStatus,
             sourceData,
             sourceDto,
             null,
@@ -45,7 +45,7 @@ data class IntegrationAsset
         fun requiresUpdate(existing: IntegrationAsset): Boolean = sourceData != existing.sourceData
     }
 
-data class IntegrationStatus(
+data class IntegrationAssetStatus(
     val events: MutableList<IntegrationAssetSyncEvent> = mutableListOf(),
 ) {
     fun currentStatus(): IntegrationStatusValues {

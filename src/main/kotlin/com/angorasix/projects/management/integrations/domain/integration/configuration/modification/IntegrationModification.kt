@@ -17,7 +17,9 @@ class ModifyIntegrationStatus(
         simpleContributor: SimpleContributor,
         domainObject: Integration,
     ): Integration {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) { "Requesting contributor is not admin" }
+        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+            "Requesting contributor is not admin"
+        }
         domainObject.status.status = modifyValue
         domainObject.status.expirationDate = Instant.now()
         return domainObject

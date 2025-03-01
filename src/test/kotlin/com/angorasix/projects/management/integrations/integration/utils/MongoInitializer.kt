@@ -39,7 +39,9 @@ suspend fun initializeMongodb(
         .map { entry ->
             if (entry.containsKey(CREATED_AT)) {
                 entry[CREATED_AT] =
-                    mapCreatedAt(@Suppress("UNCHECKED_CAST") (entry[CREATED_AT] as MutableMap<String, Any>))
+                    mapCreatedAt(
+                        @Suppress("UNCHECKED_CAST") (entry[CREATED_AT] as MutableMap<String, Any>),
+                    )
             }
             val document = Document(entry)
             template

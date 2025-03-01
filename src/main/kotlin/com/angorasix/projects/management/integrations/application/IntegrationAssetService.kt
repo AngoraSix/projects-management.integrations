@@ -9,6 +9,7 @@ import com.angorasix.commons.infrastructure.intercommunication.dto.domainresourc
 import com.angorasix.commons.infrastructure.intercommunication.dto.messaging.A6InfraMessageDto
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
@@ -55,9 +56,12 @@ class IntegrationAssetService(
 
         assets.forEach { asset ->
             val existing =
-                existingSourceSyncAssets.find { existing -> existing.sourceData.id == asset.sourceData.id }
+                existingSourceSyncAssets.find { existing ->
+                    existing.sourceData.id ==
+                        asset.sourceData.id
+                }
             updatedAssetOrNull(asset, existing)?.let {
-                if (existing == null || existing.integrationStatus.currentStatus() == IntegrationStatusValues.SYNCED) {
+                if (existing == null || existing.integrationAssetStatus.isSynced()) {
                     updatedAssets.add(it)
                 } else {
                     pendingUpdatedAssets.add(it)
@@ -177,3 +181,5 @@ private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto =
         industryModifier,
         moneyPayment,
     )
+
+private fun IntegrationAssetStatus.isSynced(): Boolean = currentStatus() == IntegrationStatusValues.SYNCED

@@ -49,56 +49,48 @@ class ProjectManagementIntegrationsRouter(
         }
 
     private fun CoRouterFunctionDsl.defineByIdEndpoints() {
-        method(apiConfigs.routes.getIntegration.method).nest {
-            method(
-                apiConfigs.routes.getIntegration.method,
-                handler::getIntegration,
-            )
-        }
-        method(apiConfigs.routes.patchIntegration.method).nest {
-            method(
-                apiConfigs.routes.patchIntegration.method,
-                handler::patchIntegration,
-            )
-        }
+        method(
+            apiConfigs.routes.getIntegration.method,
+            handler::getIntegration,
+        )
+        method(
+            apiConfigs.routes.patchIntegration.method,
+            handler::patchIntegration,
+        )
     }
 
     private fun CoRouterFunctionDsl.defineSourceSyncBaseEndpoints() {
-        method(apiConfigs.routes.createSourceSync.method).nest {
-            method(
-                apiConfigs.routes.createSourceSync.method,
-                sourceSyncHandler::createSourceSync,
-            )
-        }
+        method(
+            apiConfigs.routes.createSourceSync.method,
+            sourceSyncHandler::createSourceSync,
+        )
     }
 
     private fun CoRouterFunctionDsl.defineSourceSyncByIdEndpoints() {
-        method(apiConfigs.routes.getSourceSync.method).nest {
+        method(
+            apiConfigs.routes.getSourceSync.method,
+            sourceSyncHandler::getSourceSync,
+        )
+        method(
+            apiConfigs.routes.patchSourceSync.method,
+            sourceSyncHandler::patchSourceSync,
+        )
+        path(apiConfigs.routes.startSourceSyncUsersMatch.path).nest {
             method(
-                apiConfigs.routes.getSourceSync.method,
-                sourceSyncHandler::getSourceSync,
-            )
-        }
-        method(apiConfigs.routes.patchSourceSync.method).nest {
-            method(
-                apiConfigs.routes.patchSourceSync.method,
-                sourceSyncHandler::patchSourceSync,
+                apiConfigs.routes.startSourceSyncUsersMatch.method,
+                sourceSyncHandler::startSourceSyncUsersMatch,
             )
         }
     }
 
     private fun CoRouterFunctionDsl.defineByProjectManagementIdRoutes() {
-        method(apiConfigs.routes.listIntegrationsByProjectManagementId.method).nest {
-            method(
-                apiConfigs.routes.listIntegrationsByProjectManagementId.method,
-                handler::getProjectManagementIntegrations,
-            )
-        }
-        method(apiConfigs.routes.registerIntegrationForProjectManagement.method).nest {
-            method(
-                apiConfigs.routes.registerIntegrationForProjectManagement.method,
-                handler::registerIntegration,
-            )
-        }
+        method(
+            apiConfigs.routes.listIntegrationsByProjectManagementId.method,
+            handler::getProjectManagementIntegrations,
+        )
+        method(
+            apiConfigs.routes.registerIntegrationForProjectManagement.method,
+            handler::registerIntegration,
+        )
     }
 }

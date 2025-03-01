@@ -4,12 +4,14 @@ import com.angorasix.commons.domain.DetailedContributor
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.infrastructure.constants.AngoraSixInfrastructure
 import com.angorasix.commons.presentation.dto.Patch
+import com.angorasix.commons.presentation.dto.convertToDto
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
 import com.angorasix.commons.reactive.presentation.error.resolveExceptionResponse
 import com.angorasix.commons.reactive.presentation.error.resolveNotFound
 import com.angorasix.projects.management.integrations.application.SourceSyncService
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
+import com.angorasix.projects.management.integrations.presentation.dto.ProjectContributorsToMatchDto
 import com.angorasix.projects.management.integrations.presentation.dto.SupportedSourceSyncPatchOperations
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
@@ -52,7 +54,7 @@ class SourceSyncHandler(
         return if (requestingContributor is SimpleContributor) {
             service
                 .createSourceSync(integrationId, requestingContributor)
-                ?.convertToDto(requestingContributor, apiConfigs, request)
+                ?.convertToDto(requestingContributor, apiConfigs, request, true)
                 ?.let { outputSourceSyncDto ->
                     val selfLink =
                         outputSourceSyncDto.links.getRequiredLink(IanaLinkRelations.SELF).href
@@ -95,7 +97,7 @@ class SourceSyncHandler(
     }
 
     /**
-     * Handler for the Get SourceSync endpoint for a particular Integration.
+     * Handler for the Patch SourceSync endpoint.
      *
      * @param request - HTTP `ServerRequest` object
      * @return the `ServerResponse`
@@ -129,11 +131,45 @@ class SourceSyncHandler(
                         requestingContributor,
                         apiConfigs,
                         request,
+                        true, // println(update these with Trello-QhqSyHa7)
                     )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
                     ?: resolveNotFound("Can't patch this Source Sync", "Source Sync")
             } catch (ex: RuntimeException) {
                 logger.error("Error while patching Source Sync", ex)
                 return resolveExceptionResponse(ex, "Source Sync")
+            }
+        } else {
+            resolveBadRequest("Invalid Contributor Token", "Contributor Token")
+        }
+    }
+
+    /**
+     * Handler to start a SourceSync users match process,
+     * based on the received list of contributors.
+     *
+     * @param request - HTTP `ServerRequest` object
+     * @return the `ServerResponse`
+     */
+    suspend fun startSourceSyncUsersMatch(request: ServerRequest): ServerResponse {
+        val requestingContributor =
+            request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
+        val sourceSyncId = request.pathVariable("id")
+        val projectContributorsDto = request.awaitBody(ProjectContributorsToMatchDto::class)
+        return if (requestingContributor is SimpleContributor) {
+            try {
+                service
+                    .startUserMatching(
+                        projectContributorsDto.projectContributors,
+                        sourceSyncId,
+                        requestingContributor,
+                    ).map {
+                        it.convertToDto()
+                    }.let {
+                        ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it)
+                    }
+            } catch (ex: RuntimeException) {
+                logger.error("Error while starting Source Sync Users Match process", ex)
+                return resolveExceptionResponse(ex, "Source Sync Users Match")
             }
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")

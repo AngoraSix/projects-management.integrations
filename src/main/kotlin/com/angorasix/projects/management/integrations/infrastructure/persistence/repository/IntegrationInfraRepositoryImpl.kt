@@ -42,7 +42,9 @@ private fun ListIntegrationFilter.toQuery(requestingContributor: SimpleContribut
     query.addCriteria(where("admins.contributorId").`is`(requestingContributor.contributorId))
 
     ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
-    projectManagementId?.let { query.addCriteria(where("projectManagementId").`in`(it as Collection<Any>)) }
+    projectManagementId?.let {
+        query.addCriteria(where("projectManagementId").`in`(it as Collection<Any>))
+    }
     sources?.let { query.addCriteria(where("source").`in`(it as Collection<Any>)) }
 
     return query
