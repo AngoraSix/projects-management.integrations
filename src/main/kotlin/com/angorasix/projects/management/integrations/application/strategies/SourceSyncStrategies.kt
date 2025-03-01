@@ -4,6 +4,7 @@ import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceUser
 import org.springframework.core.ParameterizedTypeReference
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
@@ -33,4 +34,10 @@ interface SourceSyncStrategy {
         requestingContributor: SimpleContributor,
         syncEventId: String,
     ): List<IntegrationAsset>
+
+    suspend fun obtainUsersMatchOptions(
+        sourceSync: SourceSync,
+        integration: Integration,
+        requestingContributor: SimpleContributor,
+    ): List<SourceUser>
 }

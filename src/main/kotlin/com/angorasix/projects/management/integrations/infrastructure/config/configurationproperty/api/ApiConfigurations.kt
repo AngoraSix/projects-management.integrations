@@ -13,18 +13,17 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  */
 @ConfigurationProperties(prefix = "configs.api")
 data class ApiConfigs(
-
     @NestedConfigurationProperty
     var routes: RoutesConfigs,
-
     @NestedConfigurationProperty
     var basePaths: BasePathConfigs,
-
     @NestedConfigurationProperty
     var integrationActions: IntegrationActions,
 )
 
-data class BasePathConfigs(val projectsManagementIntegration: String)
+data class BasePathConfigs(
+    val projectsManagementIntegration: String,
+)
 
 data class RoutesConfigs(
     val baseListCrudRoute: String,
@@ -39,13 +38,15 @@ data class RoutesConfigs(
     val createSourceSync: Route,
     val getSourceSync: Route,
     val patchSourceSync: Route,
+    val startSourceSyncUsersMatch: Route,
 )
 
 data class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
-    val configSourceSync: String,
+    val startConfigSourceSync: String,
     val continueSourceSync: String,
     val requestFullSync: String,
     val updateSourceSyncConfig: String,
+    val startMatchPlatformUsers: String,
 )

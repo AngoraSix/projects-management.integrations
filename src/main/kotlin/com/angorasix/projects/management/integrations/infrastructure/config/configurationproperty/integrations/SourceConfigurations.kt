@@ -12,31 +12,35 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty
  *
  * @author rozagerardo
  */
-enum class SourceType(val key: String) {
+enum class SourceType(
+    val key: String,
+) {
     TRELLO("trello"),
 }
 
 @ConfigurationProperties(prefix = "configs.source")
 class SourceConfigurations(
-
     sourceConfigs: Map<String, RawSourceConfiguration>,
     var supported: Set<String>,
 ) {
     @NestedConfigurationProperty
-    var sourceConfigs: Map<String, SourceConfiguration> = sourceConfigs.map { (key, value) ->
-        val strategy = when (key) {
-            SourceType.TRELLO.key ->
-                TrelloStrategy(value.strategyConfigs)
+    var sourceConfigs: Map<String, SourceConfiguration> =
+        sourceConfigs
+            .map { (key, value) ->
+                val strategy =
+                    when (key) {
+                        SourceType.TRELLO.key ->
+                            TrelloStrategy(value.strategyConfigs)
 
-            else ->
-                throw IllegalArgumentException(
-                    "Unsupported source strategy:" +
-                        "$key - should be one of:" +
-                        SourceType.values().joinToString { it.key },
-                )
-        }
-        key to SourceConfiguration(value.strategyConfigs, strategy)
-    }.toMap()
+                        else ->
+                            throw IllegalArgumentException(
+                                "Unsupported source strategy:" +
+                                    "$key - should be one of:" +
+                                    SourceType.values().joinToString { it.key },
+                            )
+                    }
+                key to SourceConfiguration(value.strategyConfigs, strategy)
+            }.toMap()
 }
 
 open class RawSourceConfiguration(
