@@ -10,27 +10,35 @@ import org.springframework.data.mongodb.core.ReactiveMongoOperations
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query
 
-class SourceSyncInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperations) :
-    SourceSyncInfraRepository {
-
+class SourceSyncInfraRepositoryImpl(
+    private val mongoOps: ReactiveMongoOperations,
+) : SourceSyncInfraRepository {
     override fun findUsingFilter(
         filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor?,
-    ): Flow<SourceSync> {
-        return mongoOps.find(filter.toQuery(requestingContributor), SourceSync::class.java)
+        allowAnonymous: Boolean,
+    ): Flow<SourceSync> =
+        mongoOps
+            .find(filter.toQuery(requestingContributor, allowAnonymous), SourceSync::class.java)
             .asFlow()
-    }
 
-    override suspend fun findForContributorUsingFilter(
+    override suspend fun findSingleUsingFilter(
         filter: ListSourceSyncFilter,
-        requestingContributor: SimpleContributor,
-    ): SourceSync? {
-        return mongoOps.find(filter.toQuery(requestingContributor), SourceSync::class.java)
+        requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
+    ): SourceSync? =
+        mongoOps
+            .find(filter.toQuery(requestingContributor, allowAnonymous), SourceSync::class.java)
             .awaitFirstOrNull()
-    }
 }
 
-private fun ListSourceSyncFilter.toQuery(requestingContributor: SimpleContributor?): Query {
+private fun ListSourceSyncFilter.toQuery(
+    requestingContributor: SimpleContributor?,
+    allowAnonymous: Boolean = false,
+): Query {
+    if (!allowAnonymous) {
+        requireNotNull(requestingContributor)
+    }
     val query = Query()
 
     requestingContributor?.let {

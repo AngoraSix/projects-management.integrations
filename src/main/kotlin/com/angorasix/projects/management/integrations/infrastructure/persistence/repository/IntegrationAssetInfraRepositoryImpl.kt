@@ -14,34 +14,37 @@ import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 
-class IntegrationAssetInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperations) :
-    IntegrationAssetInfraRepository {
-
+class IntegrationAssetInfraRepositoryImpl(
+    private val mongoOps: ReactiveMongoOperations,
+) : IntegrationAssetInfraRepository {
     override fun findUsingFilter(
         filter: ListIntegrationAssetFilter,
         requestingContributor: SimpleContributor?,
-    ): Flow<IntegrationAsset> {
-        return mongoOps.find(filter.toQuery(requestingContributor), IntegrationAsset::class.java)
+        allowAnonymous: Boolean,
+    ): Flow<IntegrationAsset> =
+        mongoOps
+            .find(filter.toQuery(requestingContributor, allowAnonymous), IntegrationAsset::class.java)
             .asFlow()
-    }
 
-    override suspend fun findForContributorUsingFilter(
+    override suspend fun findSingleUsingFilter(
         filter: ListIntegrationAssetFilter,
-        requestingContributor: SimpleContributor,
-    ): IntegrationAsset? {
-        return mongoOps.find(filter.toQuery(requestingContributor), IntegrationAsset::class.java)
+        requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
+    ): IntegrationAsset? =
+        mongoOps
+            .find(filter.toQuery(requestingContributor), IntegrationAsset::class.java)
             .awaitFirstOrNull()
-    }
 
     override suspend fun registerEvent(
         filter: ListIntegrationAssetFilter,
         event: IntegrationAssetSyncEvent,
     ) {
-        mongoOps.updateMulti(
-            filter.toAllByIdQuery(),
-            addEvent(event),
-            IntegrationAsset::class.java,
-        ).awaitFirstOrNull()
+        mongoOps
+            .updateMulti(
+                filter.toAllByIdQuery(),
+                addEvent(event),
+                IntegrationAsset::class.java,
+            ).awaitFirstOrNull()
     }
 
     override suspend fun registerCorrespondences(
@@ -55,8 +58,10 @@ class IntegrationAssetInfraRepositoryImpl(private val mongoOps: ReactiveMongoOpe
 
         correspondences.forEach {
             val query = correspondenceQuery(it.first, sourceSyncId)
-            val update = Update().push("integrationStatus.events", ackEvent)
-                .set("angoraSixData", A6AssetData.task(it.second))
+            val update =
+                Update()
+                    .push("integrationStatus.events", ackEvent)
+                    .set("angoraSixData", A6AssetData.task(it.second))
             bulkOps.updateOne(query, update)
         }
         bulkOps.execute().awaitFirstOrNull()
@@ -73,7 +78,13 @@ private fun correspondenceQuery(
     return query
 }
 
-private fun ListIntegrationAssetFilter.toQuery(requestingContributor: SimpleContributor?): Query {
+private fun ListIntegrationAssetFilter.toQuery(
+    requestingContributor: SimpleContributor?,
+    allowAnonymous: Boolean = false,
+): Query {
+    if (!allowAnonymous) {
+        requireNotNull(requestingContributor)
+    }
     val query = Query()
 
     requestingContributor?.let {
@@ -95,6 +106,4 @@ private fun ListIntegrationAssetFilter.toAllByIdQuery(): Query {
     return query
 }
 
-private fun addEvent(event: IntegrationAssetSyncEvent): Update {
-    return Update().push("integrationStatus.events", event)
-}
+private fun addEvent(event: IntegrationAssetSyncEvent): Update = Update().push("integrationStatus.events", event)

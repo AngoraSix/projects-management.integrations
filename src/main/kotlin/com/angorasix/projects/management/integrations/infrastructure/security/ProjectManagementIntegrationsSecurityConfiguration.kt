@@ -8,7 +8,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import java.security.MessageDigest
-import java.util.*
+import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
@@ -22,13 +22,10 @@ import javax.crypto.spec.SecretKeySpec
  * @author rozagerardo
  */
 class ProjectManagementIntegrationsSecurityConfiguration private constructor() {
-
     companion object {
-        fun passwordEncoder(): PasswordEncoder =
-            PasswordEncoderFactories.createDelegatingPasswordEncoder()
+        fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
 
-        fun tokenEncryptionUtils(securityConfigs: SecurityConfigurations): TokenEncryptionUtil =
-            TokenEncryptionUtil(securityConfigs)
+        fun tokenEncryptionUtils(securityConfigs: SecurityConfigurations): TokenEncryptionUtil = TokenEncryptionUtil(securityConfigs)
 
         /**
          *
@@ -40,16 +37,18 @@ class ProjectManagementIntegrationsSecurityConfiguration private constructor() {
          * @return fully configured SecurityWebFilterChain
          */
         fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-            http.authorizeExchange { exchanges: ServerHttpSecurity.AuthorizeExchangeSpec ->
-                exchanges
-                    .pathMatchers(
-                        HttpMethod.GET,
-                        "/management-integrations/**",
-                    ).permitAll()
-                    .anyExchange().authenticated()
-            }.oauth2ResourceServer { oauth2 ->
-                oauth2.jwt(Customizer.withDefaults())
-            }
+            http
+                .authorizeExchange { exchanges: ServerHttpSecurity.AuthorizeExchangeSpec ->
+                    exchanges
+                        .pathMatchers(
+                            HttpMethod.GET,
+                            "/management-integrations/**",
+                        ).permitAll()
+                        .anyExchange()
+                        .authenticated()
+                }.oauth2ResourceServer { oauth2 ->
+                    oauth2.jwt(Customizer.withDefaults())
+                }
 //            .oauth2Client(Customizer.withDefaults())
             return http.build()
         }
@@ -60,8 +59,9 @@ private const val ALG = "SHA-256"
 
 private const val KEY_SIZE_LIMIT = 16
 
-class TokenEncryptionUtil(private val securityConfigs: SecurityConfigurations) {
-
+class TokenEncryptionUtil(
+    private val securityConfigs: SecurityConfigurations,
+) {
     fun encrypt(token: String): String {
         val cipher = Cipher.getInstance(ENCRYPTION_ALGORITHM)
         val secretKey: SecretKey = getAesKeyFromString(securityConfigs.secretKey)

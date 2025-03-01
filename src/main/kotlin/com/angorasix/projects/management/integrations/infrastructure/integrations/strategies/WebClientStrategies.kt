@@ -20,8 +20,7 @@ class IntegrationConstants private constructor() {
 }
 
 class WebClientStrategies {
-
-    /* default */
+    // default
     val logger: Logger = LoggerFactory.getLogger(WebClientStrategies::class.java)
 
     //    fun oauth2WebClient(authorizedClientManager: ReactiveOAuth2AuthorizedClientManager): WebClient {
@@ -33,19 +32,23 @@ class WebClientStrategies {
     companion object {
         fun trelloWebClient(integrationConfigs: SourceConfigurations): WebClient {
             val trelloApiKey =
-                integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("apiKey")
+                integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
+                    "apiKey",
+                )
                     ?: throw IllegalArgumentException("trello apiKey config is required")
 
-//    val trelloApiSecret = integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("apiSecret")
-//        ?: throw IllegalArgumentException("trello apiSecret config is required")
-            return WebClient.builder()
+            return WebClient
+                .builder()
                 .defaultUriVariables(mapOf("key" to trelloApiKey))
                 .defaultHeader(HttpHeaders.ACCEPT, "application/json")
                 .filter { request, next ->
                     val userToken =
-                        request.attribute(IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN)
+                        request.attribute(
+                            IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN,
+                        )
                     next.exchange(
-                        ClientRequest.from(request)
+                        ClientRequest
+                            .from(request)
                             .header(
                                 HttpHeaders.AUTHORIZATION,
                                 "OAuth oauth_consumer_key=\"$trelloApiKey\", oauth_token=\"${userToken.get()}\"",

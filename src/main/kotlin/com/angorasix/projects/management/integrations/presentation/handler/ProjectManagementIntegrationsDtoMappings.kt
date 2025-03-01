@@ -50,25 +50,24 @@ fun IntegrationStatusDto.convertToDomain(): IntegrationStatus =
         sourceStrategyData,
     )
 
-fun IntegrationConfigDto.convertToDomain(): IntegrationConfig {
-    return IntegrationConfig(
+fun IntegrationConfigDto.convertToDomain(): IntegrationConfig =
+    IntegrationConfig(
         sourceStrategyConfigData,
     )
-}
 
 fun Integration.convertToDto(
     contributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
     sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
-): IntegrationDto {
-    return IntegrationDto(
+): IntegrationDto =
+    IntegrationDto(
         source,
         projectManagementId,
         status.convertToDto(),
         admins,
         config.convertToDto(),
-        sourceSync?.convertToDto(contributor, apiConfigs, request),
+        sourceSync?.convertToDto(contributor, apiConfigs, request, this.isActive()),
         id,
     ).resolveHypermedia(
         contributor,
@@ -77,16 +76,13 @@ fun Integration.convertToDto(
         sourceConfigurations,
         request,
     )
-}
 
-fun IntegrationStatus.convertToDto(): IntegrationStatusDto =
-    IntegrationStatusDto(status, expirationDate, sourceStrategyStatusData)
+fun IntegrationStatus.convertToDto(): IntegrationStatusDto = IntegrationStatusDto(status, expirationDate, sourceStrategyStatusData)
 
-fun IntegrationConfig.convertToDto(): IntegrationConfigDto {
-    return IntegrationConfigDto(
+fun IntegrationConfig.convertToDto(): IntegrationConfigDto =
+    IntegrationConfigDto(
         sourceStrategyConfigData,
     )
-}
 
 fun List<IntegrationDto>.convertToDto(
     contributor: SimpleContributor?,

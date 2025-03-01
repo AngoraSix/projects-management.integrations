@@ -3,8 +3,8 @@ package com.angorasix.projects.management.integrations.presentation.handler
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.presentation.dto.convertToDto
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetData
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
@@ -32,8 +32,9 @@ fun SourceSync.convertToDto(
     contributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
-): SourceSyncDto {
-    return SourceSyncDto(
+    isIntegrationActive: Boolean,
+): SourceSyncDto =
+    SourceSyncDto(
         source,
         integrationId,
         status.convertToDto(),
@@ -46,39 +47,43 @@ fun SourceSync.convertToDto(
         this,
         apiConfigs,
         request,
+        isIntegrationActive,
     )
-}
 
-fun SourceSyncEvent.convertToDto(): SourceSyncEventDto =
-    SourceSyncEventDto(type, eventInstant)
+fun SourceSyncEvent.convertToDto(): SourceSyncEventDto = SourceSyncEventDto(type, eventInstant)
 
 fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto =
-    SourceSyncStatusDto(status, steps.map { it.convertToDto() })
+    SourceSyncStatusDto(
+        status,
+        steps.map {
+            it.convertToDto()
+        },
+    )
 
 fun SourceSyncStatusStep.convertToDto(): SourceSyncStatusStepDto =
     SourceSyncStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)
 
-fun IntegrationAsset.convertToDto(): IntegrationAssetDto {
-    return IntegrationAssetDto(
+fun IntegrationAsset.convertToDto(): IntegrationAssetDto =
+    IntegrationAssetDto(
         id,
-        integrationStatus.convertToDto(),
+        integrationAssetStatus.convertToDto(),
         sourceData.convertToDto(),
         source,
         integrationId,
         sourceSyncId,
     )
-}
 
-fun SourceAssetData.convertToDto(): SourceAssetDataDto = SourceAssetDataDto(
-    id,
-    type,
-    title,
-    description,
-    dueInstant,
-    assigneeIds,
-    done,
-    estimations?.convertToDto(),
-)
+fun SourceAssetData.convertToDto(): SourceAssetDataDto =
+    SourceAssetDataDto(
+        id,
+        type,
+        title,
+        description,
+        dueInstant,
+        assigneeIds,
+        done,
+        estimations?.convertToDto(),
+    )
 
 fun IntegrationAssetSyncEvent.convertToDto(): IntegrationAssetSyncEventDto =
     IntegrationAssetSyncEventDto(
@@ -87,11 +92,12 @@ fun IntegrationAssetSyncEvent.convertToDto(): IntegrationAssetSyncEventDto =
         eventInstant.toString(),
     )
 
-fun IntegrationStatus.convertToDto(): IntegrationAssetStatusDto = IntegrationAssetStatusDto(
-    events.map {
-        it.convertToDto()
-    },
-)
+fun IntegrationAssetStatus.convertToDto(): IntegrationAssetStatusDto =
+    IntegrationAssetStatusDto(
+        events.map {
+            it.convertToDto()
+        },
+    )
 
 fun SourceAssetEstimationData.convertToDto(): SourceAssetEstimationDataDto =
     SourceAssetEstimationDataDto(
