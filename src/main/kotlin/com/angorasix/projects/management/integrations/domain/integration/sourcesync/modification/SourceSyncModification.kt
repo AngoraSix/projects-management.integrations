@@ -7,11 +7,13 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 
-abstract class SourceSyncModification<U>(modifyValue: U) :
-    DomainObjectModification<SourceSync, U>(modifyValue)
+abstract class SourceSyncModification<U>(
+    modifyValue: U,
+) : DomainObjectModification<SourceSync, U>(modifyValue)
 
-class ReplaceStepResponseData(stepResponses: List<Map<String, List<String>>?>) :
-    SourceSyncModification<List<Map<String, List<String>>?>>(stepResponses) {
+class ReplaceStepResponseData(
+    stepResponses: List<Map<String, List<String>>?>,
+) : SourceSyncModification<List<Map<String, List<String>>?>>(stepResponses) {
     override fun modify(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,
@@ -26,8 +28,9 @@ class ReplaceStepResponseData(stepResponses: List<Map<String, List<String>>?>) :
     }
 }
 
-class ReplaceMappingUsersData(stepResponses: Map<String, String>) :
-    SourceSyncModification<Map<String, String>>(stepResponses) {
+class ReplaceMappingUsersData(
+    stepResponses: Map<String, String>,
+) : SourceSyncModification<Map<String, String>>(stepResponses) {
     override fun modify(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,
@@ -38,8 +41,9 @@ class ReplaceMappingUsersData(stepResponses: Map<String, String>) :
     }
 }
 
-class RequestFullSyncEvent(newEvent: SourceSyncEvent) :
-    SourceSyncModification<SourceSyncEvent>(newEvent) {
+class RequestFullSyncEvent(
+    newEvent: SourceSyncEvent,
+) : SourceSyncModification<SourceSyncEvent>(newEvent) {
     override fun modify(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,
@@ -52,8 +56,9 @@ class RequestFullSyncEvent(newEvent: SourceSyncEvent) :
     }
 }
 
-class RequestSyncConfigUpdate(status: SourceSyncStatusValues) :
-    SourceSyncModification<SourceSyncStatusValues>(status) {
+class RequestSyncConfigUpdate(
+    status: SourceSyncStatusValues,
+) : SourceSyncModification<SourceSyncStatusValues>(status) {
     override fun modify(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,

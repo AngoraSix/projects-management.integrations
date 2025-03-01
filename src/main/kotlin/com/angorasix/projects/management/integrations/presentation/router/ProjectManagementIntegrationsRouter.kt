@@ -24,28 +24,29 @@ class ProjectManagementIntegrationsRouter(
      *
      * @return the [RouterFunction] with all the routes for ProjectManagements
      */
-    fun projectRouterFunction() = coRouter {
-        apiConfigs.basePaths.projectsManagementIntegration.nest {
-            filter { request, next ->
-                extractRequestingContributor(
-                    request,
-                    next,
-                )
-            }
-            apiConfigs.routes.baseByProjectManagementIdCrudRoute.nest {
-                defineByProjectManagementIdRoutes()
-            }
-            apiConfigs.routes.baseSourceSyncByIdCrudRoute.nest {
-                defineSourceSyncByIdEndpoints()
-            }
-            apiConfigs.routes.baseSourceSyncByIntegrationIdCrudRoute.nest {
-                defineSourceSyncBaseEndpoints()
-            }
-            apiConfigs.routes.baseByIdCrudRoute.nest {
-                defineByIdEndpoints()
+    fun projectRouterFunction() =
+        coRouter {
+            apiConfigs.basePaths.projectsManagementIntegration.nest {
+                filter { request, next ->
+                    extractRequestingContributor(
+                        request,
+                        next,
+                    )
+                }
+                apiConfigs.routes.baseByProjectManagementIdCrudRoute.nest {
+                    defineByProjectManagementIdRoutes()
+                }
+                apiConfigs.routes.baseSourceSyncByIdCrudRoute.nest {
+                    defineSourceSyncByIdEndpoints()
+                }
+                apiConfigs.routes.baseSourceSyncByIntegrationIdCrudRoute.nest {
+                    defineSourceSyncBaseEndpoints()
+                }
+                apiConfigs.routes.baseByIdCrudRoute.nest {
+                    defineByIdEndpoints()
+                }
             }
         }
-    }
 
     private fun CoRouterFunctionDsl.defineByIdEndpoints() {
         method(

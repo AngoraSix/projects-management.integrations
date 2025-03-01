@@ -44,9 +44,13 @@ data class IntegrationStatusDto(
     val sourceStrategyData: Map<String, Any>? = null,
 )
 
-data class IntegrationConfigDto(val sourceStrategyConfigData: Map<String, Any>?)
+data class IntegrationConfigDto(
+    val sourceStrategyConfigData: Map<String, Any>?,
+)
 
-enum class SupportedIntegrationPatchOperations(val op: PatchOperationSpec) {
+enum class SupportedIntegrationPatchOperations(
+    val op: PatchOperationSpec,
+) {
     STATUS(
         object : PatchOperationSpec {
             override fun supportsPatchOperation(operation: PatchOperation): Boolean =
@@ -98,7 +102,9 @@ data class ProjectContributorsToMatchDto(
     val projectContributors: List<DetailedContributor>,
 )
 
-enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {
+enum class SupportedSourceSyncPatchOperations(
+    val op: PatchOperationSpec,
+) {
     STEP_RESPONSE_DATA(
         object : PatchOperationSpec {
             override fun supportsPatchOperation(operation: PatchOperation): Boolean =
@@ -135,21 +141,21 @@ enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {
                 operation: PatchOperation,
                 objectMapper: ObjectMapper,
             ): SourceSyncModification<Map<String, String>> {
-                    val mappingValueData =
+                val mappingValueData =
                     objectMapper.convertValue(
                         operation.value,
                         object : TypeReference<Map<String, String>>() {},
                     )
                         ?: throw IllegalArgumentException(
-                            "Not supported value: ${operation.value}.")
+                            "Not supported value: ${operation.value}.",
+                        )
                 return ReplaceMappingUsersData(mappingValueData)
             }
         },
     ),
     REQUEST_FULL_SYNC_EVENT(
         object : PatchOperationSpec {
-            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
-                operation.op == "add" && operation.path == "/events/+"
+            override fun supportsPatchOperation(operation: PatchOperation): Boolean = operation.op == "add" && operation.path == "/events/+"
 
             override fun mapToObjectModification(
                 contributor: SimpleContributor,
@@ -188,6 +194,10 @@ enum class SupportedSourceSyncPatchOperations(val op: PatchOperationSpec) {
 fun extractNumberFromPath(path: String): Int {
     val regex = Regex("^/status/steps/(\\d+)$")
     val matchResult = regex.matchEntire(path)
-    return matchResult?.groups?.get(1)?.value?.toInt()
+    return matchResult
+        ?.groups
+        ?.get(1)
+        ?.value
+        ?.toInt()
         ?: throw IllegalArgumentException("Invalid path")
 }

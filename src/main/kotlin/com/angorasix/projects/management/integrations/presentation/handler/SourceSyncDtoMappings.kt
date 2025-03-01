@@ -23,8 +23,8 @@ fun SourceSync.convertToDto(
     apiConfigs: ApiConfigs,
     request: ServerRequest,
     isIntegrationActive: Boolean,
-): SourceSyncDto {
-    return SourceSyncDto(
+): SourceSyncDto =
+    SourceSyncDto(
         source,
         integrationId,
         status.convertToDto(),
@@ -38,13 +38,10 @@ fun SourceSync.convertToDto(
         request,
         isIntegrationActive,
     )
-}
 
-fun SourceSyncEvent.convertToDto(): SourceSyncEventDto =
-    SourceSyncEventDto(type, eventInstant)
+fun SourceSyncEvent.convertToDto(): SourceSyncEventDto = SourceSyncEventDto(type, eventInstant)
 
-fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto =
-    SourceSyncStatusDto(status, steps.map { it.convertToDto() })
+fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto = SourceSyncStatusDto(status, steps.map { it.convertToDto() })
 
 fun SourceSyncStatusStep.convertToDto(): SourceSyncStatusStepDto =
     SourceSyncStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)

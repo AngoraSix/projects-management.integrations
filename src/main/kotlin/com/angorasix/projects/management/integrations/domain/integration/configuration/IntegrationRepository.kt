@@ -14,5 +14,8 @@ interface IntegrationRepository :
     CoroutineCrudRepository<Integration, String>,
     CoroutineSortingRepository<Integration, String>,
     IntegrationInfraRepository {
-    suspend fun findBySourceAndProjectManagementId(source: String, projectManagementId: String): Integration?
+    suspend fun findBySourceAndProjectManagementId(
+        source: String,
+        projectManagementId: String,
+    ): Integration?
 }

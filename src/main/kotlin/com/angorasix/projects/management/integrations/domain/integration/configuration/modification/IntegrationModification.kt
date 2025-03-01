@@ -6,11 +6,13 @@ import com.angorasix.projects.management.integrations.domain.integration.configu
 import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
 import java.time.Instant
 
-abstract class IntegrationModification<U>(modifyValue: U) :
-    DomainObjectModification<Integration, U>(modifyValue)
+abstract class IntegrationModification<U>(
+    modifyValue: U,
+) : DomainObjectModification<Integration, U>(modifyValue)
 
-class ModifyIntegrationStatus(status: IntegrationStatusValues) :
-    IntegrationModification<IntegrationStatusValues>(status) {
+class ModifyIntegrationStatus(
+    status: IntegrationStatusValues,
+) : IntegrationModification<IntegrationStatusValues>(status) {
     override fun modify(
         simpleContributor: SimpleContributor,
         domainObject: Integration,

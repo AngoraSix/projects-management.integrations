@@ -36,7 +36,6 @@ class ProjectManagementIntegrationsHandler(
     private val sourceConfigurations: SourceConfigurations,
     private val objectMapper: ObjectMapper,
 ) {
-
     /**
      * Handler for the Get Single ProjectManagementIntegration endpoint,
      * retrieving a Mono with the requested ProjectManagementIntegration.
@@ -77,7 +76,8 @@ class ProjectManagementIntegrationsHandler(
 
         val projectManagementId = request.pathVariable("projectManagementId")
         return if (requestingContributor is SimpleContributor) {
-            service.findIntegrationsForProjectManagement(projectManagementId, requestingContributor)
+            service
+                .findIntegrationsForProjectManagement(projectManagementId, requestingContributor)
                 .map {
                     it.convertToDto(
                         requestingContributor,
@@ -85,9 +85,9 @@ class ProjectManagementIntegrationsHandler(
                         sourceConfigurations,
                         request,
                     )
-                }
-                .let {
-                    ok().contentType(MediaTypes.HAL_FORMS_JSON)
+                }.let {
+                    ok()
+                        .contentType(MediaTypes.HAL_FORMS_JSON)
                         .bodyValueAndAwait(
                             it.convertToDto(
                                 requestingContributor,
@@ -115,31 +115,36 @@ class ProjectManagementIntegrationsHandler(
         val projectManagementId = request.pathVariable("projectManagementId")
 
         return if (requestingContributor is SimpleContributor) {
-            val integration = try {
-                request.awaitBody<IntegrationDto>()
-                    .convertToDomain(
-                        setOf(
-                            SimpleContributor(
-                                requestingContributor.contributorId,
-                                emptySet(),
+            val integration =
+                try {
+                    request
+                        .awaitBody<IntegrationDto>()
+                        .convertToDomain(
+                            setOf(
+                                SimpleContributor(
+                                    requestingContributor.contributorId,
+                                    emptySet(),
+                                ),
                             ),
-                        ),
-                        projectManagementId,
+                            projectManagementId,
+                        )
+                } catch (e: IllegalArgumentException) {
+                    return resolveBadRequest(
+                        e.message ?: "Incorrect Project Management body",
+                        "Project Management",
                     )
-            } catch (e: IllegalArgumentException) {
-                return resolveBadRequest(
-                    e.message ?: "Incorrect Project Management body",
-                    "Project Management",
-                )
-            }
+                }
 
-            val outputIntegration = service.registerIntegration(integration, requestingContributor)
-                .convertToDto(requestingContributor, apiConfigs, sourceConfigurations, request)
+            val outputIntegration =
+                service
+                    .registerIntegration(integration, requestingContributor)
+                    .convertToDto(requestingContributor, apiConfigs, sourceConfigurations, request)
 
             val selfLink =
                 outputIntegration.links.getRequiredLink(IanaLinkRelations.SELF).href
 
-            created(URI.create(selfLink)).contentType(MediaTypes.HAL_FORMS_JSON)
+            created(URI.create(selfLink))
+                .contentType(MediaTypes.HAL_FORMS_JSON)
                 .bodyValueAndAwait(outputIntegration)
         } else {
             resolveBadRequest("Invalid Contributor Token", "Contributor Token")
@@ -159,13 +164,14 @@ class ProjectManagementIntegrationsHandler(
         val patch = request.awaitBody(Patch::class)
         return if (contributor is SimpleContributor) {
             try {
-                val modifyOperations = patch.operations.map {
-                    it.toDomainObjectModification(
-                        contributor,
-                        SupportedIntegrationPatchOperations.values().map { o -> o.op }.toList(),
-                        objectMapper,
-                    )
-                }
+                val modifyOperations =
+                    patch.operations.map {
+                        it.toDomainObjectModification(
+                            contributor,
+                            SupportedIntegrationPatchOperations.values().map { o -> o.op }.toList(),
+                            objectMapper,
+                        )
+                    }
                 val modifyIntegrationOperations: List<IntegrationModification<Any>> =
                     modifyOperations.filterIsInstance<IntegrationModification<Any>>()
                 val serviceOutput =
@@ -174,12 +180,13 @@ class ProjectManagementIntegrationsHandler(
                         integrationId,
                         modifyIntegrationOperations,
                     )
-                serviceOutput?.convertToDto(
-                    contributor,
-                    apiConfigs,
-                    sourceConfigurations,
-                    request,
-                )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
+                serviceOutput
+                    ?.convertToDto(
+                        contributor,
+                        apiConfigs,
+                        sourceConfigurations,
+                        request,
+                    )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
                     ?: resolveNotFound("Can't patch this Integration", "Integration")
             } catch (ex: RuntimeException) {
                 return resolveExceptionResponse(ex, "Integration")

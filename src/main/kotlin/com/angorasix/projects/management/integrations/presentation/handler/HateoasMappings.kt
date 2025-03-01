@@ -36,10 +36,17 @@ fun IntegrationDto.resolveHypermedia(
     val getSingleRoute = apiConfigs.routes.getIntegration
     // self
     val selfLink =
-        Link.of(uriBuilder(request).path(getSingleRoute.resolvePath()).build().toUriString())
-            .withRel(getSingleRoute.name).expand(id).withSelfRel()
+        Link
+            .of(uriBuilder(request).path(getSingleRoute.resolvePath()).build().toUriString())
+            .withRel(getSingleRoute.name)
+            .expand(id)
+            .withSelfRel()
     val selfLinkWithDefaultAffordance =
-        Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
+        Affordances
+            .of(selfLink)
+            .afford(HttpMethod.OPTIONS)
+            .withName("default")
+            .toLink()
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
@@ -56,60 +63,80 @@ private fun IntegrationDto.addIntegrationDtoAdminLinks(
     sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
 ) {
-    if (status?.status in listOf(
+    if (status?.status in
+        listOf(
             IntegrationStatusValues.NOT_REGISTERED,
             IntegrationStatusValues.DISABLED,
         )
     ) {
-        sourceConfigurations.supported.flatMap {
-            sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions(
-                apiConfigs,
-            )
-                ?: emptyList()
-        }.forEach { actionData ->
-            val actionLink = Link.of(actionData.url).withRel(actionData.key)
-            add(actionLink)
-        }
+        sourceConfigurations.supported
+            .flatMap {
+                sourceConfigurations.sourceConfigs[it]?.resolvedStrategy?.resolveRegistrationActions(
+                    apiConfigs,
+                )
+                    ?: emptyList()
+            }.forEach { actionData ->
+                val actionLink = Link.of(actionData.url).withRel(actionData.key)
+                add(actionLink)
+            }
     } else {
         // START SOURCE SYNC
         if (integration.sourceSync?.status?.status != SourceSyncStatusValues.COMPLETED) {
             val createSourceSyncRoute = apiConfigs.routes.createSourceSync
             val startConfigSourceSyncActionName =
                 apiConfigs.integrationActions.startConfigSourceSync
-            val createSourceSyncLink = Link.of(
-                uriBuilder(request).path(createSourceSyncRoute.resolvePath()).build()
-                    .toUriString(),
-            ).withTitle(startConfigSourceSyncActionName).withName(startConfigSourceSyncActionName)
-                .withRel(startConfigSourceSyncActionName).expand(integration.id)
+            val createSourceSyncLink =
+                Link
+                    .of(
+                        uriBuilder(request)
+                            .path(createSourceSyncRoute.resolvePath())
+                            .build()
+                            .toUriString(),
+                    ).withTitle(startConfigSourceSyncActionName)
+                    .withName(startConfigSourceSyncActionName)
+                    .withRel(startConfigSourceSyncActionName)
+                    .expand(integration.id)
             val createSourceSyncAffordanceLink =
-                Affordances.of(createSourceSyncLink).afford(createSourceSyncRoute.method)
-                    .withName(startConfigSourceSyncActionName).toLink()
+                Affordances
+                    .of(createSourceSyncLink)
+                    .afford(createSourceSyncRoute.method)
+                    .withName(startConfigSourceSyncActionName)
+                    .toLink()
             add(createSourceSyncAffordanceLink)
         }
 
         // DISABLE
         val patchIntegrationRoute = apiConfigs.routes.patchIntegration
         val disableActionName = apiConfigs.integrationActions.disableIntegration
-        val disableActionLink = Link.of(
-            uriBuilder(request).path(patchIntegrationRoute.resolvePath()).build()
-                .toUriString(),
-        ).withTitle(disableActionName).withName(disableActionName)
-            .withRel(disableActionName)
+        val disableActionLink =
+            Link
+                .of(
+                    uriBuilder(request)
+                        .path(patchIntegrationRoute.resolvePath())
+                        .build()
+                        .toUriString(),
+                ).withTitle(disableActionName)
+                .withName(disableActionName)
+                .withRel(disableActionName)
         val disableAffordanceLink =
-            Affordances.of(disableActionLink).afford(patchIntegrationRoute.method)
-                .withName(disableActionName).toLink()
+            Affordances
+                .of(disableActionLink)
+                .afford(patchIntegrationRoute.method)
+                .withName(disableActionName)
+                .toLink()
         add(disableAffordanceLink)
     }
 }
 
 fun List<IntegrationDto>.generateCollectionModel(): Pair<Boolean, CollectionModel<IntegrationDto>> {
-    val collectionModel = if (this.isEmpty()) {
-        val wrappers = EmbeddedWrappers(false)
-        val wrapper: EmbeddedWrapper = wrappers.emptyCollectionOf(IntegrationDto::class.java)
-        CollectionModel.of(listOf(wrapper)) as CollectionModel<IntegrationDto>
-    } else {
-        CollectionModel.of(this).withFallbackType(IntegrationDto::class.java)
-    }
+    val collectionModel =
+        if (this.isEmpty()) {
+            val wrappers = EmbeddedWrappers(false)
+            val wrapper: EmbeddedWrapper = wrappers.emptyCollectionOf(IntegrationDto::class.java)
+            CollectionModel.of(listOf(wrapper)) as CollectionModel<IntegrationDto>
+        } else {
+            CollectionModel.of(this).withFallbackType(IntegrationDto::class.java)
+        }
     return Pair(this.isEmpty(), collectionModel)
 }
 
@@ -121,13 +148,21 @@ fun CollectionModel<IntegrationDto>.resolveHypermedia(
 ): CollectionModel<IntegrationDto> {
     val getByProjectManagementId = apiConfigs.routes.listIntegrationsByProjectManagementId
     // self
-    val selfLink = Link.of(
-        uriBuilder(request).path(getByProjectManagementId.resolvePath())
-            .queryParams(filter.toMultiValueMap()).build()
-            .toUriString(),
-    ).withSelfRel()
+    val selfLink =
+        Link
+            .of(
+                uriBuilder(request)
+                    .path(getByProjectManagementId.resolvePath())
+                    .queryParams(filter.toMultiValueMap())
+                    .build()
+                    .toUriString(),
+            ).withSelfRel()
     val selfLinkWithDefaultAffordance =
-        Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
+        Affordances
+            .of(selfLink)
+            .afford(HttpMethod.OPTIONS)
+            .withName("default")
+            .toLink()
     add(selfLinkWithDefaultAffordance)
     if (requestingContributor != null && requestingContributor.isAdminHint == true) {
         // here goes admin-specific collection hypermedia
@@ -151,10 +186,17 @@ fun SourceSyncDto.resolveHypermedia(
     val getSingleRoute = apiConfigs.routes.getSourceSync
     // self
     val selfLink =
-        Link.of(uriBuilder(request).path(getSingleRoute.resolvePath()).build().toUriString())
-            .withRel(getSingleRoute.name).expand(sourceSync.integrationId, id).withSelfRel()
+        Link
+            .of(uriBuilder(request).path(getSingleRoute.resolvePath()).build().toUriString())
+            .withRel(getSingleRoute.name)
+            .expand(sourceSync.integrationId, id)
+            .withSelfRel()
     val selfLinkWithDefaultAffordance =
-        Affordances.of(selfLink).afford(HttpMethod.OPTIONS).withName("default").toLink()
+        Affordances
+            .of(selfLink)
+            .afford(HttpMethod.OPTIONS)
+            .withName("default")
+            .toLink()
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
@@ -162,7 +204,7 @@ fun SourceSyncDto.resolveHypermedia(
             (
                 requestingContributor.isAdminHint == true ||
                     sourceSync.isAdmin(requestingContributor.contributorId)
-                ) &&
+            ) &&
             isIntegrationActive
         ) {
             if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
@@ -199,15 +241,26 @@ fun SourceSyncDto.resolveHypermedia(
     return this
 }
 
-private fun SourceSyncDto.addLink(route: Route, actionName: String, request: ServerRequest) {
-    val actionLink = Link.of(
-        uriBuilder(request).path(route.resolvePath()).build()
-            .toUriString(),
-    ).withTitle(actionName).withName(actionName)
-        .withRel(actionName)
+private fun SourceSyncDto.addLink(
+    route: Route,
+    actionName: String,
+    request: ServerRequest,
+) {
+    val actionLink =
+        Link
+            .of(
+                uriBuilder(request)
+                    .path(route.resolvePath())
+                    .build()
+                    .toUriString(),
+            ).withTitle(actionName)
+            .withName(actionName)
+            .withRel(actionName)
     val affordanceLink =
-        Affordances.of(actionLink)
+        Affordances
+            .of(actionLink)
             .afford(route.method)
-            .withName(actionName).toLink()
+            .withName(actionName)
+            .toLink()
     add(affordanceLink)
 }
