@@ -32,8 +32,8 @@ fun SourceSync.convertToDto(
     contributor: SimpleContributor?,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
-): SourceSyncDto {
-    return SourceSyncDto(
+): SourceSyncDto =
+    SourceSyncDto(
         source,
         integrationId,
         status.convertToDto(),
@@ -47,19 +47,16 @@ fun SourceSync.convertToDto(
         apiConfigs,
         request,
     )
-}
 
-fun SourceSyncEvent.convertToDto(): SourceSyncEventDto =
-    SourceSyncEventDto(type, eventInstant)
+fun SourceSyncEvent.convertToDto(): SourceSyncEventDto = SourceSyncEventDto(type, eventInstant)
 
-fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto =
-    SourceSyncStatusDto(status, steps.map { it.convertToDto() })
+fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto = SourceSyncStatusDto(status, steps.map { it.convertToDto() })
 
 fun SourceSyncStatusStep.convertToDto(): SourceSyncStatusStepDto =
     SourceSyncStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)
 
-fun IntegrationAsset.convertToDto(): IntegrationAssetDto {
-    return IntegrationAssetDto(
+fun IntegrationAsset.convertToDto(): IntegrationAssetDto =
+    IntegrationAssetDto(
         id,
         integrationStatus.convertToDto(),
         sourceData.convertToDto(),
@@ -67,18 +64,18 @@ fun IntegrationAsset.convertToDto(): IntegrationAssetDto {
         integrationId,
         sourceSyncId,
     )
-}
 
-fun SourceAssetData.convertToDto(): SourceAssetDataDto = SourceAssetDataDto(
-    id,
-    type,
-    title,
-    description,
-    dueInstant,
-    assigneeIds,
-    done,
-    estimations?.convertToDto(),
-)
+fun SourceAssetData.convertToDto(): SourceAssetDataDto =
+    SourceAssetDataDto(
+        id,
+        type,
+        title,
+        description,
+        dueInstant,
+        assigneeIds,
+        done,
+        estimations?.convertToDto(),
+    )
 
 fun IntegrationAssetSyncEvent.convertToDto(): IntegrationAssetSyncEventDto =
     IntegrationAssetSyncEventDto(
@@ -87,11 +84,12 @@ fun IntegrationAssetSyncEvent.convertToDto(): IntegrationAssetSyncEventDto =
         eventInstant.toString(),
     )
 
-fun IntegrationStatus.convertToDto(): IntegrationAssetStatusDto = IntegrationAssetStatusDto(
-    events.map {
-        it.convertToDto()
-    },
-)
+fun IntegrationStatus.convertToDto(): IntegrationAssetStatusDto =
+    IntegrationAssetStatusDto(
+        events.map {
+            it.convertToDto()
+        },
+    )
 
 fun SourceAssetEstimationData.convertToDto(): SourceAssetEstimationDataDto =
     SourceAssetEstimationDataDto(

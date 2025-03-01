@@ -18,7 +18,7 @@ import com.angorasix.projects.management.integrations.infrastructure.queryfilter
 import kotlinx.coroutines.flow.toList
 import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.messaging.support.MessageBuilder
-import java.util.*
+import java.util.UUID
 
 /**
  *
@@ -30,7 +30,6 @@ class IntegrationAssetService(
     private val streamBridge: StreamBridge,
     private val amqpConfigs: AmqpConfigurations,
 ) {
-
     /**
      * Method to modify [SourceSync].
      *
@@ -41,13 +40,15 @@ class IntegrationAssetService(
         projectManagementId: String,
         requestingContributor: DetailedContributor,
     ): List<IntegrationAsset> {
-        val existingSourceSyncAssets = repository.findUsingFilter(
-            ListIntegrationAssetFilter(
-                null,
-                assets.map { it.sourceData.id },
-                listOf(sourceSyncId),
-            ),
-        ).toList()
+        val existingSourceSyncAssets =
+            repository
+                .findUsingFilter(
+                    ListIntegrationAssetFilter(
+                        null,
+                        assets.map { it.sourceData.id },
+                        listOf(sourceSyncId),
+                    ),
+                ).toList()
         val updatedAssets = mutableListOf<IntegrationAsset>()
         val pendingUpdatedAssets =
             mutableListOf<IntegrationAsset>() // unsynced assets
@@ -114,37 +115,39 @@ class IntegrationAssetService(
         requestingContributor: DetailedContributor,
     ) {
         if (updatedAssets.isNotEmpty()) {
-            val messageData = A6InfraBulkResourceDto(
-                A6DomainResource.Task,
-                updatedAssets.map {
-                    requireNotNull(it.id)
-                    val sourceData = it.sourceData
-                    A6InfraTaskDto(
-                        it.id,
-                        sourceData.title,
-                        sourceData.description,
-                        sourceData.dueInstant,
-                        emptySet(),
-                        sourceData.done,
-                        sourceData.type,
-                        sourceData.id,
-                        sourceData.estimations?.toDto(),
-                    )
-                },
-            )
+            val messageData =
+                A6InfraBulkResourceDto(
+                    A6DomainResource.Task,
+                    updatedAssets.map {
+                        requireNotNull(it.id)
+                        val sourceData = it.sourceData
+                        A6InfraTaskDto(
+                            it.id,
+                            sourceData.title,
+                            sourceData.description,
+                            sourceData.dueInstant,
+                            emptySet(),
+                            sourceData.done,
+                            sourceData.type,
+                            sourceData.id,
+                            sourceData.estimations?.toDto(),
+                        )
+                    },
+                )
             streamBridge.send(
                 bindingKey,
-                MessageBuilder.withPayload(
-                    A6InfraMessageDto(
-                        projectManagementId,
-                        A6DomainResource.ProjectManagement,
-                        sourceSyncId,
-                        A6DomainResource.IntegrationSourceSync.value,
-                        A6InfraTopics.TASKS_INTEGRATION_FULL_SYNCING.value,
-                        requestingContributor,
-                        messageData.toMap(),
-                    ),
-                ).build(),
+                MessageBuilder
+                    .withPayload(
+                        A6InfraMessageDto(
+                            projectManagementId,
+                            A6DomainResource.ProjectManagement,
+                            sourceSyncId,
+                            A6DomainResource.IntegrationSourceSync.value,
+                            A6InfraTopics.TASKS_INTEGRATION_FULL_SYNCING.value,
+                            requestingContributor,
+                            messageData.toMap(),
+                        ),
+                    ).build(),
             )
         }
     }
@@ -153,8 +156,8 @@ class IntegrationAssetService(
 private fun updatedAssetOrNull(
     asset: IntegrationAsset,
     existing: IntegrationAsset?,
-): IntegrationAsset? {
-    return if (existing != null) {
+): IntegrationAsset? =
+    if (existing != null) {
         if (asset.requiresUpdate(existing)) {
             asset.copy(id = existing.id)
         } else {
@@ -163,10 +166,9 @@ private fun updatedAssetOrNull(
     } else {
         asset
     }
-}
 
-private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto {
-    return A6InfraTaskEstimationDto(
+private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto =
+    A6InfraTaskEstimationDto(
         caps,
         strategy,
         effort,
@@ -175,4 +177,3 @@ private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto {
         industryModifier,
         moneyPayment,
     )
-}

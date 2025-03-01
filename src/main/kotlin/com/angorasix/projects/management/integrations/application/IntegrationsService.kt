@@ -30,49 +30,55 @@ class IntegrationsService(
     suspend fun findSingleIntegration(
         id: String,
         requestingContributor: SimpleContributor,
-    ): Integration? = repository.findSingleForContributorUsingFilter(
-        ListIntegrationFilter(listOf(id)),
-        requestingContributor,
-    )?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
+    ): Integration? =
+        repository
+            .findSingleForContributorUsingFilter(
+                ListIntegrationFilter(listOf(id)),
+                requestingContributor,
+            )?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
 
     fun findIntegrationsForProjectManagement(
         projectManagementId: String,
         requestingContributor: SimpleContributor,
-    ): List<Integration> = runBlocking {
-        val filter = ListIntegrationFilter(null, null, listOf(projectManagementId))
-        val integrationList = repository.findUsingFilter(filter, requestingContributor).toList()
-        sourceConfigs.supported.map { source ->
-            integrationList.find { it.source == source }
-                ?.includeSourceSyncData(requestingContributor, sourceSyncRepository) ?: Integration(
-                source,
-                projectManagementId,
-                IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED),
-                emptySet(),
-                IntegrationConfig(null),
-            )
+    ): List<Integration> =
+        runBlocking {
+            val filter = ListIntegrationFilter(null, null, listOf(projectManagementId))
+            val integrationList = repository.findUsingFilter(filter, requestingContributor).toList()
+            sourceConfigs.supported.map { source ->
+                integrationList
+                    .find { it.source == source }
+                    ?.includeSourceSyncData(requestingContributor, sourceSyncRepository) ?: Integration(
+                    source,
+                    projectManagementId,
+                    IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED),
+                    emptySet(),
+                    IntegrationConfig(null),
+                )
+            }
         }
-    }
 
     suspend fun registerIntegration(
         newIntegrationData: Integration,
         requestingContributor: SimpleContributor,
     ): Integration {
         val source = Source.valueOf(newIntegrationData.source.uppercase())
-        val existingIntegration = repository.findSingleForContributorUsingFilter(
-            ListIntegrationFilter(
-                null,
-                setOf(source.value),
-                listOf(newIntegrationData.projectManagementId),
-            ),
-            requestingContributor,
-        )
+        val existingIntegration =
+            repository.findSingleForContributorUsingFilter(
+                ListIntegrationFilter(
+                    null,
+                    setOf(source.value),
+                    listOf(newIntegrationData.projectManagementId),
+                ),
+                requestingContributor,
+            )
         val processedRegisterIntegration =
             registrationStrategies[source]?.processIntegrationRegistration(
                 newIntegrationData,
                 requestingContributor,
                 existingIntegration,
             ) ?: throw IllegalArgumentException("Source not supported")
-        return repository.save(processedRegisterIntegration)
+        return repository
+            .save(processedRegisterIntegration)
             .includeSourceSyncData(requestingContributor, sourceSyncRepository)
     }
 
@@ -85,19 +91,22 @@ class IntegrationsService(
         integrationId: String,
         modificationOperations: List<IntegrationModification<out Any>>,
     ): Integration? {
-        val integration = repository.findSingleForContributorUsingFilter(
-            ListIntegrationFilter(listOf(integrationId)),
-            requestingContributor,
-        )
-        val updatedIntegration = integration?.let {
-            modificationOperations.fold(it) { accumulatedIntegration, op ->
-                op.modify(
-                    requestingContributor,
-                    accumulatedIntegration,
-                )
+        val integration =
+            repository.findSingleForContributorUsingFilter(
+                ListIntegrationFilter(listOf(integrationId)),
+                requestingContributor,
+            )
+        val updatedIntegration =
+            integration?.let {
+                modificationOperations.fold(it) { accumulatedIntegration, op ->
+                    op.modify(
+                        requestingContributor,
+                        accumulatedIntegration,
+                    )
+                }
             }
-        }
-        return updatedIntegration?.let { repository.save(it) }
+        return updatedIntegration
+            ?.let { repository.save(it) }
             ?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
     }
 }
@@ -107,10 +116,11 @@ private suspend fun Integration.includeSourceSyncData(
     sourceSyncRepository: SourceSyncRepository,
 ): Integration {
     this.id?.let {
-        val sourceSyncs = sourceSyncRepository.findForContributorUsingFilter(
-            ListSourceSyncFilter(null, listOf(it)),
-            requestingContributor,
-        )
+        val sourceSyncs =
+            sourceSyncRepository.findForContributorUsingFilter(
+                ListSourceSyncFilter(null, listOf(it)),
+                requestingContributor,
+            )
         this.sourceSync = sourceSyncs
     }
     return this

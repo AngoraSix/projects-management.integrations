@@ -17,40 +17,40 @@ import java.time.Instant
  */
 @Document
 @CompoundIndex(name = "integration_idx", def = "{'source': 1, 'projectManagementId': 1}")
-data class Integration @PersistenceCreator public constructor(
-    @field:Id val id: String?,
-    val source: String,
-    val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
-    val status: IntegrationStatus,
-    val admins: Set<SimpleContributor> = emptySet(),
-    val config: IntegrationConfig,
-) {
+data class Integration
+    @PersistenceCreator
+    public constructor(
+        @field:Id val id: String?,
+        val source: String,
+        val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
+        val status: IntegrationStatus,
+        val admins: Set<SimpleContributor> = emptySet(),
+        val config: IntegrationConfig,
+    ) {
+        @Transient var sourceSync: SourceSync? = null
 
-    @Transient var sourceSync: SourceSync? = null
+        constructor(
+            source: String,
+            projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
+            status: IntegrationStatus,
+            admins: Set<SimpleContributor> = emptySet(),
+            config: IntegrationConfig,
+        ) : this(
+            null,
+            source,
+            projectManagementId,
+            status,
+            admins,
+            config,
+        )
 
-    constructor(
-        source: String,
-        projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
-        status: IntegrationStatus,
-        admins: Set<SimpleContributor> = emptySet(),
-        config: IntegrationConfig,
-    ) : this(
-        null,
-        source,
-        projectManagementId,
-        status,
-        admins,
-        config,
-    )
-
-    /**
-     * Checks whether a particular contributor is Admin of this Club.
-     *
-     * @param contributorId - contributor candidate to check.
-     */
-    fun isAdmin(contributorId: String?): Boolean =
-        (contributorId != null).and(admins.any { it.contributorId == contributorId })
-}
+        /**
+         * Checks whether a particular contributor is Admin of this Club.
+         *
+         * @param contributorId - contributor candidate to check.
+         */
+        fun isAdmin(contributorId: String?): Boolean = (contributorId != null).and(admins.any { it.contributorId == contributorId })
+    }
 
 data class IntegrationStatus(
     @Transient var status: IntegrationStatusValues, // should match one of the IntegrationStatusValues, but flexible
@@ -64,7 +64,9 @@ data class IntegrationStatus(
 }
 
 enum class IntegrationStatusValues {
-    NOT_REGISTERED, REGISTERED, DISABLED
+    NOT_REGISTERED,
+    REGISTERED,
+    DISABLED,
 }
 
 data class IntegrationConfig(

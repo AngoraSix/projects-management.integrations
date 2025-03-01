@@ -10,24 +10,24 @@ import org.springframework.data.mongodb.core.ReactiveMongoOperations
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query
 
-class SourceSyncInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperations) :
-    SourceSyncInfraRepository {
-
+class SourceSyncInfraRepositoryImpl(
+    private val mongoOps: ReactiveMongoOperations,
+) : SourceSyncInfraRepository {
     override fun findUsingFilter(
         filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor?,
-    ): Flow<SourceSync> {
-        return mongoOps.find(filter.toQuery(requestingContributor), SourceSync::class.java)
+    ): Flow<SourceSync> =
+        mongoOps
+            .find(filter.toQuery(requestingContributor), SourceSync::class.java)
             .asFlow()
-    }
 
     override suspend fun findForContributorUsingFilter(
         filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor,
-    ): SourceSync? {
-        return mongoOps.find(filter.toQuery(requestingContributor), SourceSync::class.java)
+    ): SourceSync? =
+        mongoOps
+            .find(filter.toQuery(requestingContributor), SourceSync::class.java)
             .awaitFirstOrNull()
-    }
 }
 
 private fun ListSourceSyncFilter.toQuery(requestingContributor: SimpleContributor?): Query {

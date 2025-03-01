@@ -35,7 +35,7 @@ class SourceSyncHandler(
     private val apiConfigs: ApiConfigs,
     private val objectMapper: ObjectMapper,
 ) {
-    /* default */
+    // default
     private val logger: Logger = LoggerFactory.getLogger(SourceSyncHandler::class.java)
 
     /**
@@ -50,12 +50,14 @@ class SourceSyncHandler(
         val integrationId = request.pathVariable("integrationId")
 
         return if (requestingContributor is SimpleContributor) {
-            service.createSourceSync(integrationId, requestingContributor)
+            service
+                .createSourceSync(integrationId, requestingContributor)
                 ?.convertToDto(requestingContributor, apiConfigs, request)
                 ?.let { outputSourceSyncDto ->
                     val selfLink =
                         outputSourceSyncDto.links.getRequiredLink(IanaLinkRelations.SELF).href
-                    created(URI.create(selfLink)).contentType(MediaTypes.HAL_FORMS_JSON)
+                    created(URI.create(selfLink))
+                        .contentType(MediaTypes.HAL_FORMS_JSON)
                         .bodyValueAndAwait(outputSourceSyncDto)
                 } ?: resolveNotFound(
                 "Can't register Source Sync for this Integration / Source",
@@ -106,13 +108,14 @@ class SourceSyncHandler(
 
         return if (requestingContributor is DetailedContributor) {
             try {
-                val modifyOperations = patch.operations.map {
-                    it.toDomainObjectModification(
-                        requestingContributor,
-                        SupportedSourceSyncPatchOperations.values().map { o -> o.op }.toList(),
-                        objectMapper,
-                    )
-                }
+                val modifyOperations =
+                    patch.operations.map {
+                        it.toDomainObjectModification(
+                            requestingContributor,
+                            SupportedSourceSyncPatchOperations.values().map { o -> o.op }.toList(),
+                            objectMapper,
+                        )
+                    }
                 val modifyIntegrationOperations: List<SourceSyncModification<Any>> =
                     modifyOperations.filterIsInstance<SourceSyncModification<Any>>()
                 val serviceOutput =
@@ -121,11 +124,12 @@ class SourceSyncHandler(
                         sourceSyncId,
                         modifyIntegrationOperations,
                     )
-                serviceOutput?.convertToDto(
-                    requestingContributor,
-                    apiConfigs,
-                    request,
-                )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
+                serviceOutput
+                    ?.convertToDto(
+                        requestingContributor,
+                        apiConfigs,
+                        request,
+                    )?.let { ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(it) }
                     ?: resolveNotFound("Can't patch this Source Sync", "Source Sync")
             } catch (ex: RuntimeException) {
                 logger.error("Error while patching Source Sync", ex)

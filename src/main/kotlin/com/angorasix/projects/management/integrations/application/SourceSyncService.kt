@@ -15,7 +15,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.toList
-import java.util.*
+import java.util.UUID
 
 /**
  *
@@ -29,22 +29,25 @@ class SourceSyncService(
     private val assetsService: IntegrationAssetService,
     private val assetRepository: IntegrationAssetRepository,
 ) {
-
     suspend fun findSingleSourceSync(
         id: String,
         requestingContributor: SimpleContributor,
-    ): SourceSync? = repository.findForContributorUsingFilter(
-        ListSourceSyncFilter(listOf(id)),
-        requestingContributor,
-    )?.includeSourceSyncAssets(assetRepository)
+    ): SourceSync? =
+        repository
+            .findForContributorUsingFilter(
+                ListSourceSyncFilter(listOf(id)),
+                requestingContributor,
+            )?.includeSourceSyncAssets(assetRepository)
 
     suspend fun createSourceSync(
         integrationId: String,
         requestingContributor: SimpleContributor,
     ): SourceSync? {
-        val existingSourceSyncList = repository.findUsingFilter(
-            ListSourceSyncFilter(null, listOf(integrationId)),
-        ).toList()
+        val existingSourceSyncList =
+            repository
+                .findUsingFilter(
+                    ListSourceSyncFilter(null, listOf(integrationId)),
+                ).toList()
 
         if (existingSourceSyncList.isNotEmpty() &&
             existingSourceSyncList.first().status.status == SourceSyncStatusValues.COMPLETED
@@ -58,11 +61,12 @@ class SourceSyncService(
             integrationsService.findSingleIntegration(integrationId, requestingContributor)
         return integration?.let {
             val source = Source.valueOf(integration.source.uppercase())
-            val sourceSync = sourceSyncStrategies[source]?.configSourceSync(
-                integration,
-                requestingContributor,
-                existingSourceSyncList.firstOrNull(),
-            )
+            val sourceSync =
+                sourceSyncStrategies[source]?.configSourceSync(
+                    integration,
+                    requestingContributor,
+                    existingSourceSyncList.firstOrNull(),
+                )
             sourceSync?.let { repository.save(it) }
         }
     }
@@ -76,10 +80,11 @@ class SourceSyncService(
         sourceSyncId: String,
         modificationOperations: List<SourceSyncModification<out Any>>,
     ): SourceSync? {
-        val persistedSourceSync = repository.findForContributorUsingFilter(
-            ListSourceSyncFilter(listOf(sourceSyncId)),
-            requestingContributor,
-        )
+        val persistedSourceSync =
+            repository.findForContributorUsingFilter(
+                ListSourceSyncFilter(listOf(sourceSyncId)),
+                requestingContributor,
+            )
         return persistedSourceSync?.let {
             val patchedSourceSync =
                 modificationOperations.fold(it) { accumulatedSourceSync, op ->
@@ -89,18 +94,21 @@ class SourceSyncService(
                     )
                 }
             val source = persistedSourceSync.source
-            val sourceSyncStrategy = sourceSyncStrategies[Source.valueOf(source.uppercase())]
-                ?: throw IllegalArgumentException("Source not supported for SourceSync operations: $source")
-            val integration = integrationsService.findSingleIntegration(
-                persistedSourceSync.integrationId,
-                requestingContributor,
-            )
-                ?: throw IllegalArgumentException(
-                    "Couldn't find associated integration" +
-                        "[${persistedSourceSync.integrationId}] for sourceSync [$sourceSyncId] }",
+            val sourceSyncStrategy =
+                sourceSyncStrategies[Source.valueOf(source.uppercase())]
+                    ?: throw IllegalArgumentException("Source not supported for SourceSync operations: $source")
+            val integration =
+                integrationsService.findSingleIntegration(
+                    persistedSourceSync.integrationId,
+                    requestingContributor,
                 )
+                    ?: throw IllegalArgumentException(
+                        "Couldn't find associated integration" +
+                            "[${persistedSourceSync.integrationId}] for sourceSync [$sourceSyncId] }",
+                    )
             val updatedSourceSync =
-                if (patchedSourceSync.wasRequestedFullSync() || sourceSyncStrategy.isReadyForSyncing(
+                if (patchedSourceSync.wasRequestedFullSync() ||
+                    sourceSyncStrategy.isReadyForSyncing(
                         patchedSourceSync,
                         integration,
                         requestingContributor,
@@ -124,13 +132,13 @@ class SourceSyncService(
         }
     }
 
-    private suspend fun SourceSync.includeSourceSyncAssets(
-        assetRepository: IntegrationAssetRepository,
-    ): SourceSync {
+    private suspend fun SourceSync.includeSourceSyncAssets(assetRepository: IntegrationAssetRepository): SourceSync {
         this.id?.let {
-            val assets = assetRepository.findUsingFilter(
-                ListIntegrationAssetFilter(null, null, listOf(it)),
-            ).toList()
+            val assets =
+                assetRepository
+                    .findUsingFilter(
+                        ListIntegrationAssetFilter(null, null, listOf(it)),
+                    ).toList()
             this.assets = assets
         }
         return this
@@ -144,18 +152,20 @@ class SourceSyncService(
         sourceSyncId: String,
     ): SourceSync {
         val syncEventId = UUID.randomUUID().toString()
-        val assets = sourceSyncStrategy.triggerSourceSync(
-            patchedSourceSync,
-            integration,
-            requestingContributor,
-            syncEventId,
-        )
-        val updatedAssets = assetsService.processAssets(
-            assets,
-            sourceSyncId,
-            integration.projectManagementId,
-            requestingContributor,
-        )
+        val assets =
+            sourceSyncStrategy.triggerSourceSync(
+                patchedSourceSync,
+                integration,
+                requestingContributor,
+                syncEventId,
+            )
+        val updatedAssets =
+            assetsService.processAssets(
+                assets,
+                sourceSyncId,
+                integration.projectManagementId,
+                requestingContributor,
+            )
 
         patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
         patchedSourceSync.addEvent(
@@ -174,11 +184,12 @@ class SourceSyncService(
         syncingEventId: String,
         requestingContributor: DetailedContributor,
     ): SourceSync {
-        val sourceSync = repository.findForContributorUsingFilter(
-            ListSourceSyncFilter((listOf(sourceSyncId))),
-            requestingContributor,
-        )
-            ?: throw IllegalArgumentException("SourceSync [$sourceSyncId] not found for contributor")
+        val sourceSync =
+            repository.findForContributorUsingFilter(
+                ListSourceSyncFilter((listOf(sourceSyncId))),
+                requestingContributor,
+            )
+                ?: throw IllegalArgumentException("SourceSync [$sourceSyncId] not found for contributor")
 
         assetsService.processSyncingCorrespondence(
             correspondences,

@@ -42,13 +42,16 @@ class TrelloRegistrationStrategy(
                 ?: throw IllegalArgumentException("trello memberUrl config is required for registration")
 
         // Call Trello to get User data
-        val trelloMemberDto = trelloWebClient.get()
-            .uri(memberUri)
-            .attributes { attrs ->
-                attrs[IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
-                    accessToken
-            }
-            .retrieve().bodyToMono(TrelloMemberDto::class.java).awaitSingle()
+        val trelloMemberDto =
+            trelloWebClient
+                .get()
+                .uri(memberUri)
+                .attributes { attrs ->
+                    attrs[IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
+                        accessToken
+                }.retrieve()
+                .bodyToMono(TrelloMemberDto::class.java)
+                .awaitSingle()
 
         return Integration(
             existingIntegration?.id,
@@ -65,14 +68,10 @@ class TrelloRegistrationStrategy(
         )
     }
 
-    private fun extractStatusData(data: Map<String, Any>?): Map<String, Any>? {
-        return data
-    }
+    private fun extractStatusData(data: Map<String, Any>?): Map<String, Any>? = data
 
     private fun extractConfigData(
         accessToken: String,
         userData: TrelloMemberDto,
-    ): Map<String, Any> {
-        return mapOf(ACCESS_TOKEN_CONFIG_PARAM to accessToken, ACCESS_USER_CONFIG_PARAM to userData)
-    }
+    ): Map<String, Any> = mapOf(ACCESS_TOKEN_CONFIG_PARAM to accessToken, ACCESS_USER_CONFIG_PARAM to userData)
 }

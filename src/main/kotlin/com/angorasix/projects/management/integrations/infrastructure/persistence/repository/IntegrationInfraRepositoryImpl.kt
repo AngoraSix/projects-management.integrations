@@ -16,24 +16,24 @@ import org.springframework.data.mongodb.core.query.Query
  *
  * @author rozagerardo
  */
-class IntegrationInfraRepositoryImpl(private val mongoOps: ReactiveMongoOperations) :
-    IntegrationInfraRepository {
-
+class IntegrationInfraRepositoryImpl(
+    private val mongoOps: ReactiveMongoOperations,
+) : IntegrationInfraRepository {
     override fun findUsingFilter(
         filter: ListIntegrationFilter,
         requestingContributor: SimpleContributor,
-    ): Flow<Integration> {
-        return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java)
+    ): Flow<Integration> =
+        mongoOps
+            .find(filter.toQuery(requestingContributor), Integration::class.java)
             .asFlow()
-    }
 
     override suspend fun findSingleForContributorUsingFilter(
         filter: ListIntegrationFilter,
         requestingContributor: SimpleContributor,
-    ): Integration? {
-        return mongoOps.find(filter.toQuery(requestingContributor), Integration::class.java)
+    ): Integration? =
+        mongoOps
+            .find(filter.toQuery(requestingContributor), Integration::class.java)
             .awaitFirstOrNull()
-    }
 }
 
 private fun ListIntegrationFilter.toQuery(requestingContributor: SimpleContributor): Query {
