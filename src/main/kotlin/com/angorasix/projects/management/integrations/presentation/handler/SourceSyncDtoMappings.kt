@@ -3,8 +3,8 @@ package com.angorasix.projects.management.integrations.presentation.handler
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.presentation.dto.convertToDto
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetData
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
@@ -66,7 +66,7 @@ fun SourceSyncStatusStep.convertToDto(): SourceSyncStatusStepDto =
 fun IntegrationAsset.convertToDto(): IntegrationAssetDto =
     IntegrationAssetDto(
         id,
-        integrationStatus.convertToDto(),
+        integrationAssetStatus.convertToDto(),
         sourceData.convertToDto(),
         source,
         integrationId,
@@ -92,7 +92,7 @@ fun IntegrationAssetSyncEvent.convertToDto(): IntegrationAssetSyncEventDto =
         eventInstant.toString(),
     )
 
-fun IntegrationStatus.convertToDto(): IntegrationAssetStatusDto =
+fun IntegrationAssetStatus.convertToDto(): IntegrationAssetStatusDto =
     IntegrationAssetStatusDto(
         events.map {
             it.convertToDto()

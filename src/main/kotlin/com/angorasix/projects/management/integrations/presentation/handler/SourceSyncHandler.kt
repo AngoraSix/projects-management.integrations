@@ -88,6 +88,7 @@ class SourceSyncHandler(
                         requestingContributor as? SimpleContributor,
                         apiConfigs,
                         request,
+                        true,
                     )
                 ok().contentType(MediaTypes.HAL_FORMS_JSON).bodyValueAndAwait(outputSourceSync)
             } ?: resolveBadRequest("Non-existing SourceSync", "SourceSync")
