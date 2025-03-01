@@ -32,7 +32,9 @@ class WebClientStrategies {
     companion object {
         fun trelloWebClient(integrationConfigs: SourceConfigurations): WebClient {
             val trelloApiKey =
-                integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("apiKey")
+                integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
+                    "apiKey",
+                )
                     ?: throw IllegalArgumentException("trello apiKey config is required")
 
             return WebClient
@@ -41,7 +43,9 @@ class WebClientStrategies {
                 .defaultHeader(HttpHeaders.ACCEPT, "application/json")
                 .filter { request, next ->
                     val userToken =
-                        request.attribute(IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN)
+                        request.attribute(
+                            IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN,
+                        )
                     next.exchange(
                         ClientRequest
                             .from(request)

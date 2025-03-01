@@ -109,65 +109,66 @@ class TrelloSourceSyncStrategy(
         -> SourceSync,
     > =
         mapOf(
-            TrelloSteps.SELECT_BOARD to { existingInProgressSourceSync, integration, requestingContributor ->
-                val accessToken = extractAccessToken(integration)
-                val memberBoardsUri =
-                    integrationConfigs.sourceConfigs[SourceType.TRELLO.key]
-                        ?.strategyConfigs
-                        ?.get("memberBoardsUrl")
-                        ?: throw IllegalArgumentException(
-                            "trello memberBoardsUrl config" +
-                                "is required for source sync",
-                        )
-
-                // Call Trello to get member Boards
-                val boardsDto =
-                    trelloWebClient
-                        .get()
-                        .uri(memberBoardsUri)
-                        .attributes { attrs ->
-                            attrs[IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
-                                accessToken
-                        }.retrieve()
-                        .bodyToMono(typeReference<List<TrelloBoardDto>>())
-                        .awaitSingle()
-
-                val boardsOptions = boardsDto.map { OptionSpec(it.id, it.name) }
-                val boardFieldSpec =
-                    InlineFieldSpec(
-                        TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value,
-                        FieldSpec.SELECT,
-                        boardsOptions,
-                    )
-                SourceSync(
-                    id = existingInProgressSourceSync?.id,
-                    source = Source.TRELLO.value,
-                    integrationId =
-                        integration.id
+            TrelloSteps.SELECT_BOARD to
+                { existingInProgressSourceSync, integration, requestingContributor ->
+                    val accessToken = extractAccessToken(integration)
+                    val memberBoardsUri =
+                        integrationConfigs.sourceConfigs[SourceType.TRELLO.key]
+                            ?.strategyConfigs
+                            ?.get("memberBoardsUrl")
                             ?: throw IllegalArgumentException(
-                                "persisted Integration" +
+                                "trello memberBoardsUrl config" +
                                     "is required for source sync",
-                            ),
-                    status =
-                        SourceSyncStatus(
-                            SourceSyncStatusValues.IN_PROGRESS,
-                            arrayListOf(
-                                SourceSyncStatusStep(
-                                    TrelloSteps.SELECT_BOARD.value,
-                                    listOf(boardFieldSpec),
+                            )
+
+                    // Call Trello to get member Boards
+                    val boardsDto =
+                        trelloWebClient
+                            .get()
+                            .uri(memberBoardsUri)
+                            .attributes { attrs ->
+                                attrs[IntegrationConstants.REQUEST_ATTRIBUTE_AUTHORIZATION_USER_TOKEN] =
+                                    accessToken
+                            }.retrieve()
+                            .bodyToMono(typeReference<List<TrelloBoardDto>>())
+                            .awaitSingle()
+
+                    val boardsOptions = boardsDto.map { OptionSpec(it.id, it.name) }
+                    val boardFieldSpec =
+                        InlineFieldSpec(
+                            TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value,
+                            FieldSpec.SELECT,
+                            boardsOptions,
+                        )
+                    SourceSync(
+                        id = existingInProgressSourceSync?.id,
+                        source = Source.TRELLO.value,
+                        integrationId =
+                            integration.id
+                                ?: throw IllegalArgumentException(
+                                    "persisted Integration" +
+                                        "is required for source sync",
+                                ),
+                        status =
+                            SourceSyncStatus(
+                                SourceSyncStatusValues.IN_PROGRESS,
+                                arrayListOf(
+                                    SourceSyncStatusStep(
+                                        TrelloSteps.SELECT_BOARD.value,
+                                        listOf(boardFieldSpec),
+                                    ),
                                 ),
                             ),
-                        ),
-                    admins = setOf(requestingContributor),
-                    events =
-                        mutableListOf(
-                            SourceSyncEvent(
-                                SourceSyncEventValues.STARTING_FULL_SYNC_CONFIG,
+                        admins = setOf(requestingContributor),
+                        events =
+                            mutableListOf(
+                                SourceSyncEvent(
+                                    SourceSyncEventValues.STARTING_FULL_SYNC_CONFIG,
+                                ),
                             ),
-                        ),
-                    sourceStrategyStateData = mapOf("boards" to boardsDto),
-                )
-            },
+                        sourceStrategyStateData = mapOf("boards" to boardsDto),
+                    )
+                },
         )
 
     private val stepKeysInOrder: List<TrelloSteps> = trelloStepsFns.keys.toList()
@@ -207,8 +208,12 @@ class TrelloSourceSyncStrategy(
         requireNotNull(integration.id) { "integration.id is required for triggerSourceSync" }
         requireNotNull(sourceSync.id) { "sourceSync.id is required for triggerSourceSync" }
         val trelloPluginId =
-            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get("pluginId")
-        requireNotNull(trelloPluginId) { "trello pluginId config is required for triggerSourceSync" }
+            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
+                "pluginId",
+            )
+        requireNotNull(
+            trelloPluginId,
+        ) { "trello pluginId config is required for triggerSourceSync" }
         val selectedBoardIds =
             sourceSync.status.steps
                 .first { it.stepKey == TrelloSteps.SELECT_BOARD.value }
@@ -298,7 +303,9 @@ class TrelloSourceSyncStrategy(
     private fun extractAccessToken(integration: Integration) =
         tokenEncryptionUtil.decrypt(
             integration.config.sourceStrategyConfigData?.get(ACCESS_TOKEN_CONFIG_PARAM) as? String
-                ?: throw IllegalArgumentException("trello access token body param is required for source sync"),
+                ?: throw IllegalArgumentException(
+                    "trello access token body param is required for source sync",
+                ),
         )
 
     private fun parseDueDate(due: String?): Instant? =
@@ -349,7 +356,10 @@ class TrelloSourceSyncStrategy(
                             username = it.username,
                             email = it.email,
                             profileUrl = it.url,
-                            profileMediaUrl = it.avatarUrl?.let { avatarUrlPattern -> "$avatarUrlPattern/50.png" },
+                            profileMediaUrl =
+                                it.avatarUrl?.let { avatarUrlPattern ->
+                                    "$avatarUrlPattern/50.png"
+                                },
                         )
                     }
                 } catch (e: WebClientResponseException) {

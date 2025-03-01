@@ -50,7 +50,9 @@ fun IntegrationDto.resolveHypermedia(
     add(selfLinkWithDefaultAffordance)
 
     requestingContributor?.let {
-        if (requestingContributor.isAdminHint == true || integration.isAdmin(requestingContributor.contributorId)) {
+        if (requestingContributor.isAdminHint == true ||
+            integration.isAdmin(requestingContributor.contributorId)
+        ) {
             addIntegrationDtoAdminLinks(integration, apiConfigs, sourceConfigurations, request)
         }
     }

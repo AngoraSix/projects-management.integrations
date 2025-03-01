@@ -50,7 +50,13 @@ data class Integration
          *
          * @param contributorId - contributor candidate to check.
          */
-        fun isAdmin(contributorId: String?): Boolean = (contributorId != null).and(admins.any { it.contributorId == contributorId })
+        fun isAdmin(contributorId: String?): Boolean =
+            (contributorId != null).and(
+                admins.any {
+                    it.contributorId ==
+                        contributorId
+                },
+            )
 
         fun isActive(): Boolean = status.status == IntegrationStatusValues.REGISTERED
     }

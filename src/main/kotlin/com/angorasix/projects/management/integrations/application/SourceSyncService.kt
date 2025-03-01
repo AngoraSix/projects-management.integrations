@@ -90,7 +90,9 @@ class SourceSyncService(
             val source = persistedSourceSync.source
             val sourceSyncStrategy =
                 sourceSyncStrategies[Source.valueOf(source.uppercase())]
-                    ?: throw IllegalArgumentException("Source not supported for SourceSync operations: $source")
+                    ?: throw IllegalArgumentException(
+                        "Source not supported for SourceSync operations: $source",
+                    )
             val integration =
                 integrationsService.findSingleIntegration(
                     persistedSourceSync.integrationId,
@@ -171,7 +173,9 @@ class SourceSyncService(
                 ListSourceSyncFilter((listOf(sourceSyncId))),
                 requestingContributor,
             )
-                ?: throw IllegalArgumentException("SourceSync [$sourceSyncId] not found for contributor")
+                ?: throw IllegalArgumentException(
+                    "SourceSync [$sourceSyncId] not found for contributor",
+                )
 
         assetsService.processSyncingCorrespondence(
             correspondences,
@@ -202,14 +206,18 @@ class SourceSyncService(
             )
         requireNotNull(sourceSync) { "SourceSync [$sourceSyncId] not found for contributor" }
         val sourceSyncStrategy = sourceSyncStrategies[Source.valueOf(sourceSync.source.uppercase())]
-        requireNotNull(sourceSyncStrategy) { "Source not supported for SourceSync operations: ${sourceSync.source}" }
+        requireNotNull(sourceSyncStrategy) {
+            "Source not supported for SourceSync operations: ${sourceSync.source}"
+        }
         val integration =
             integrationsService
                 .findSingleIntegration(
                     sourceSync.integrationId,
                     requestingContributor,
                 )?.takeIf { it.isActive() }
-        requireNotNull(integration) { "Couldn't find associated integration [${sourceSync.integrationId}]" }
+        requireNotNull(
+            integration,
+        ) { "Couldn't find associated integration [${sourceSync.integrationId}]" }
 
         val platformUsers =
             sourceSyncStrategy.obtainUsersMatchOptions(
@@ -218,14 +226,7 @@ class SourceSyncService(
                 requestingContributor,
             )
 
-        val initialUsersMapping = contributorsToMatch.associate { it.contributorId to null }
-        sourceSync.mappings.addNewUserMappings(initialUsersMapping)
-        sourceSync.addEvent(
-            SourceSyncEvent(
-                type = SourceSyncEventValues.STARTING_MEMBER_MATCH,
-                correspondenceQty = contributorsToMatch.size,
-            ),
-        )
+        sourceSync.updateSourceSyncMappingUsers(contributorsToMatch)
         repository.save(sourceSync)
         return contributorsToMatch.map {
             InlineFieldSpec(
@@ -267,5 +268,16 @@ class SourceSyncService(
                 ?.find { it.email == contributor.email }
                 ?.sourceUserId
         return selectedValue?.let { listOf(it) } ?: emptyList()
+    }
+
+    private fun SourceSync.updateSourceSyncMappingUsers(contributorsToMatch: List<DetailedContributor>) {
+        val initialUsersMapping = contributorsToMatch.associate { it.contributorId to null }
+        mappings.addNewUserMappings(initialUsersMapping)
+        addEvent(
+            SourceSyncEvent(
+                type = SourceSyncEventValues.STARTING_MEMBER_MATCH,
+                correspondenceQty = contributorsToMatch.size,
+            ),
+        )
     }
 }

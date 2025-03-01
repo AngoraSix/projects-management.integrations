@@ -47,13 +47,14 @@ class IntegrationsService(
             sourceConfigs.supported.map { source ->
                 integrationList
                     .find { it.source == source }
-                    ?.includeSourceSyncData(requestingContributor, sourceSyncRepository) ?: Integration(
-                    source,
-                    projectManagementId,
-                    IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED),
-                    emptySet(),
-                    IntegrationConfig(null),
-                )
+                    ?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
+                    ?: Integration(
+                        source,
+                        projectManagementId,
+                        IntegrationStatus(IntegrationStatusValues.NOT_REGISTERED),
+                        emptySet(),
+                        IntegrationConfig(null),
+                    )
             }
         }
 

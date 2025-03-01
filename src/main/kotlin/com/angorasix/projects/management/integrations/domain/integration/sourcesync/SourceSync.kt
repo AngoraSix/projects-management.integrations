@@ -53,7 +53,13 @@ data class SourceSync
          *
          * @param contributorId - contributor candidate to check.
          */
-        fun isAdmin(contributorId: String?): Boolean = (contributorId != null).and(admins.any { it.contributorId == contributorId })
+        fun isAdmin(contributorId: String?): Boolean =
+            (contributorId != null).and(
+                admins.any {
+                    it.contributorId ==
+                        contributorId
+                },
+            )
 
         fun addEvent(event: SourceSyncEvent) {
             events.add(event)

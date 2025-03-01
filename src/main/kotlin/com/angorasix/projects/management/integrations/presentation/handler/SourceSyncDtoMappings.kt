@@ -41,7 +41,13 @@ fun SourceSync.convertToDto(
 
 fun SourceSyncEvent.convertToDto(): SourceSyncEventDto = SourceSyncEventDto(type, eventInstant)
 
-fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto = SourceSyncStatusDto(status, steps.map { it.convertToDto() })
+fun SourceSyncStatus.convertToDto(): SourceSyncStatusDto =
+    SourceSyncStatusDto(
+        status,
+        steps.map {
+            it.convertToDto()
+        },
+    )
 
 fun SourceSyncStatusStep.convertToDto(): SourceSyncStatusStepDto =
     SourceSyncStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)

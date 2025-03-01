@@ -56,7 +56,10 @@ class IntegrationAssetService(
 
         assets.forEach { asset ->
             val existing =
-                existingSourceSyncAssets.find { existing -> existing.sourceData.id == asset.sourceData.id }
+                existingSourceSyncAssets.find { existing ->
+                    existing.sourceData.id ==
+                        asset.sourceData.id
+                }
             updatedAssetOrNull(asset, existing)?.let {
                 if (existing == null || existing.integrationAssetStatus.isSynced()) {
                     updatedAssets.add(it)

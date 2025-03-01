@@ -18,7 +18,9 @@ class ReplaceStepResponseData(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) { "Requesting contributor is not admin" }
+        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+            "Requesting contributor is not admin"
+        }
         modifyValue.forEachIndexed { index, stepResponse ->
             if (stepResponse != null) {
                 domainObject.status.steps[index].responseData = stepResponse
@@ -35,7 +37,9 @@ class ReplaceMappingUsersData(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) { "Requesting contributor is not admin" }
+        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+            "Requesting contributor is not admin"
+        }
         domainObject.mappings.addUserMappings(modifyValue)
         return domainObject
     }
@@ -48,7 +52,9 @@ class RequestFullSyncEvent(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) { "Requesting contributor is not admin" }
+        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+            "Requesting contributor is not admin"
+        }
         if (modifyValue.type === SourceSyncEventValues.REQUEST_FULL_SYNC) {
             domainObject.addEvent(modifyValue)
         }
@@ -63,7 +69,9 @@ class RequestSyncConfigUpdate(
         simpleContributor: SimpleContributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) { "Requesting contributor is not admin" }
+        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+            "Requesting contributor is not admin"
+        }
         if (modifyValue === SourceSyncStatusValues.IN_PROGRESS) {
             domainObject.addEvent(
                 SourceSyncEvent(
