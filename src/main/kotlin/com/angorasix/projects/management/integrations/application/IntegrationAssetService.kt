@@ -1,6 +1,7 @@
 package com.angorasix.projects.management.integrations.application
 
 import com.angorasix.commons.domain.DetailedContributor
+import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.infrastructure.intercommunication.dto.A6DomainResource
 import com.angorasix.commons.infrastructure.intercommunication.dto.A6InfraTopics
 import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraBulkResourceDto
@@ -31,6 +32,14 @@ class IntegrationAssetService(
     private val streamBridge: StreamBridge,
     private val amqpConfigs: AmqpConfigurations,
 ) {
+    fun findForSourceSyncId(
+        sourceSyncId: String,
+        requestingContributor: SimpleContributor,
+    ) = repository.findUsingFilter(
+        ListIntegrationAssetFilter(null, null, listOf(sourceSyncId)),
+        requestingContributor,
+    )
+
     /**
      * Method to modify [SourceSync].
      *

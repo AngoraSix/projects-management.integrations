@@ -14,13 +14,13 @@ import kotlinx.coroutines.flow.Flow
 interface IntegrationInfraRepository {
     fun findUsingFilter(
         filter: ListIntegrationFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor? = null,
+        allowAnonymous: Boolean = false,
     ): Flow<Integration>
 
-    suspend fun findSingleForContributorUsingFilter(
+    suspend fun findSingleUsingFilter(
         filter: ListIntegrationFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor? = null,
+        allowAnonymous: Boolean = false,
     ): Integration?
-
-//    suspend fun updateOrCreate(integrations: List<IntegrationAsset>): BulkResult
 }

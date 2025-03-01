@@ -8,7 +8,6 @@ import com.angorasix.commons.domain.inputs.InlineFieldSpec
 import com.angorasix.commons.domain.inputs.OptionSpec
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
 import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
@@ -17,7 +16,6 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceUser
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
-import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
 import kotlinx.coroutines.flow.toList
 import java.util.UUID
@@ -32,17 +30,20 @@ class SourceSyncService(
     private val integrationsService: IntegrationsService,
     private val sourceSyncStrategies: Map<Source, SourceSyncStrategy>,
     private val assetsService: IntegrationAssetService,
-    private val assetRepository: IntegrationAssetRepository,
 ) {
     suspend fun findSingleSourceSync(
         id: String,
         requestingContributor: SimpleContributor,
     ): SourceSync? =
         repository
-            .findForContributorUsingFilter(
+            .findSingleUsingFilter(
                 ListSourceSyncFilter(listOf(id)),
                 requestingContributor,
-            )?.includeSourceSyncAssets(assetRepository)
+            )?.let {
+                val assets = assetsService.findForSourceSyncId(id, requestingContributor)
+                it.assets = assets.toList()
+                it
+            }
 
     suspend fun createSourceSync(
         integrationId: String,
@@ -88,7 +89,7 @@ class SourceSyncService(
         modificationOperations: List<SourceSyncModification<out Any>>,
     ): SourceSync? {
         val persistedSourceSync =
-            repository.findForContributorUsingFilter(
+            repository.findSingleUsingFilter(
                 ListSourceSyncFilter(listOf(sourceSyncId)),
                 requestingContributor,
             )
@@ -141,18 +142,6 @@ class SourceSyncService(
         }
     }
 
-    private suspend fun SourceSync.includeSourceSyncAssets(assetRepository: IntegrationAssetRepository): SourceSync {
-        this.id?.let {
-            val assets =
-                assetRepository
-                    .findUsingFilter(
-                        ListIntegrationAssetFilter(null, null, listOf(it)),
-                    ).toList()
-            this.assets = assets
-        }
-        return this
-    }
-
     private suspend fun triggerFullSync(
         sourceSyncStrategy: SourceSyncStrategy,
         patchedSourceSync: SourceSync,
@@ -194,7 +183,7 @@ class SourceSyncService(
         requestingContributor: DetailedContributor,
     ): SourceSync {
         val sourceSync =
-            repository.findForContributorUsingFilter(
+            repository.findSingleUsingFilter(
                 ListSourceSyncFilter((listOf(sourceSyncId))),
                 requestingContributor,
             )
@@ -225,7 +214,7 @@ class SourceSyncService(
         requestingContributor: SimpleContributor,
     ): List<InlineFieldSpec> {
         val sourceSync =
-            repository.findForContributorUsingFilter(
+            repository.findSingleUsingFilter(
                 ListSourceSyncFilter((listOf(sourceSyncId))),
                 requestingContributor,
             )
