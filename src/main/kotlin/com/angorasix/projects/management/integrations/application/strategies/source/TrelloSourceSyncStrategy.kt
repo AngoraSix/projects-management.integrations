@@ -132,7 +132,40 @@ class TrelloSourceSyncStrategy(
                             }.retrieve()
                             .bodyToMono(typeReference<List<TrelloBoardDto>>())
                             .awaitSingle()
-
+                    val boardsOptions = boardsDto.map { OptionSpec(it.id, it.name) }
+                    val boardFieldSpec =
+                        InlineFieldSpec(
+                            TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value,
+                            FieldSpec.SELECT,
+                            boardsOptions,
+                        )
+                    SourceSync(
+                        id = existingInProgressSourceSync?.id,
+                        source = Source.TRELLO.value,
+                        integrationId =
+                            integration.id
+                                ?: throw IllegalArgumentException(
+                                    "persisted Integration" +
+                                        "is required for source sync",
+                                ),
+                        status =
+                            SourceSyncStatus(
+                                SourceSyncStatusValues.IN_PROGRESS,
+                                arrayListOf(
+                                    SourceSyncStatusStep(
+                                        TrelloSteps.SELECT_BOARD.value,
+                                        listOf(boardFieldSpec),
+                                    ),
+                                ),
+                            ),
+                        admins = setOf(requestingContributor),
+                        events =
+                            mutableListOf(
+                                SourceSyncEvent(
+                                    SourceSyncEventValues.STARTING_FULL_SYNC_CONFIG,
+                                ),
+                            ),
+                        sourceStrategyStateData = mapOf("boards" to boardsDto),
                     )
                 },
         )
@@ -340,6 +373,7 @@ class TrelloSourceSyncStrategy(
                     )
                 }
             }.toList()
+    }
 
     companion object {
         private const val PAGING_LIMIT = 1000
