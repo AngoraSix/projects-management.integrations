@@ -49,14 +49,14 @@ class SourceSyncService(
         integrationId: String,
         requestingContributor: SimpleContributor,
     ): SourceSync? {
-        val existingSourceSyncList =
+        val existingSourceSync =
             repository
-                .findUsingFilter(
+                .findSingleUsingFilter(
                     ListSourceSyncFilter(null, listOf(integrationId)),
-                ).toList()
+                    requestingContributor,
+                )
 
-        if (existingSourceSyncList.isNotEmpty() &&
-            existingSourceSyncList.first().status.status == SourceSyncStatusValues.COMPLETED
+        if (existingSourceSync?.status?.status == SourceSyncStatusValues.COMPLETED
         ) {
             throw IllegalArgumentException(
                 "There is already a Completed SourceSync " +
@@ -73,7 +73,7 @@ class SourceSyncService(
                     sourceSyncStrategies[source]?.configSourceSync(
                         integration,
                         requestingContributor,
-                        existingSourceSyncList.firstOrNull(),
+                        existingSourceSync,
                     )
                 sourceSync?.let { repository.save(it) }
             }
@@ -87,60 +87,59 @@ class SourceSyncService(
         requestingContributor: DetailedContributor,
         sourceSyncId: String,
         modificationOperations: List<SourceSyncModification<out Any>>,
-    ): SourceSync? {
-        val persistedSourceSync =
-            repository.findSingleUsingFilter(
+    ): SourceSync? =
+        repository
+            .findSingleUsingFilter(
                 ListSourceSyncFilter(listOf(sourceSyncId)),
                 requestingContributor,
-            )
-        return persistedSourceSync?.let {
-            val patchedSourceSync =
-                modificationOperations.fold(it) { accumulatedSourceSync, op ->
-                    op.modify(
-                        requestingContributor,
-                        accumulatedSourceSync,
-                    )
-                }
-            val source = persistedSourceSync.source
-            val sourceSyncStrategy =
-                sourceSyncStrategies[Source.valueOf(source.uppercase())]
-                    ?: throw IllegalArgumentException(
-                        "Source not supported for SourceSync operations: $source",
-                    )
-            val integration =
-                integrationsService.findSingleIntegration(
-                    persistedSourceSync.integrationId,
-                    requestingContributor,
-                )
-                    ?: throw IllegalArgumentException(
-                        "Couldn't find associated integration" +
-                            "[${persistedSourceSync.integrationId}] for sourceSync [$sourceSyncId] }",
-                    )
-            val updatedSourceSync =
-                if (patchedSourceSync.wasRequestedFullSync() ||
-                    sourceSyncStrategy.isReadyForSyncing(
-                        patchedSourceSync,
-                        integration,
+            )?.let {
+                val patchedSourceSync =
+                    modificationOperations.fold(it) { accumulatedSourceSync, op ->
+                        op.modify(
+                            requestingContributor,
+                            accumulatedSourceSync,
+                        )
+                    }
+                val source = it.source
+                val sourceSyncStrategy =
+                    sourceSyncStrategies[Source.valueOf(source.uppercase())]
+                        ?: throw IllegalArgumentException(
+                            "Source not supported for SourceSync operations: $source",
+                        )
+
+                val integration =
+                    integrationsService.findSingleIntegration(
+                        it.integrationId,
                         requestingContributor,
                     )
-                ) {
-                    triggerFullSync(
-                        sourceSyncStrategy,
-                        patchedSourceSync,
-                        integration,
-                        requestingContributor,
-                        sourceSyncId,
-                    )
-                } else {
-                    sourceSyncStrategy.processModification(
-                        patchedSourceSync,
-                        integration,
-                        requestingContributor,
-                    )
-                }
-            repository.save(updatedSourceSync)
-        }
-    }
+                        ?: throw IllegalArgumentException(
+                            "Couldn't find associated integration" +
+                                "[${it.integrationId}] for sourceSync [$sourceSyncId] }",
+                        )
+
+                val updatedSourceSync =
+                    if (patchedSourceSync.wasRequestedFullSync() ||
+                        sourceSyncStrategy.isReadyForSyncing(
+                            patchedSourceSync,
+                            requestingContributor,
+                        )
+                    ) {
+                        triggerFullSync(
+                            sourceSyncStrategy,
+                            patchedSourceSync,
+                            integration,
+                            requestingContributor,
+                            sourceSyncId,
+                        )
+                    } else {
+                        sourceSyncStrategy.processModification(
+                            patchedSourceSync,
+                            integration,
+                            requestingContributor,
+                        )
+                    }
+                repository.save(updatedSourceSync)
+            }
 
     private suspend fun triggerFullSync(
         sourceSyncStrategy: SourceSyncStrategy,
@@ -231,7 +230,7 @@ class SourceSyncService(
                 )?.takeIf { it.isActive() }
         requireNotNull(
             integration,
-        ) { "Couldn't find associated integration [${sourceSync.integrationId}]" }
+        ) { "Inactive associated integration" }
 
         val platformUsers =
             sourceSyncStrategy.obtainUsersMatchOptions(

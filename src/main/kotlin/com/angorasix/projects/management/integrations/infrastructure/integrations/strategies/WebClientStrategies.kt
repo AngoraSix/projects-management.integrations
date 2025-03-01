@@ -30,9 +30,9 @@ class WebClientStrategies {
 //            .build()
 //    }
     companion object {
-        fun trelloWebClient(integrationConfigs: SourceConfigurations): WebClient {
+        fun trelloWebClient(sourceConfigs: SourceConfigurations): WebClient {
             val trelloApiKey =
-                integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
+                sourceConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
                     "apiKey",
                 )
                     ?: throw IllegalArgumentException("trello apiKey config is required")

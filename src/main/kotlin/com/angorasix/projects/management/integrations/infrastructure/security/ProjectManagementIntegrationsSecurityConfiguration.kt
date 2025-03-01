@@ -1,6 +1,8 @@
 package com.angorasix.projects.management.integrations.infrastructure.security
 
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.security.SecurityConfigurations
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.web.server.ServerHttpSecurity
@@ -21,37 +23,39 @@ import javax.crypto.spec.SecretKeySpec
  *
  * @author rozagerardo
  */
-class ProjectManagementIntegrationsSecurityConfiguration private constructor() {
-    companion object {
-        fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
+@Configuration
+class ProjectManagementIntegrationsSecurityConfiguration {
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
 
-        fun tokenEncryptionUtils(securityConfigs: SecurityConfigurations): TokenEncryptionUtil = TokenEncryptionUtil(securityConfigs)
+    @Bean
+    fun tokenEncryptionUtils(securityConfigs: SecurityConfigurations): TokenEncryptionUtil = TokenEncryptionUtil(securityConfigs)
 
-        /**
-         *
-         *
-         * Security Filter Chain setup.
-         *
-         *
-         * @param http Spring's customizable ServerHttpSecurity bean
-         * @return fully configured SecurityWebFilterChain
-         */
-        fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-            http
-                .authorizeExchange { exchanges: ServerHttpSecurity.AuthorizeExchangeSpec ->
-                    exchanges
-                        .pathMatchers(
-                            HttpMethod.GET,
-                            "/management-integrations/**",
-                        ).permitAll()
-                        .anyExchange()
-                        .authenticated()
-                }.oauth2ResourceServer { oauth2 ->
-                    oauth2.jwt(Customizer.withDefaults())
-                }
+    /**
+     *
+     *
+     * Security Filter Chain setup.
+     *
+     *
+     * @param http Spring's customizable ServerHttpSecurity bean
+     * @return fully configured SecurityWebFilterChain
+     */
+    @Bean
+    fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
+        http
+            .authorizeExchange { exchanges: ServerHttpSecurity.AuthorizeExchangeSpec ->
+                exchanges
+                    .pathMatchers(
+                        HttpMethod.GET,
+                        "/management-integrations/**",
+                    ).permitAll()
+                    .anyExchange()
+                    .authenticated()
+            }.oauth2ResourceServer { oauth2 ->
+                oauth2.jwt(Customizer.withDefaults())
+            }
 //            .oauth2Client(Customizer.withDefaults())
-            return http.build()
-        }
+        return http.build()
     }
 }
 
