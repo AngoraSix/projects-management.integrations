@@ -1,0 +1,114 @@
+package com.angorasix.projects.management.integrations.infrastructure.service
+
+import com.angorasix.commons.domain.projectmanagement.integrations.Source
+import com.angorasix.projects.management.integrations.application.IntegrationAssetService
+import com.angorasix.projects.management.integrations.application.IntegrationsService
+import com.angorasix.projects.management.integrations.application.SourceSyncService
+import com.angorasix.projects.management.integrations.application.strategies.RegistrationStrategy
+import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
+import com.angorasix.projects.management.integrations.application.strategies.TrelloRegistrationStrategy
+import com.angorasix.projects.management.integrations.application.strategies.source.TrelloSourceSyncStrategy
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
+import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationRepository
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncRepository
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp.AmqpConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientStrategies
+import com.angorasix.projects.management.integrations.infrastructure.security.TokenEncryptionUtil
+import com.angorasix.projects.management.integrations.messaging.handler.ProjectsManagementIntegrationsMessagingHandler
+import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
+import com.angorasix.projects.management.integrations.presentation.handler.SourceSyncHandler
+import com.angorasix.projects.management.integrations.presentation.router.ProjectManagementIntegrationsRouter
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.cloud.stream.function.StreamBridge
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.web.reactive.function.client.WebClient
+
+@Configuration
+class ServiceConfiguration {
+    @Bean
+    fun integrationsService(
+        repository: IntegrationRepository,
+        sourceConfigs: SourceConfigurations,
+        @Qualifier("trelloRegistrationStrategy") trelloStrategy: RegistrationStrategy,
+        sourceSyncRepository: SourceSyncRepository,
+    ): IntegrationsService {
+        val strategies =
+            mapOf(
+                Source.TRELLO to trelloStrategy,
+            )
+        return IntegrationsService(repository, sourceConfigs, strategies, sourceSyncRepository)
+    }
+
+    @Bean
+    fun projectManagementIntegrationsHandler(
+        service: IntegrationsService,
+        apiConfigs: ApiConfigs,
+        sourceConfigurations: SourceConfigurations,
+        objectMapper: ObjectMapper,
+    ) = ProjectManagementIntegrationsHandler(service, apiConfigs, sourceConfigurations, objectMapper)
+
+    @Bean
+    fun sourceSyncHandler(
+        service: SourceSyncService,
+        apiConfigs: ApiConfigs,
+        objectMapper: ObjectMapper,
+    ) = SourceSyncHandler(service, apiConfigs, objectMapper)
+
+    @Bean
+    fun sourceSyncService(
+        repository: SourceSyncRepository,
+        integrationsService: IntegrationsService,
+        @Qualifier("trelloSourceSyncStrategy") trelloStrategy: SourceSyncStrategy,
+        assetsService: IntegrationAssetService,
+    ): SourceSyncService {
+        val strategies =
+            mapOf(
+                Source.TRELLO to trelloStrategy,
+            )
+        return SourceSyncService(repository, integrationsService, strategies, assetsService)
+    }
+
+    @Bean
+    fun projectsManagementIntegrationsMessagingHandler(
+        service: SourceSyncService,
+        objectMapper: ObjectMapper,
+    ) = ProjectsManagementIntegrationsMessagingHandler(service, objectMapper)
+
+    @Bean
+    fun integrationAssetService(
+        repository: IntegrationAssetRepository,
+        streamBridge: StreamBridge,
+        amqpConfigs: AmqpConfigurations,
+    ) = IntegrationAssetService(repository, streamBridge, amqpConfigs)
+
+    @Bean
+    fun projectManagementIntegrationsRouter(
+        handler: ProjectManagementIntegrationsHandler,
+        sourceSyncHandler: SourceSyncHandler,
+        apiConfigs: ApiConfigs,
+    ) = ProjectManagementIntegrationsRouter(handler, sourceSyncHandler, apiConfigs).projectRouterFunction()
+
+    // Strategies Infrastructure
+    @Bean("trelloWebClient")
+    fun trelloWebClient(sourceConfigs: SourceConfigurations) = WebClientStrategies.trelloWebClient(sourceConfigs)
+
+    // Strategies Implementations
+    @Bean("trelloRegistrationStrategy")
+    fun trelloRegistrationStrategy(
+        @Qualifier("trelloWebClient") trelloWebClient: WebClient,
+        sourceConfigs: SourceConfigurations,
+        tokenEncryptionUtil: TokenEncryptionUtil,
+    ) = TrelloRegistrationStrategy(trelloWebClient, sourceConfigs, tokenEncryptionUtil)
+
+    @Bean("trelloSourceSyncStrategy")
+    fun trelloSourceSyncStrategy(
+        @Qualifier("trelloWebClient") trelloWebClient: WebClient,
+        sourceConfigs: SourceConfigurations,
+        tokenEncryptionUtil: TokenEncryptionUtil,
+        objectMapper: ObjectMapper,
+    ) = TrelloSourceSyncStrategy(trelloWebClient, sourceConfigs, tokenEncryptionUtil, objectMapper)
+}

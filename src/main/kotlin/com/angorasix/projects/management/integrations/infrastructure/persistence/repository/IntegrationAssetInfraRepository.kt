@@ -16,11 +16,13 @@ interface IntegrationAssetInfraRepository {
     fun findUsingFilter(
         filter: ListIntegrationAssetFilter,
         requestingContributor: SimpleContributor? = null,
+        allowAnonymous: Boolean = false,
     ): Flow<IntegrationAsset>
 
-    suspend fun findForContributorUsingFilter(
+    suspend fun findSingleUsingFilter(
         filter: ListIntegrationAssetFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor? = null,
+        allowAnonymous: Boolean = false,
     ): IntegrationAsset?
 
     suspend fun registerEvent(

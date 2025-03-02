@@ -2,8 +2,10 @@ package com.angorasix.projects.management.integrations.domain.integration.source
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
+import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
+import org.springframework.data.annotation.Transient
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
@@ -29,6 +31,9 @@ data class SourceSync
         val mappings: SourceSyncMappings = SourceSyncMappings(),
         val sourceStrategyStateData: Any?, // any sate information used by the source strategy
     ) {
+        @Transient
+        var assets: List<IntegrationAsset> = emptyList()
+
         constructor(
             source: String,
             integrationId: String,

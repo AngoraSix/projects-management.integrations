@@ -18,7 +18,6 @@ interface SourceSyncStrategy {
 
     suspend fun isReadyForSyncing(
         sourceSync: SourceSync,
-        integration: Integration,
         requestingContributor: SimpleContributor,
     ): Boolean
 

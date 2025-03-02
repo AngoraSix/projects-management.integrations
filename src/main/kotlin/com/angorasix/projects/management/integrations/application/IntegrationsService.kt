@@ -32,7 +32,7 @@ class IntegrationsService(
         requestingContributor: SimpleContributor,
     ): Integration? =
         repository
-            .findSingleForContributorUsingFilter(
+            .findSingleUsingFilter(
                 ListIntegrationFilter(listOf(id)),
                 requestingContributor,
             )?.includeSourceSyncData(requestingContributor, sourceSyncRepository)
@@ -64,7 +64,7 @@ class IntegrationsService(
     ): Integration {
         val source = Source.valueOf(newIntegrationData.source.uppercase())
         val existingIntegration =
-            repository.findSingleForContributorUsingFilter(
+            repository.findSingleUsingFilter(
                 ListIntegrationFilter(
                     null,
                     setOf(source.value),
@@ -93,7 +93,7 @@ class IntegrationsService(
         modificationOperations: List<IntegrationModification<out Any>>,
     ): Integration? {
         val integration =
-            repository.findSingleForContributorUsingFilter(
+            repository.findSingleUsingFilter(
                 ListIntegrationFilter(listOf(integrationId)),
                 requestingContributor,
             )
@@ -118,7 +118,7 @@ private suspend fun Integration.includeSourceSyncData(
 ): Integration {
     this.id?.let {
         val sourceSyncs =
-            sourceSyncRepository.findForContributorUsingFilter(
+            sourceSyncRepository.findSingleUsingFilter(
                 ListSourceSyncFilter(null, listOf(it)),
                 requestingContributor,
             )

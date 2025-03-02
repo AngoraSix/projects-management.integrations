@@ -48,5 +48,6 @@ data class IntegrationActions(
     val continueSourceSync: String,
     val requestFullSync: String,
     val updateSourceSyncConfig: String,
+    val getSourceSync: String,
     val startMatchPlatformUsers: String,
 )

@@ -20,14 +20,16 @@ class IntegrationAssetInfraRepositoryImpl(
     override fun findUsingFilter(
         filter: ListIntegrationAssetFilter,
         requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
     ): Flow<IntegrationAsset> =
         mongoOps
-            .find(filter.toQuery(requestingContributor), IntegrationAsset::class.java)
+            .find(filter.toQuery(requestingContributor, allowAnonymous), IntegrationAsset::class.java)
             .asFlow()
 
-    override suspend fun findForContributorUsingFilter(
+    override suspend fun findSingleUsingFilter(
         filter: ListIntegrationAssetFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
     ): IntegrationAsset? =
         mongoOps
             .find(filter.toQuery(requestingContributor), IntegrationAsset::class.java)
@@ -76,7 +78,13 @@ private fun correspondenceQuery(
     return query
 }
 
-private fun ListIntegrationAssetFilter.toQuery(requestingContributor: SimpleContributor?): Query {
+private fun ListIntegrationAssetFilter.toQuery(
+    requestingContributor: SimpleContributor?,
+    allowAnonymous: Boolean = false,
+): Query {
+    if (!allowAnonymous) {
+        requireNotNull(requestingContributor)
+    }
     val query = Query()
 
     requestingContributor?.let {

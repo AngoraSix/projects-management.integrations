@@ -15,10 +15,12 @@ interface SourceSyncInfraRepository {
     fun findUsingFilter(
         filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor? = null,
+        allowAnonymous: Boolean = false,
     ): Flow<SourceSync>
 
-    suspend fun findForContributorUsingFilter(
+    suspend fun findSingleUsingFilter(
         filter: ListSourceSyncFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor? = null,
+        allowAnonymous: Boolean = false,
     ): SourceSync?
 }

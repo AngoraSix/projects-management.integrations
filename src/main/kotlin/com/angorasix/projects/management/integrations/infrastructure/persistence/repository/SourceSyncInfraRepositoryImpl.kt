@@ -16,21 +16,29 @@ class SourceSyncInfraRepositoryImpl(
     override fun findUsingFilter(
         filter: ListSourceSyncFilter,
         requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
     ): Flow<SourceSync> =
         mongoOps
-            .find(filter.toQuery(requestingContributor), SourceSync::class.java)
+            .find(filter.toQuery(requestingContributor, allowAnonymous), SourceSync::class.java)
             .asFlow()
 
-    override suspend fun findForContributorUsingFilter(
+    override suspend fun findSingleUsingFilter(
         filter: ListSourceSyncFilter,
-        requestingContributor: SimpleContributor,
+        requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
     ): SourceSync? =
         mongoOps
-            .find(filter.toQuery(requestingContributor), SourceSync::class.java)
+            .find(filter.toQuery(requestingContributor, allowAnonymous), SourceSync::class.java)
             .awaitFirstOrNull()
 }
 
-private fun ListSourceSyncFilter.toQuery(requestingContributor: SimpleContributor?): Query {
+private fun ListSourceSyncFilter.toQuery(
+    requestingContributor: SimpleContributor?,
+    allowAnonymous: Boolean = false,
+): Query {
+    if (!allowAnonymous) {
+        requireNotNull(requestingContributor)
+    }
     val query = Query()
 
     requestingContributor?.let {

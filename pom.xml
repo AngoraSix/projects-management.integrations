@@ -13,7 +13,7 @@
     <parent>
         <artifactId>parent-pom-spring-kotlin</artifactId>
         <groupId>com.angorasix</groupId>
-        <version>0.3.1</version>
+        <version>0.3.2-SNAPSHOT</version>
     </parent>
     <properties>
         <jacoco-coverage.class.line.min>0.0</jacoco-coverage.class.line.min>

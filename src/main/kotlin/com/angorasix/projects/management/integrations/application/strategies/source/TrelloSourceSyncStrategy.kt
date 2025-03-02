@@ -50,7 +50,7 @@ import java.time.format.DateTimeParseException
 
 class TrelloSourceSyncStrategy(
     private val trelloWebClient: WebClient,
-    private val integrationConfigs: SourceConfigurations,
+    private val sourceConfigs: SourceConfigurations,
     private val tokenEncryptionUtil: TokenEncryptionUtil,
     private val objectMapper: ObjectMapper,
 ) : SourceSyncStrategy {
@@ -76,7 +76,6 @@ class TrelloSourceSyncStrategy(
 
     override suspend fun isReadyForSyncing(
         sourceSync: SourceSync,
-        integration: Integration,
         requestingContributor: SimpleContributor,
     ): Boolean =
         sourceSync.status.steps.all { it.isCompleted() } &&
@@ -113,7 +112,7 @@ class TrelloSourceSyncStrategy(
                 { existingInProgressSourceSync, integration, requestingContributor ->
                     val accessToken = extractAccessToken(integration)
                     val memberBoardsUri =
-                        integrationConfigs.sourceConfigs[SourceType.TRELLO.key]
+                        sourceConfigs.sourceConfigs[SourceType.TRELLO.key]
                             ?.strategyConfigs
                             ?.get("memberBoardsUrl")
                             ?: throw IllegalArgumentException(
@@ -132,7 +131,6 @@ class TrelloSourceSyncStrategy(
                             }.retrieve()
                             .bodyToMono(typeReference<List<TrelloBoardDto>>())
                             .awaitSingle()
-
                     val boardsOptions = boardsDto.map { OptionSpec(it.id, it.name) }
                     val boardFieldSpec =
                         InlineFieldSpec(
@@ -181,7 +179,7 @@ class TrelloSourceSyncStrategy(
     ): List<IntegrationAsset> {
         val accessToken = extractAccessToken(integration)
         val boardCardsUrlPattern =
-            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]
+            sourceConfigs.sourceConfigs[SourceType.TRELLO.key]
                 ?.strategyConfigs
                 ?.get("boardCardsUrlPattern")
                 ?: throw IllegalArgumentException(
@@ -208,7 +206,7 @@ class TrelloSourceSyncStrategy(
         requireNotNull(integration.id) { "integration.id is required for triggerSourceSync" }
         requireNotNull(sourceSync.id) { "sourceSync.id is required for triggerSourceSync" }
         val trelloPluginId =
-            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
+            sourceConfigs.sourceConfigs[SourceType.TRELLO.key]?.strategyConfigs?.get(
                 "pluginId",
             )
         requireNotNull(
@@ -324,7 +322,7 @@ class TrelloSourceSyncStrategy(
     ): List<SourceUser> {
         val accessToken = extractAccessToken(integration)
         val boardMembersUrlPattern =
-            integrationConfigs.sourceConfigs[SourceType.TRELLO.key]
+            sourceConfigs.sourceConfigs[SourceType.TRELLO.key]
                 ?.strategyConfigs
                 ?.get("boardMembersUrlPattern")
                 ?: throw IllegalArgumentException(

@@ -209,6 +209,12 @@ fun SourceSyncDto.resolveHypermedia(
             ) &&
             isIntegrationActive
         ) {
+            // GET SOURCE SYNC
+            addLink(
+                apiConfigs.routes.getSourceSync,
+                apiConfigs.integrationActions.getSourceSync,
+                request,
+            )
             if (status?.status == SourceSyncStatusValues.IN_PROGRESS) {
                 // CONTINUE SYNC
                 addLink(
