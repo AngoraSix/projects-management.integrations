@@ -50,16 +50,16 @@ class IntegrationAssetService(
         projectManagementId: String,
         requestingContributor: DetailedContributor,
     ): List<IntegrationAsset> {
-        val existingSourceSyncAssets = l6fh7VIv
-        repository
-            .findUsingFilter(
-                ListIntegrationAssetFilter(
-                    null,
-                    assets.map { it.sourceData.id },
-                    listOf(sourceSyncId),
-                ),
-                requestingContributor,
-            ).toList()
+        val existingSourceSyncAssets =
+            repository
+                .findUsingFilter(
+                    ListIntegrationAssetFilter(
+                        null,
+                        assets.map { it.sourceData.id },
+                        listOf(sourceSyncId),
+                    ),
+                    requestingContributor,
+                ).toList()
         val updatedAssets = mutableListOf<IntegrationAsset>()
         val pendingUpdatedAssets =
             mutableListOf<IntegrationAsset>() // unsynced assets
