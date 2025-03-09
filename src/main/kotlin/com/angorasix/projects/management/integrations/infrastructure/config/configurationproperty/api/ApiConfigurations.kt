@@ -23,19 +23,14 @@ data class ApiConfigs(
 
 data class BasePathConfigs(
     val projectsManagementIntegration: String,
+    val baseByIdCrudRoute: String,
+    val baseByProjectManagementIdCrudRoute: String,
 )
 
 data class RoutesConfigs(
-    val baseListCrudRoute: String,
-    val baseByIdCrudRoute: String,
-    val baseByProjectManagementIdCrudRoute: String,
-    val baseSourceSyncByIntegrationIdCrudRoute: String,
-    val baseSourceSyncByIdCrudRoute: String,
-    val listIntegrationsByProjectManagementId: Route,
-    val registerIntegrationForProjectManagement: Route,
-    val getIntegration: Route,
-    val patchIntegration: Route,
-    val createSourceSync: Route,
+    val listSourceSyncsByProjectManagementId: Route,
+    val registerSourceSyncForProjectManagement: Route,
+    val getSourceSyncState: Route,
     val getSourceSync: Route,
     val patchSourceSync: Route,
     val startSourceSyncUsersMatch: Route,
@@ -44,10 +39,9 @@ data class RoutesConfigs(
 data class IntegrationActions(
     val redirectAuthorization: String,
     val disableIntegration: String,
-    val startConfigSourceSync: String,
     val continueSourceSync: String,
     val requestFullSync: String,
     val updateSourceSyncConfig: String,
-    val getSourceSync: String,
+    val getSourceSyncState: String,
     val startMatchPlatformUsers: String,
 )

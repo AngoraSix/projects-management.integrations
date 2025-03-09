@@ -2,7 +2,7 @@ package com.angorasix.projects.management.integrations.infrastructure.integratio
 
 data class TrelloMemberDto(
     val id: String,
-    val username: String,
+    val username: String?,
     val fullName: String?,
     val url: String?,
     val email: String?,

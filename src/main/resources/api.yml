@@ -2,74 +2,56 @@ configs:
   api:
     basePaths:
       projectsManagementIntegration: "/managements-integration"
+      baseByIdCrudRoute: "/source-sync/{id}"
+      baseByProjectManagementIdCrudRoute: "/project-management/{projectManagementId}/source-sync"
     routes:
-      baseListCrudRoute: ""
-      baseByIdCrudRoute: "/{id}"
-      baseSourceSyncByIntegrationIdCrudRoute: "/{integrationId}/source-sync"
-      baseSourceSyncByIdCrudRoute: "/source-sync/{id}"
-      baseByProjectManagementIdCrudRoute: "/project-management/{projectManagementId}"
-      listIntegrationsByProjectManagementId:
-        name: listIntegrationsByProjectManagementId
+      listSourceSyncsByProjectManagementId:
+        name: listSourceSyncsByProjectManagementId
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseByProjectManagementIdCrudRoute}
+          - ${configs.api.basePaths.baseByProjectManagementIdCrudRoute}
         method: GET
         path: "/"
-      registerIntegrationForProjectManagement:
-        name: registerIntegrationForProjectManagement
+      registerSourceSyncForProjectManagement:
+        name: registerSourceSyncForProjectManagement
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseByProjectManagementIdCrudRoute}
-        method: POST
-        path: "/"
-      getIntegration:
-        name: getIntegration
-        basePaths:
-          - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseByIdCrudRoute}
-        method: GET
-        path: "/"
-      patchIntegration:
-        name: patchIntegration
-        basePaths:
-          - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseByIdCrudRoute}
-        method: PATCH
-        path: "/"
-      createSourceSync:
-        name: createSourceSync
-        basePaths:
-          - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseSourceSyncByIntegrationIdCrudRoute}
+          - ${configs.api.basePaths.baseByProjectManagementIdCrudRoute}
         method: POST
         path: "/"
       getSourceSync:
         name: getSourceSync
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseSourceSyncByIdCrudRoute}
+          - ${configs.api.basePaths.baseByIdCrudRoute}
         method: GET
         path: "/"
+      getSourceSyncState:
+        name: getSourceSyncState
+        basePaths:
+          - ${configs.api.basePaths.projectsManagementIntegration}
+          - ${configs.api.basePaths.baseByIdCrudRoute}
+        method: GET
+        path: "/state"
       patchSourceSync:
         name: patchSourceSync
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseSourceSyncByIdCrudRoute}
+          - ${configs.api.basePaths.baseByIdCrudRoute}
         method: PATCH
-        path: ""
+        path: "/"
       startSourceSyncUsersMatch:
         name: startSourceSyncUsersMatch
         basePaths:
           - ${configs.api.basePaths.projectsManagementIntegration}
-          - ${configs.api.routes.baseSourceSyncByIdCrudRoute}
+          - ${configs.api.basePaths.baseByIdCrudRoute}
         method: POST
         path: "/mappings/users"
     integrationActions:
       redirectAuthorization: redirectAuthorization
       disableIntegration: disableIntegration
-      startConfigSourceSync: startConfigSourceSync
       continueSourceSync: continueSourceSync
       requestFullSync: requestFullSync
       updateSourceSyncConfig: updateSourceSyncConfig
-      getSourceSync: getSourceSync
+      getSourceSyncState: getSourceSyncState
       startMatchPlatformUsers: startMatchPlatformUsers

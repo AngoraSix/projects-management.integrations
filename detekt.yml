@@ -657,7 +657,7 @@ style:
     allowNonStandardGrouping: false
   UnnecessaryAbstractClass:
     active: true
-    excludes: [ '**/IntegrationModification.kt', '**/SourceSyncModification.kt' ]
+    excludes: [ '**/SourceSyncModification.kt', ]
   UnnecessaryAnnotationUseSiteTarget:
     active: false
   UnnecessaryApply:

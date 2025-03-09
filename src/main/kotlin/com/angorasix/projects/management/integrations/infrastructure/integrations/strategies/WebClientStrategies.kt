@@ -23,12 +23,6 @@ class WebClientStrategies {
     // default
     val logger: Logger = LoggerFactory.getLogger(WebClientStrategies::class.java)
 
-    //    fun oauth2WebClient(authorizedClientManager: ReactiveOAuth2AuthorizedClientManager): WebClient {
-//        val oauth2Client = ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
-//        return WebClient.builder()
-//            .filter(oauth2Client)
-//            .build()
-//    }
     companion object {
         fun trelloWebClient(sourceConfigs: SourceConfigurations): WebClient {
             val trelloApiKey =

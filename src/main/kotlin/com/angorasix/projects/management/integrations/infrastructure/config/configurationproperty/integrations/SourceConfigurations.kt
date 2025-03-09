@@ -41,6 +41,13 @@ class SourceConfigurations(
                     }
                 key to SourceConfiguration(value.strategyConfigs, strategy)
             }.toMap()
+
+    fun extractSourceConfig(
+        source: String,
+        configKey: String,
+    ): String =
+        sourceConfigs[source]?.strategyConfigs?.get(configKey)
+            ?: throw IllegalArgumentException("Configuration: $configKey is required")
 }
 
 open class RawSourceConfiguration(

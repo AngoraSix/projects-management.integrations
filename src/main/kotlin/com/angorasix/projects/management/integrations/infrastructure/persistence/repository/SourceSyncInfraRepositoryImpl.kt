@@ -2,7 +2,7 @@ package com.angorasix.projects.management.integrations.infrastructure.persistenc
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
-import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
+import com.angorasix.projects.management.integrations.infrastructure.queryfilters.SourceSyncFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -14,7 +14,7 @@ class SourceSyncInfraRepositoryImpl(
     private val mongoOps: ReactiveMongoOperations,
 ) : SourceSyncInfraRepository {
     override fun findUsingFilter(
-        filter: ListSourceSyncFilter,
+        filter: SourceSyncFilter,
         requestingContributor: SimpleContributor?,
         allowAnonymous: Boolean,
     ): Flow<SourceSync> =
@@ -23,7 +23,7 @@ class SourceSyncInfraRepositoryImpl(
             .asFlow()
 
     override suspend fun findSingleUsingFilter(
-        filter: ListSourceSyncFilter,
+        filter: SourceSyncFilter,
         requestingContributor: SimpleContributor?,
         allowAnonymous: Boolean,
     ): SourceSync? =
@@ -32,7 +32,7 @@ class SourceSyncInfraRepositoryImpl(
             .awaitFirstOrNull()
 }
 
-private fun ListSourceSyncFilter.toQuery(
+private fun SourceSyncFilter.toQuery(
     requestingContributor: SimpleContributor?,
     allowAnonymous: Boolean = false,
 ): Query {
@@ -46,8 +46,8 @@ private fun ListSourceSyncFilter.toQuery(
     }
 
     ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
-    integrationId?.let { query.addCriteria(where("integrationId").`in`(it as Collection<Any>)) }
     sources?.let { query.addCriteria(where("source").`in`(it as Collection<Any>)) }
+    projectManagementId?.let { query.addCriteria(where("projectManagementId").`in`(it as Collection<Any>)) }
 
     return query
 }

@@ -17,7 +17,6 @@ data class IntegrationAsset
     constructor(
         @field:Id val id: String?,
         val source: String,
-        val integrationId: String,
         val sourceSyncId: String,
         val integrationAssetStatus: IntegrationAssetStatus,
         val sourceData: SourceAssetData,
@@ -26,7 +25,6 @@ data class IntegrationAsset
     ) {
         constructor(
             source: String,
-            integrationId: String,
             sourceSyncId: String,
             integrationAssetStatus: IntegrationAssetStatus,
             sourceData: SourceAssetData,
@@ -34,7 +32,6 @@ data class IntegrationAsset
         ) : this(
             null,
             source,
-            integrationId,
             sourceSyncId,
             integrationAssetStatus,
             sourceData,
