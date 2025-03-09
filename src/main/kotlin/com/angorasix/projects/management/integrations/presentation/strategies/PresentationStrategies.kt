@@ -14,7 +14,7 @@ class TrelloStrategy(
     override fun resolveRegistrationActions(apiConfigs: ApiConfigs): List<ActionData> {
         val authUrlPattern =
             sourceConfigs["authorizationUrlPattern"]
-                ?: throw IllegalArgumentException("redirectAuthUrl is required")
+                ?: throw IllegalArgumentException("authorizationUrl is required")
 
         val paramsRegex = """:(\w+)""".toRegex()
 

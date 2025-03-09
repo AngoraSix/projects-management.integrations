@@ -6,52 +6,38 @@ import com.angorasix.projects.management.integrations.domain.integration.asset.I
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
 import org.springframework.data.annotation.Transient
-import org.springframework.data.mongodb.core.index.Indexed
+import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 import java.util.UUID
 
 /**
- * Source Sync Root.
- *
- * A syncing of data with the third-part integration.
+ * <p>
+ *     Root entity defining the Project Management Source Sync Configuration data.
+ * </p>
  *
  * @author rozagerardo
  */
 @Document
+@CompoundIndex(
+    name = "sourcesync_idx",
+    def = "{'source': 1, 'projectManagementId': 1}",
+    unique = true,
+)
 data class SourceSync
     @PersistenceCreator
     constructor(
         @field:Id val id: String?,
         val source: String,
-        @Indexed(unique = true) val integrationId: String,
-        var status: SourceSyncStatus,
+        val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
         val admins: Set<SimpleContributor> = emptySet(),
+        var status: SourceSyncStatus,
+        val config: SourceSyncConfig = SourceSyncConfig(),
         val events: MutableList<SourceSyncEvent> = mutableListOf(),
         val mappings: SourceSyncMappings = SourceSyncMappings(),
-        val sourceStrategyStateData: Any?, // any sate information used by the source strategy
     ) {
         @Transient
         var assets: List<IntegrationAsset> = emptyList()
-
-        constructor(
-            source: String,
-            integrationId: String,
-            status: SourceSyncStatus,
-            admins: Set<SimpleContributor> = emptySet(),
-            events: MutableList<SourceSyncEvent> = mutableListOf(),
-            mappings: SourceSyncMappings = SourceSyncMappings(),
-            sourceStrategyStateData: Any?,
-        ) : this(
-            null,
-            source,
-            integrationId,
-            status,
-            admins,
-            events,
-            mappings,
-            sourceStrategyStateData,
-        )
 
         /**
          * Checks whether a particular contributor is Admin of this Club.
@@ -66,24 +52,105 @@ data class SourceSync
                 },
             )
 
+        fun isActive(): Boolean = status.status == SourceSyncStatusValues.REGISTERED
+
+        fun isInProgress(): Boolean = status.status == SourceSyncStatusValues.IN_PROGRESS
+
+        private fun isDisabled(): Boolean = status.status == SourceSyncStatusValues.DISABLED
+
         fun addEvent(event: SourceSyncEvent) {
             events.add(event)
         }
 
+        fun addStep(step: SourceSyncStatusStep) {
+            status = SourceSyncStatus.inProgress()
+            config.steps.add(step)
+        }
+
         fun wasRequestedFullSync(): Boolean =
-            status.status === SourceSyncStatusValues.COMPLETED &&
+            isActive() &&
                 events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
+
+        fun wasRequestedDisable(): Boolean =
+            isDisabled() &&
+                events.last().type == SourceSyncEventValues.REQUEST_UPDATE_STATE
+
+        fun requiresFurtherConfiguration(): Boolean =
+            isInProgress() &&
+                config.steps.any { !it.isCompleted() }
+
+        companion object {
+            fun initiate(
+                baseSourceSyncData: SourceSync,
+                requestingContributor: SimpleContributor,
+                config: SourceSyncConfig,
+                id: String? = null,
+            ): SourceSync =
+                SourceSync(
+                    id ?: baseSourceSyncData.id,
+                    baseSourceSyncData.source,
+                    baseSourceSyncData.projectManagementId,
+                    setOf(requestingContributor),
+                    SourceSyncStatus.inProgress(),
+                    config,
+                )
+
+            fun notRegistered(
+                source: String,
+                projectManagementId: String,
+                config: SourceSyncConfig? = null,
+            ): SourceSync =
+                SourceSync(
+                    null,
+                    source,
+                    projectManagementId,
+                    emptySet(),
+                    SourceSyncStatus.notRegistered(),
+                    config ?: SourceSyncConfig(),
+                )
+        }
     }
+
+data class SourceSyncStatus(
+    val status: SourceSyncStatusValues, // should match one of the IntegrationStatusValues, but flexible
+    val expirationDate: Instant? = null, // the integration or syncing expiration date
+//    val sourceStrategyStatusData: Map<String, Any>? = null, // any information used by the source to manage its stat
+) {
+    companion object {
+        fun inProgress(): SourceSyncStatus = SourceSyncStatus(SourceSyncStatusValues.IN_PROGRESS)
+
+        fun registered(): SourceSyncStatus = SourceSyncStatus(SourceSyncStatusValues.REGISTERED, Instant.now())
+
+        fun notRegistered(): SourceSyncStatus = SourceSyncStatus(SourceSyncStatusValues.NOT_REGISTERED)
+    }
+}
+
+enum class SourceSyncStatusValues {
+    NOT_REGISTERED,
+    IN_PROGRESS,
+    REGISTERED,
+    DISABLED,
+}
+
+data class SourceSyncConfig(
+    var accessToken: String? = null,
+    var sourceUserId: String? = null,
+    val steps: MutableList<SourceSyncStatusStep> =
+        mutableListOf(),
+//        arrayListOf(),
+)
 
 data class SourceSyncEvent(
     val type: SourceSyncEventValues,
-    val syncEventId: String = UUID.randomUUID().toString(),
-    val correspondenceQty: Int? = null,
+    val integrationEventId: String = UUID.randomUUID().toString(),
+    val affectedQty: Int? = null,
     val eventInstant: Instant = Instant.now(),
 )
 
 enum class SourceSyncEventValues {
-    STARTING_FULL_SYNC_CONFIG,
+    INITIATED_CONFIG,
+    REGISTERED_CONFIG,
+    REQUEST_UPDATE_STATE,
     REQUEST_FULL_SYNC,
     TRIGGERED_FULL_SYNC,
     REQUEST_UPDATE_SYNC_CONFIG,
@@ -91,10 +158,10 @@ enum class SourceSyncEventValues {
     STARTING_MEMBER_MATCH,
 }
 
-data class SourceSyncStatus(
-    var status: SourceSyncStatusValues,
-    val steps: MutableList<SourceSyncStatusStep> = arrayListOf(),
-)
+// data class SourceSyncStatus(
+//    var status: SourceSyncStatusValues,
+//    val steps: MutableList<SourceSyncStatusStep> = arrayListOf(),
+// )
 
 data class SourceSyncStatusStep(
     val stepKey: String,
@@ -108,11 +175,11 @@ data class SourceSyncStatusStep(
             }
 }
 
-enum class SourceSyncStatusValues {
-    IN_PROGRESS,
-    COMPLETED,
-    FAILED,
-}
+// enum class SourceSyncStatusValues {
+//    IN_PROGRESS,
+//    COMPLETED,
+//    FAILED,
+// }
 
 data class SourceSyncMappings(
     val users: MutableMap<String, String?> = mutableMapOf(), // A6 Contributor id to Source User

@@ -8,16 +8,19 @@ import com.angorasix.commons.domain.inputs.InlineFieldSpec
 import com.angorasix.commons.domain.inputs.OptionSpec
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.projects.management.integrations.application.strategies.SourceSyncStrategy
-import com.angorasix.projects.management.integrations.domain.integration.configuration.Integration
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncRepository
-import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatus
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceUser
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.inputs.SourceSyncMappingsUsersInput
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
-import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListSourceSyncFilter
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncOperation
+import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.queryfilters.SourceSyncFilter
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import java.util.UUID
 
 /**
@@ -27,56 +30,68 @@ import java.util.UUID
  */
 class SourceSyncService(
     private val repository: SourceSyncRepository,
-    private val integrationsService: IntegrationsService,
+    private val sourceConfigs: SourceConfigurations,
     private val sourceSyncStrategies: Map<Source, SourceSyncStrategy>,
     private val assetsService: IntegrationAssetService,
 ) {
     suspend fun findSingleSourceSync(
         id: String,
         requestingContributor: SimpleContributor,
+        includeAssets: Boolean = false,
     ): SourceSync? =
         repository
             .findSingleUsingFilter(
-                ListSourceSyncFilter(listOf(id)),
+                SourceSyncFilter(listOf(id)),
                 requestingContributor,
-            )?.let {
-                val assets = assetsService.findForSourceSyncId(id, requestingContributor)
-                it.assets = assets.toList()
-                it
+            )?.apply {
+                if (includeAssets) {
+                    assets = assetsService.findForSourceSyncId(id, requestingContributor).toList()
+                }
             }
 
-    suspend fun createSourceSync(
-        integrationId: String,
+    fun findSourceSyncsForProjectManagement(
+        projectManagementId: String,
         requestingContributor: SimpleContributor,
-    ): SourceSync? {
-        val existingSourceSync =
-            repository
-                .findSingleUsingFilter(
-                    ListSourceSyncFilter(null, listOf(integrationId)),
-                    requestingContributor,
-                )
-
-        if (existingSourceSync?.status?.status == SourceSyncStatusValues.COMPLETED
-        ) {
-            throw IllegalArgumentException(
-                "There is already a Completed SourceSync " +
-                    "for integration [$integrationId]",
-            )
-        }
-        val integration =
-            integrationsService.findSingleIntegration(integrationId, requestingContributor)
-        return integration
-            ?.takeIf { it.isActive() }
-            ?.let {
-                val source = Source.valueOf(integration.source.uppercase())
-                val sourceSync =
-                    sourceSyncStrategies[source]?.configSourceSync(
-                        integration,
-                        requestingContributor,
-                        existingSourceSync,
-                    )
-                sourceSync?.let { repository.save(it) }
+    ): List<SourceSync> =
+        runBlocking {
+            val filter = SourceSyncFilter(null, null, listOf(projectManagementId))
+            val integrationList = repository.findUsingFilter(filter, requestingContributor).toList()
+            sourceConfigs.supported.map { source ->
+                integrationList
+                    .find { it.source == source }
+                    ?: SourceSync.notRegistered(source, projectManagementId)
             }
+        }
+
+    suspend fun registerSourceSync(
+        newSourceSyncData: SourceSync,
+        requestingContributor: SimpleContributor,
+    ): SourceSync {
+        val source = Source.valueOf(newSourceSyncData.source.uppercase())
+        val existingSourceSync =
+            repository.findSingleUsingFilter(
+                SourceSyncFilter(
+                    null,
+                    setOf(source.value),
+                    listOf(newSourceSyncData.projectManagementId),
+                ),
+                requestingContributor,
+            )
+        val sourceSyncRegistration =
+            sourceSyncStrategies[source]
+                ?.resolveSourceSyncRegistration(
+                    newSourceSyncData,
+                    requestingContributor,
+                    existingSourceSync,
+                )?.apply {
+                    addEvent(
+                        SourceSyncEvent(
+                            SourceSyncEventValues.INITIATED_CONFIG,
+                        ),
+                    )
+                } ?: throw IllegalArgumentException("Source not supported")
+        return repository
+            .save(sourceSyncRegistration)
     }
 
     /**
@@ -87,10 +102,13 @@ class SourceSyncService(
         requestingContributor: DetailedContributor,
         sourceSyncId: String,
         modificationOperations: List<SourceSyncModification<out Any>>,
-    ): SourceSync? =
-        repository
+    ): SourceSync? {
+        if (modificationOperations.size != 1) {
+            throw IllegalArgumentException("Only one modification operation is allowed")
+        }
+        return repository
             .findSingleUsingFilter(
-                ListSourceSyncFilter(listOf(sourceSyncId)),
+                SourceSyncFilter(listOf(sourceSyncId)),
                 requestingContributor,
             )?.let {
                 val patchedSourceSync =
@@ -106,65 +124,74 @@ class SourceSyncService(
                         ?: throw IllegalArgumentException(
                             "Source not supported for SourceSync operations: $source",
                         )
-
-                val integration =
-                    integrationsService.findSingleIntegration(
-                        it.integrationId,
-                        requestingContributor,
-                    )
-                        ?: throw IllegalArgumentException(
-                            "Couldn't find associated integration" +
-                                "[${it.integrationId}] for sourceSync [$sourceSyncId] }",
-                        )
+                val operation = modificationOperations.first().operation
 
                 val updatedSourceSync =
-                    if (patchedSourceSync.wasRequestedFullSync() ||
-                        sourceSyncStrategy.isReadyForSyncing(
-                            patchedSourceSync,
-                            requestingContributor,
-                        )
-                    ) {
-                        triggerFullSync(
-                            sourceSyncStrategy,
-                            patchedSourceSync,
-                            integration,
-                            requestingContributor,
-                            sourceSyncId,
-                        )
-                    } else {
-                        sourceSyncStrategy.processModification(
-                            patchedSourceSync,
-                            integration,
-                            requestingContributor,
-                        )
-                    }
+                    postProcessPatchedSourceSync(operation, patchedSourceSync, sourceSyncStrategy, requestingContributor)
                 repository.save(updatedSourceSync)
             }
+    }
+
+    private suspend fun SourceSyncService.postProcessPatchedSourceSync(
+        operation: SourceSyncOperation,
+        patchedSourceSync: SourceSync,
+        sourceSyncStrategy: SourceSyncStrategy,
+        requestingContributor: DetailedContributor,
+    ) = when (operation) {
+        SourceSyncOperation.MODIFY_STATUS -> patchedSourceSync
+
+        SourceSyncOperation.REQUEST_FULL_SYNC_EVENT ->
+            triggerFullSync(
+                sourceSyncStrategy,
+                patchedSourceSync,
+                requestingContributor,
+            )
+
+        SourceSyncOperation.REPLACE_STEP_RESPONSE_DATA ->
+            if (sourceSyncStrategy.isReadyForSyncing(
+                    patchedSourceSync,
+                    requestingContributor,
+                )
+            ) {
+                triggerFullSync(
+                    sourceSyncStrategy,
+                    patchedSourceSync,
+                    requestingContributor,
+                ).apply {
+                    status = SourceSyncStatus.registered()
+                }
+            } else {
+                sourceSyncStrategy.configureNextStepData(
+                    patchedSourceSync,
+                    requestingContributor,
+                )
+            }
+
+        SourceSyncOperation.REPLACE_MAPPING_USERS_DATA ->
+            patchedSourceSync
+    }
 
     private suspend fun triggerFullSync(
         sourceSyncStrategy: SourceSyncStrategy,
         patchedSourceSync: SourceSync,
-        integration: Integration,
         requestingContributor: DetailedContributor,
-        sourceSyncId: String,
     ): SourceSync {
+        requireNotNull(patchedSourceSync.id) { "SourceSync id required for triggerFullSync" }
         val syncEventId = UUID.randomUUID().toString()
         val assets =
             sourceSyncStrategy.triggerSourceSync(
                 patchedSourceSync,
-                integration,
                 requestingContributor,
                 syncEventId,
             )
         val updatedAssets =
             assetsService.processAssets(
                 assets,
-                sourceSyncId,
-                integration.projectManagementId,
+                patchedSourceSync.id,
+                patchedSourceSync.projectManagementId,
                 requestingContributor,
             )
 
-        patchedSourceSync.status.status = SourceSyncStatusValues.COMPLETED
         patchedSourceSync.addEvent(
             SourceSyncEvent(
                 SourceSyncEventValues.TRIGGERED_FULL_SYNC,
@@ -183,7 +210,7 @@ class SourceSyncService(
     ): SourceSync {
         val sourceSync =
             repository.findSingleUsingFilter(
-                ListSourceSyncFilter((listOf(sourceSyncId))),
+                SourceSyncFilter((listOf(sourceSyncId))),
                 requestingContributor,
             )
                 ?: throw IllegalArgumentException(
@@ -211,10 +238,10 @@ class SourceSyncService(
         contributorsToMatch: List<DetailedContributor>,
         sourceSyncId: String,
         requestingContributor: SimpleContributor,
-    ): List<InlineFieldSpec> {
+    ): SourceSyncMappingsUsersInput {
         val sourceSync =
             repository.findSingleUsingFilter(
-                ListSourceSyncFilter((listOf(sourceSyncId))),
+                SourceSyncFilter((listOf(sourceSyncId))),
                 requestingContributor,
             )
         requireNotNull(sourceSync) { "SourceSync [$sourceSyncId] not found for contributor" }
@@ -222,51 +249,45 @@ class SourceSyncService(
         requireNotNull(sourceSyncStrategy) {
             "Source not supported for SourceSync operations: ${sourceSync.source}"
         }
-        val integration =
-            integrationsService
-                .findSingleIntegration(
-                    sourceSync.integrationId,
-                    requestingContributor,
-                )?.takeIf { it.isActive() }
-        requireNotNull(
-            integration,
-        ) { "Inactive associated integration" }
 
         val platformUsers =
             sourceSyncStrategy.obtainUsersMatchOptions(
                 sourceSync,
-                integration,
                 requestingContributor,
             )
 
         sourceSync.updateSourceSyncMappingUsers(contributorsToMatch)
         repository.save(sourceSync)
-        return contributorsToMatch.map {
-            InlineFieldSpec(
-                name = it.contributorId,
-                type = FieldSpec.SELECT_COMPLEX,
-                options =
-                    InlineFieldOptions(
-                        selectedValues =
-                            determineSelectedValues(
-                                it,
-                                sourceSync.mappings.users,
-                                platformUsers,
+        return SourceSyncMappingsUsersInput(
+            inputs =
+                contributorsToMatch.map {
+                    InlineFieldSpec(
+                        name = it.contributorId,
+                        type = FieldSpec.SELECT_COMPLEX,
+                        options =
+                            InlineFieldOptions(
+                                selectedValues =
+                                    determineSelectedValues(
+                                        it,
+                                        sourceSync.mappings.users,
+                                        platformUsers,
+                                    ),
+                                inline =
+                                    platformUsers.map { platformUser ->
+                                        OptionSpec(
+                                            value = platformUser.sourceUserId,
+                                            prompt =
+                                                platformUser.username
+                                                    ?: platformUser.email
+                                                    ?: platformUser.sourceUserId,
+                                            promptData = platformUser.toMap(),
+                                        )
+                                    },
                             ),
-                        inline =
-                            platformUsers.map { platformUser ->
-                                OptionSpec(
-                                    value = platformUser.sourceUserId,
-                                    prompt =
-                                        platformUser.username
-                                            ?: platformUser.email
-                                            ?: platformUser.sourceUserId,
-                                    promptData = platformUser.toMap(),
-                                )
-                            },
-                    ),
-            )
-        }
+                    )
+                },
+            source = sourceSync.source,
+        )
     }
 
     private fun determineSelectedValues(
@@ -289,7 +310,7 @@ class SourceSyncService(
         addEvent(
             SourceSyncEvent(
                 type = SourceSyncEventValues.STARTING_MEMBER_MATCH,
-                correspondenceQty = contributorsToMatch.size,
+                affectedQty = contributorsToMatch.size,
             ),
         )
     }

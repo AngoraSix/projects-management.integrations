@@ -5,17 +5,15 @@ import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.presentation.dto.InlineFieldSpecDto
 import com.angorasix.commons.presentation.dto.PatchOperation
 import com.angorasix.commons.presentation.dto.PatchOperationSpec
-import com.angorasix.projects.management.integrations.domain.integration.configuration.IntegrationStatusValues
-import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.IntegrationModification
-import com.angorasix.projects.management.integrations.domain.integration.configuration.modification.ModifyIntegrationStatus
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
+import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ModifySourceSyncStatus
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ReplaceMappingUsersData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.ReplaceStepResponseData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.RequestFullSyncEvent
-import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.RequestSyncConfigUpdate
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.hateoas.RepresentationModel
@@ -27,112 +25,31 @@ import java.time.Instant
  *
  * @author rozagerardo
  */
-@Relation(collectionRelation = "integrationList", itemRelation = "integration")
-data class IntegrationDto(
-    val source: String? = null,
-    val projectManagementId: String? = null,
-    val status: IntegrationStatusDto? = null,
-    val admins: Set<SimpleContributor>? = emptySet(),
-    val config: IntegrationConfigDto? = null,
-    val sourceSync: SourceSyncDto? = null,
-    val id: String? = null,
-) : RepresentationModel<IntegrationDto>()
-
-data class IntegrationStatusDto(
-    val status: IntegrationStatusValues? = null,
-    val expirationDate: Instant? = null,
-    val sourceStrategyData: Map<String, Any>? = null,
-)
-
-data class IntegrationConfigDto(
-    val sourceStrategyConfigData: Map<String, Any>?,
-)
-
-enum class SupportedIntegrationPatchOperations(
-    val op: PatchOperationSpec,
-) {
-    STATUS(
-        object : PatchOperationSpec {
-            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
-                operation.op == "replace" && operation.path == "/status/status"
-
-            override fun mapToObjectModification(
-                contributor: SimpleContributor,
-                operation: PatchOperation,
-                objectMapper: ObjectMapper,
-            ): IntegrationModification<IntegrationStatusValues> {
-                val statusValue =
-                    objectMapper.treeToValue(operation.value, IntegrationStatusValues::class.java)
-                        ?: throw IllegalArgumentException(
-                            "Not supported value: ${operation.value}." +
-                                "Supported values: [${IntegrationStatusValues.values()}]",
-                        )
-                return ModifyIntegrationStatus(statusValue)
-            }
-        },
-    ),
-}
-
+@Relation(collectionRelation = "sourceSyncList", itemRelation = "sourceSync")
 data class SourceSyncDto(
     val source: String? = null,
-    val integrationId: String? = null,
+    val projectManagementId: String? = null,
     val status: SourceSyncStatusDto? = null,
-    val events: List<SourceSyncEventDto> = listOf(),
-    val sourceStrategyStateData: Any? = null,
-    val id: String? = null,
+    val config: SourceSyncConfigDto? = null,
     val sourceAssets: List<IntegrationAssetDto> = emptyList(),
+    val id: String? = null,
 ) : RepresentationModel<SourceSyncDto>()
 
-data class IntegrationAssetDto(
-    val id: String? = null,
-    val integrationStatus: IntegrationAssetStatusDto,
-    val sourceData: SourceAssetDataDto,
-    val source: String,
-    val integrationId: String,
-    val sourceSyncId: String,
+data class SourceSyncStatusDto(
+    val status: SourceSyncStatusValues? = null,
+    val expirationDate: Instant? = null,
 )
 
-data class SourceAssetDataDto(
-    val id: String,
-    val type: String,
-    // TASK
-    val title: String,
-    val description: String?,
-    val dueInstant: Instant?,
-    val assigneeIds: List<String> = emptyList(),
-    val done: Boolean = false,
-    // TASK ESTIMATION (CAPS)
-    val estimations: SourceAssetEstimationDataDto? = null,
-)
-
-data class SourceAssetEstimationDataDto(
-    val caps: Double?,
-    val strategy: String?,
-    val effort: Double?,
-    val complexity: Double?,
-    val industry: String?,
-    val industryModifier: Double?,
-    val moneyPayment: Double?,
-)
-
-data class IntegrationAssetStatusDto(
-    val events: List<IntegrationAssetSyncEventDto> = emptyList(),
-)
-
-data class IntegrationAssetSyncEventDto(
-    val type: String,
-    val syncEventId: String,
-    val eventInstant: String,
+data class SourceSyncConfigDto(
+    val steps: List<SourceSyncStatusStepDto> = emptyList(),
+    // accessToken just for request inputs, don't retrieve it even if it's encrypted
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    val accessToken: String? = null,
 )
 
 data class SourceSyncEventDto(
     val type: SourceSyncEventValues,
     val eventInstant: Instant? = null,
-)
-
-data class SourceSyncStatusDto(
-    val status: SourceSyncStatusValues,
-    val steps: List<SourceSyncStatusStepDto> = emptyList(),
 )
 
 data class SourceSyncStatusStepDto(
@@ -148,10 +65,30 @@ data class ProjectContributorsToMatchDto(
 enum class SupportedSourceSyncPatchOperations(
     val op: PatchOperationSpec,
 ) {
+    UPDATE_STATUS(
+        object : PatchOperationSpec {
+            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
+                operation.op == "replace" && operation.path == "/status/status"
+
+            override fun mapToObjectModification(
+                contributor: SimpleContributor,
+                operation: PatchOperation,
+                objectMapper: ObjectMapper,
+            ): SourceSyncModification<SourceSyncStatusValues> {
+                val statusValue =
+                    objectMapper.treeToValue(operation.value, SourceSyncStatusValues::class.java)
+                        ?: throw IllegalArgumentException(
+                            "Not supported value: ${operation.value}." +
+                                "Supported values: [${SourceSyncStatusValues.values()}]",
+                        )
+                return ModifySourceSyncStatus(statusValue)
+            }
+        },
+    ),
     STEP_RESPONSE_DATA(
         object : PatchOperationSpec {
             override fun supportsPatchOperation(operation: PatchOperation): Boolean =
-                operation.op == "replace" && Regex("^/status/steps/\\d+$").matches(operation.path)
+                operation.op == "replace" && Regex("^/config/steps/\\d+$").matches(operation.path)
 
             override fun mapToObjectModification(
                 contributor: SimpleContributor,
@@ -165,7 +102,7 @@ enum class SupportedSourceSyncPatchOperations(
                     )
                         ?: throw IllegalArgumentException(
                             "Not supported value: ${operation.value}." +
-                                "Supported values: [${IntegrationStatusValues.values()}]",
+                                "Supported values: [${SourceSyncStatusValues.values()}]",
                         )
                 val index = extractNumberFromPath(operation.path)
                 val indexedResponse = MutableList<Map<String, List<String>>?>(index + 1) { null }
@@ -216,26 +153,63 @@ enum class SupportedSourceSyncPatchOperations(
             }
         },
     ),
-    REQUEST_SYNC_CONFIG_UPDATE(
-        object : PatchOperationSpec {
-            override fun supportsPatchOperation(operation: PatchOperation): Boolean =
-                operation.op == "replace" && operation.path == "/status/status"
-
-            override fun mapToObjectModification(
-                contributor: SimpleContributor,
-                operation: PatchOperation,
-                objectMapper: ObjectMapper,
-            ): SourceSyncModification<SourceSyncStatusValues> {
-                val statusValue =
-                    objectMapper.treeToValue(operation.value, SourceSyncStatusValues::class.java)
-                return RequestSyncConfigUpdate(statusValue)
-            }
-        },
-    ),
 }
 
+data class IntegrationAssetDto(
+    val id: String? = null,
+    val integrationStatus: IntegrationAssetStatusDto,
+    val sourceData: SourceAssetDataDto,
+    val source: String,
+    val sourceSyncId: String,
+)
+
+data class SourceAssetDataDto(
+    val id: String,
+    val type: String,
+    // TASK
+    val title: String,
+    val description: String?,
+    val dueInstant: Instant?,
+    val assigneeIds: List<String> = emptyList(),
+    val done: Boolean = false,
+    // TASK ESTIMATION (CAPS)
+    val estimations: SourceAssetEstimationDataDto? = null,
+)
+
+data class SourceAssetEstimationDataDto(
+    val caps: Double?,
+    val strategy: String?,
+    val effort: Double?,
+    val complexity: Double?,
+    val industry: String?,
+    val industryModifier: Double?,
+    val moneyPayment: Double?,
+)
+
+data class IntegrationAssetStatusDto(
+    val events: List<IntegrationAssetSyncEventDto> = emptyList(),
+)
+
+data class IntegrationAssetSyncEventDto(
+    val type: String,
+    val syncEventId: String,
+    val eventInstant: String,
+)
+
+class SourceSyncMappingsUsersInputCollectionModel(
+    val source: String,
+    usersInputs: List<InlineFieldSpecDto>,
+) : RepresentationModel<SourceSyncMappingsUsersInputCollectionModel>() {
+    @JsonProperty("_embedded")
+    val embedded: SourceSyncMappingsUsersInputItem = SourceSyncMappingsUsersInputItem(usersInputs)
+}
+
+data class SourceSyncMappingsUsersInputItem(
+    val usersInputs: List<InlineFieldSpecDto>,
+)
+
 fun extractNumberFromPath(path: String): Int {
-    val regex = Regex("^/status/steps/(\\d+)$")
+    val regex = Regex("^/config/steps/(\\d+)$")
     val matchResult = regex.matchEntire(path)
     return matchResult
         ?.groups

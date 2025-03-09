@@ -58,6 +58,7 @@ class IntegrationAssetService(
                         assets.map { it.sourceData.id },
                         listOf(sourceSyncId),
                     ),
+                    requestingContributor,
                 ).toList()
         val updatedAssets = mutableListOf<IntegrationAsset>()
         val pendingUpdatedAssets =

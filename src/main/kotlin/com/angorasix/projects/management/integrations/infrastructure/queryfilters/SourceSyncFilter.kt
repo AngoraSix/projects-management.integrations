@@ -10,14 +10,16 @@ import org.springframework.util.MultiValueMap
  *
  * @author rozagerardo
  */
-data class ListSourceSyncFilter(
-    val ids: Collection<String>? = null, // sourceSync ids
-    val integrationId: Collection<String>? = null,
+data class SourceSyncFilter(
+    val ids: Collection<String>? = null, // integration ids
     val sources: Set<String>? = null,
+    val projectManagementId: Collection<String>? = null,
 ) {
     fun toMultiValueMap(): MultiValueMap<String, String> {
         val multiMap: MultiValueMap<String, String> = LinkedMultiValueMap()
-        integrationId?.let { multiMap.add("integrationId", integrationId.joinToString(",")) }
+        projectManagementId?.let {
+            multiMap.add("projectManagementId", projectManagementId.joinToString(","))
+        }
         sources?.let { multiMap.add("sources", sources.joinToString(",")) }
         ids?.let { multiMap.add("ids", ids.joinToString(",")) }
         return multiMap

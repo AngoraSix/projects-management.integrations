@@ -3,7 +3,6 @@ package com.angorasix.projects.management.integrations.presentation.router
 import com.angorasix.commons.reactive.presentation.filter.extractRequestingContributor
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
-import com.angorasix.projects.management.integrations.presentation.handler.SourceSyncHandler
 import org.springframework.web.reactive.function.server.CoRouterFunctionDsl
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.coRouter
@@ -15,7 +14,6 @@ import org.springframework.web.reactive.function.server.coRouter
  */
 class ProjectManagementIntegrationsRouter(
     private val handler: ProjectManagementIntegrationsHandler,
-    private val sourceSyncHandler: SourceSyncHandler,
     private val apiConfigs: ApiConfigs,
 ) {
     /**
@@ -33,16 +31,10 @@ class ProjectManagementIntegrationsRouter(
                         next,
                     )
                 }
-                apiConfigs.routes.baseByProjectManagementIdCrudRoute.nest {
+                apiConfigs.basePaths.baseByProjectManagementIdCrudRoute.nest {
                     defineByProjectManagementIdRoutes()
                 }
-                apiConfigs.routes.baseSourceSyncByIdCrudRoute.nest {
-                    defineSourceSyncByIdEndpoints()
-                }
-                apiConfigs.routes.baseSourceSyncByIntegrationIdCrudRoute.nest {
-                    defineSourceSyncBaseEndpoints()
-                }
-                apiConfigs.routes.baseByIdCrudRoute.nest {
+                apiConfigs.basePaths.baseByIdCrudRoute.nest {
                     defineByIdEndpoints()
                 }
             }
@@ -50,47 +42,35 @@ class ProjectManagementIntegrationsRouter(
 
     private fun CoRouterFunctionDsl.defineByIdEndpoints() {
         method(
-            apiConfigs.routes.getIntegration.method,
-            handler::getIntegration,
-        )
-        method(
-            apiConfigs.routes.patchIntegration.method,
-            handler::patchIntegration,
-        )
-    }
-
-    private fun CoRouterFunctionDsl.defineSourceSyncBaseEndpoints() {
-        method(
-            apiConfigs.routes.createSourceSync.method,
-            sourceSyncHandler::createSourceSync,
-        )
-    }
-
-    private fun CoRouterFunctionDsl.defineSourceSyncByIdEndpoints() {
-        method(
             apiConfigs.routes.getSourceSync.method,
-            sourceSyncHandler::getSourceSync,
+            handler::getSourceSync,
         )
         method(
             apiConfigs.routes.patchSourceSync.method,
-            sourceSyncHandler::patchSourceSync,
+            handler::patchSourceSync,
         )
+        path(apiConfigs.routes.getSourceSyncState.path).nest {
+            method(
+                apiConfigs.routes.getSourceSyncState.method,
+                handler::getSourceSyncState,
+            )
+        }
         path(apiConfigs.routes.startSourceSyncUsersMatch.path).nest {
             method(
                 apiConfigs.routes.startSourceSyncUsersMatch.method,
-                sourceSyncHandler::startSourceSyncUsersMatch,
+                handler::startSourceSyncUsersMatch,
             )
         }
     }
 
     private fun CoRouterFunctionDsl.defineByProjectManagementIdRoutes() {
         method(
-            apiConfigs.routes.listIntegrationsByProjectManagementId.method,
-            handler::getProjectManagementIntegrations,
+            apiConfigs.routes.listSourceSyncsByProjectManagementId.method,
+            handler::getProjectManagementSourceSyncs,
         )
         method(
-            apiConfigs.routes.registerIntegrationForProjectManagement.method,
-            handler::registerIntegration,
+            apiConfigs.routes.registerSourceSyncForProjectManagement.method,
+            handler::registerSourceSync,
         )
     }
 }
