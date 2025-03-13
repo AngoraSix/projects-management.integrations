@@ -191,6 +191,10 @@ data class SourceSyncMappings(
     fun addNewUserMappings(newUserMappings: Map<String, String?>) {
         users.putAllIfAbsent(newUserMappings)
     }
+
+    fun getContributorsFromSources(sources: List<String>):Set<String> {
+        return users.filterValues { sources.contains(it) }.keys
+    }
 }
 
 private fun <K, V> MutableMap<K, V>.putAllIfAbsent(other: Map<K, V>) {

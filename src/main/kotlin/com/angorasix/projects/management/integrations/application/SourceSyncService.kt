@@ -45,7 +45,7 @@ class SourceSyncService(
                 requestingContributor,
             )?.apply {
                 if (includeAssets) {
-                    assets = assetsService.findForSourceSyncId(id, requestingContributor).toList()
+                    assets = assetsService.findForSourceSyncId(id).toList()
                 }
             }
 
@@ -168,7 +168,23 @@ class SourceSyncService(
             }
 
         SourceSyncOperation.REPLACE_MAPPING_USERS_DATA ->
-            patchedSourceSync
+            resendAssets(patchedSourceSync, requestingContributor)
+    }
+
+    private suspend fun resendAssets(patchedSourceSync: SourceSync, requestingContributor: DetailedContributor) : SourceSync {
+        requireNotNull(patchedSourceSync.id) { "SourceSync id required for resendAssets" }
+        val syncingEventId = UUID.randomUUID().toString()
+        val assets = assetsService.findForSourceSyncId(patchedSourceSync.id).toList()
+        assetsService.syncAssetsToTasks(
+            assets,
+            patchedSourceSync.projectManagementId,
+            patchedSourceSync.id,
+            syncingEventId,
+            requestingContributor,
+            patchedSourceSync.mappings,
+        )
+
+        return patchedSourceSync
     }
 
     private suspend fun triggerFullSync(
@@ -190,6 +206,7 @@ class SourceSyncService(
                 patchedSourceSync.id,
                 patchedSourceSync.projectManagementId,
                 requestingContributor,
+                patchedSourceSync.mappings,
             )
 
         patchedSourceSync.addEvent(

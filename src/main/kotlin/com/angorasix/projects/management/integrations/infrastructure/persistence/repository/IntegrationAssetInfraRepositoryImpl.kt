@@ -94,7 +94,6 @@ private fun ListIntegrationAssetFilter.toQuery(
     ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
     assetDataId?.let { query.addCriteria(where("sourceData.id").`in`(it as Collection<Any>)) }
     sourceSyncId?.let { query.addCriteria(where("sourceSyncId").`in`(it as Collection<Any>)) }
-    integrationId?.let { query.addCriteria(where("integrationId").`in`(it as Collection<Any>)) }
     sources?.let { query.addCriteria(where("source").`in`(it as Collection<Any>)) }
 
     return query
