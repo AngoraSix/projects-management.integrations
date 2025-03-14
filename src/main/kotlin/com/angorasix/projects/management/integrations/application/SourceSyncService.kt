@@ -168,10 +168,10 @@ class SourceSyncService(
             }
 
         SourceSyncOperation.REPLACE_MAPPING_USERS_DATA ->
-            resendAssets(patchedSourceSync, requestingContributor)
+            syncAssets(patchedSourceSync, requestingContributor)
     }
 
-    private suspend fun resendAssets(patchedSourceSync: SourceSync, requestingContributor: DetailedContributor) : SourceSync {
+    private suspend fun syncAssets(patchedSourceSync: SourceSync, requestingContributor: DetailedContributor) : SourceSync {
         requireNotNull(patchedSourceSync.id) { "SourceSync id required for resendAssets" }
         val syncingEventId = UUID.randomUUID().toString()
         val assets = assetsService.findForSourceSyncId(patchedSourceSync.id).toList()

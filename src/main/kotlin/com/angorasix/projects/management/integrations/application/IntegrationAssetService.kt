@@ -1,7 +1,6 @@
 package com.angorasix.projects.management.integrations.application
 
 import com.angorasix.commons.domain.DetailedContributor
-import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.infrastructure.intercommunication.dto.A6DomainResource
 import com.angorasix.commons.infrastructure.intercommunication.dto.A6InfraTopics
 import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraBulkResourceDto
@@ -110,7 +109,7 @@ class IntegrationAssetService(
     }
 
     suspend fun syncAssetsToTasks(
-        persistedAssets: List<IntegrationAsset>,
+        assets: List<IntegrationAsset>,
         projectManagementId: String,
         sourceSyncId: String,
         syncingEventId: String,
@@ -118,7 +117,7 @@ class IntegrationAssetService(
         mappings: SourceSyncMappings
     ) {
         publishUpdatedAssets(
-            persistedAssets,
+            assets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
             projectManagementId,
             "$sourceSyncId:$syncingEventId",
@@ -126,7 +125,7 @@ class IntegrationAssetService(
             mappings,
         )
         repository.registerEvent(
-            ListIntegrationAssetFilter(persistedAssets.mapNotNull { it.id }),
+            ListIntegrationAssetFilter(assets.mapNotNull { it.id }),
             IntegrationAssetSyncEvent.syncing(syncingEventId),
         )
     }
