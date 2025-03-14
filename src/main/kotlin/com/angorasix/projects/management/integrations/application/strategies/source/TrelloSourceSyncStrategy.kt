@@ -224,7 +224,7 @@ class TrelloSourceSyncStrategy(
                                 title = it.name,
                                 description = it.desc,
                                 dueInstant = parseDueDate(it.due),
-                                assigneeIds = emptyList(),
+                                assigneeIds = it.idMembers ?: emptyList(),
                                 done = it.dueComplete == true,
                                 estimations = extractEstimationData(it, trelloPluginId),
                             ),
