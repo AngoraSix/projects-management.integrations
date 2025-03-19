@@ -14,7 +14,6 @@ import com.angorasix.projects.management.integrations.domain.integration.asset.I
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationStatusValues
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
-import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncMappings
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp.AmqpConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import kotlinx.coroutines.flow.toList
@@ -48,7 +47,7 @@ class IntegrationAssetService(
         sourceSyncId: String,
         projectManagementId: String,
         requestingContributor: DetailedContributor,
-        mappings: SourceSyncMappings,
+        mappings: Map<String, String?>,
     ): List<IntegrationAsset> {
         val existingSourceSyncAssets =
             repository
@@ -58,7 +57,7 @@ class IntegrationAssetService(
                         assets.map { it.sourceData.id },
                         listOf(sourceSyncId),
                     ),
-                    requestingContributor,
+                    allowAnonymous = true, // assets dont have information about admin
                 ).toList()
         val updatedAssets = mutableListOf<IntegrationAsset>()
         val pendingUpdatedAssets =
@@ -83,13 +82,17 @@ class IntegrationAssetService(
         val syncingEventId = UUID.randomUUID().toString()
 
         // Start Syncing
-        syncAssetsToTasks(
+        publishUpdatedAssets(
             persistedAssets,
+            amqpConfigs.bindings.mgmtIntegrationSyncing,
             projectManagementId,
             sourceSyncId,
-            syncingEventId,
             requestingContributor,
-            mappings
+            mappings,
+        )
+        repository.registerEvent(
+            ListIntegrationAssetFilter(persistedAssets.mapNotNull { it.id }),
+            IntegrationAssetSyncEvent.syncing(syncingEventId),
         )
 
         // Updates not ready to be processed, for later
@@ -108,19 +111,20 @@ class IntegrationAssetService(
         return persistedAssets
     }
 
-    suspend fun syncAssetsToTasks(
+    suspend fun syncAssets(
         assets: List<IntegrationAsset>,
-        projectManagementId: String,
         sourceSyncId: String,
-        syncingEventId: String,
+        projectManagementId: String,
         requestingContributor: DetailedContributor,
-        mappings: SourceSyncMappings
+        mappings: Map<String, String?>,
     ) {
+        val syncingEventId = UUID.randomUUID().toString()
+
         publishUpdatedAssets(
             assets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
             projectManagementId,
-            "$sourceSyncId:$syncingEventId",
+            sourceSyncId,
             requestingContributor,
             mappings,
         )
@@ -148,13 +152,13 @@ class IntegrationAssetService(
         projectManagementId: String,
         sourceSyncId: String,
         requestingContributor: DetailedContributor,
-        mappings: SourceSyncMappings
+        mappings: Map<String, String?>,
     ) {
         if (updatedAssets.isNotEmpty()) {
             val messageData =
                 A6InfraBulkResourceDto(
                     A6DomainResource.Task,
-                    mapAssetsToTasks(updatedAssets, mappings),
+                    updatedAssets.map { it.toTaskDto(mappings) },
                 )
             streamBridge.send(
                 bindingKey,
@@ -170,24 +174,6 @@ class IntegrationAssetService(
                             messageData.toMap(),
                         ),
                     ).build(),
-            )
-        }
-    }
-
-    private fun mapAssetsToTasks(assets: List<IntegrationAsset>, mappings: SourceSyncMappings) : List<A6InfraTaskDto> {
-        return assets.map {
-            requireNotNull(it.id)
-            val sourceData = it.sourceData
-            A6InfraTaskDto(
-                it.id,
-                sourceData.title,
-                sourceData.description,
-                sourceData.dueInstant,
-                mappings.getContributorsFromSources(sourceData.assigneeIds),
-                sourceData.done,
-                sourceData.type,
-                sourceData.id,
-                sourceData.estimations?.toDto(),
             )
         }
     }
@@ -219,3 +205,20 @@ private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto =
     )
 
 private fun IntegrationAssetStatus.isSynced(): Boolean = currentStatus() == IntegrationStatusValues.SYNCED
+
+private fun IntegrationAsset.toTaskDto(mappings: Map<String, String?>): A6InfraTaskDto {
+    requireNotNull(this.id)
+    val sourceData = this.sourceData
+
+    return A6InfraTaskDto(
+        this.id,
+        sourceData.title,
+        sourceData.description,
+        sourceData.dueInstant,
+        mappings.filterValues { sourceData.assigneeIds.contains(it) }.keys,
+        sourceData.done,
+        sourceData.type,
+        sourceData.id,
+        sourceData.estimations?.toDto(),
+    )
+}

@@ -172,18 +172,16 @@ class SourceSyncService(
     }
 
     private suspend fun syncAssets(patchedSourceSync: SourceSync, requestingContributor: DetailedContributor) : SourceSync {
-        requireNotNull(patchedSourceSync.id) { "SourceSync id required for resendAssets" }
-        val syncingEventId = UUID.randomUUID().toString()
+        requireNotNull(patchedSourceSync.id) { "SourceSync id required for syncAssets" }
         val assets = assetsService.findForSourceSyncId(patchedSourceSync.id).toList()
-        assetsService.syncAssetsToTasks(
-            assets,
-            patchedSourceSync.projectManagementId,
-            patchedSourceSync.id,
-            syncingEventId,
-            requestingContributor,
-            patchedSourceSync.mappings,
-        )
 
+        assetsService.syncAssets(
+            assets,
+            patchedSourceSync.id,
+            patchedSourceSync.projectManagementId,
+            requestingContributor,
+            patchedSourceSync.mappings.users,
+        )
         return patchedSourceSync
     }
 
@@ -206,7 +204,7 @@ class SourceSyncService(
                 patchedSourceSync.id,
                 patchedSourceSync.projectManagementId,
                 requestingContributor,
-                patchedSourceSync.mappings,
+                patchedSourceSync.mappings.users,
             )
 
         patchedSourceSync.addEvent(
