@@ -82,9 +82,7 @@ class IntegrationAssetService(
         publishUpdatedAssets(
             persistedAssets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
-            projectManagementId,
-            sourceSyncId,
-            requestingContributor,
+            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
             mappings,
         )
         repository.registerEvent(
@@ -96,9 +94,7 @@ class IntegrationAssetService(
         publishUpdatedAssets(
             pendingUpdatedAssets,
             amqpConfigs.bindings.pendingSyncingOut,
-            projectManagementId,
-            sourceSyncId,
-            requestingContributor,
+            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
             mappings,
         )
         repository.registerEvent(
@@ -120,9 +116,7 @@ class IntegrationAssetService(
         publishUpdatedAssets(
             assets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
-            projectManagementId,
-            sourceSyncId,
-            requestingContributor,
+            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
             mappings,
         )
         repository.registerEvent(
@@ -146,9 +140,7 @@ class IntegrationAssetService(
     private fun publishUpdatedAssets(
         updatedAssets: List<IntegrationAsset>,
         bindingKey: String,
-        projectManagementId: String,
-        sourceSyncId: String,
-        requestingContributor: DetailedContributor,
+        assetsContext: AssetsContext,
         mappings: Map<String, String?>,
     ) {
         if (updatedAssets.isNotEmpty()) {
@@ -162,12 +154,12 @@ class IntegrationAssetService(
                 MessageBuilder
                     .withPayload(
                         A6InfraMessageDto(
-                            projectManagementId,
+                            assetsContext.projectManagementId,
                             A6DomainResource.ProjectManagement,
-                            sourceSyncId,
+                            assetsContext.sourceSyncId,
                             A6DomainResource.IntegrationSourceSync.value,
                             A6InfraTopics.TASKS_INTEGRATION_FULL_SYNCING.value,
-                            requestingContributor,
+                            assetsContext.requestingContributor,
                             messageData.toMap(),
                         ),
                     ).build(),
@@ -175,6 +167,12 @@ class IntegrationAssetService(
         }
     }
 }
+
+data class AssetsContext(
+    val projectManagementId: String,
+    val sourceSyncId: String,
+    val requestingContributor: DetailedContributor,
+)
 
 private fun updatedAssetOrNull(
     asset: IntegrationAsset,
