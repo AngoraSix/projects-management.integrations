@@ -47,8 +47,7 @@ data class SourceSync
         fun isAdmin(contributorId: String?): Boolean =
             (contributorId != null).and(
                 admins.any {
-                    it.contributorId ==
-                        contributorId
+                    it.contributorId == contributorId
                 },
             )
 
@@ -67,17 +66,11 @@ data class SourceSync
             config.steps.add(step)
         }
 
-        fun wasRequestedFullSync(): Boolean =
-            isActive() &&
-                events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
+        fun wasRequestedFullSync(): Boolean = isActive() && events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
 
-        fun wasRequestedDisable(): Boolean =
-            isDisabled() &&
-                events.last().type == SourceSyncEventValues.REQUEST_UPDATE_STATE
+        fun wasRequestedDisable(): Boolean = isDisabled() && events.last().type == SourceSyncEventValues.REQUEST_UPDATE_STATE
 
-        fun requiresFurtherConfiguration(): Boolean =
-            isInProgress() &&
-                config.steps.any { !it.isCompleted() }
+        fun requiresFurtherConfiguration(): Boolean = isInProgress() && config.steps.any { !it.isCompleted() }
 
         companion object {
             fun initiate(
@@ -135,8 +128,7 @@ enum class SourceSyncStatusValues {
 data class SourceSyncConfig(
     var accessToken: String? = null,
     var sourceUserId: String? = null,
-    val steps: MutableList<SourceSyncStatusStep> =
-        mutableListOf(),
+    val steps: MutableList<SourceSyncStatusStep> = mutableListOf(),
 //        arrayListOf(),
 )
 
@@ -192,9 +184,7 @@ data class SourceSyncMappings(
         users.putAllIfAbsent(newUserMappings)
     }
 
-    fun getContributorsFromSources(sources: List<String>):Set<String> {
-        return users.filterValues { sources.contains(it) }.keys
-    }
+    fun getContributorsFromSources(sources: List<String>): Set<String> = users.filterValues { sources.contains(it) }.keys
 }
 
 private fun <K, V> MutableMap<K, V>.putAllIfAbsent(other: Map<K, V>) {

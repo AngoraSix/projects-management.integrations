@@ -57,9 +57,10 @@ class SourceSyncService(
             val filter = SourceSyncFilter(null, null, listOf(projectManagementId))
             val integrationList = repository.findUsingFilter(filter, requestingContributor).toList()
             sourceConfigs.supported.map { source ->
-                integrationList
-                    .find { it.source == source }
-                    ?: SourceSync.notRegistered(source, projectManagementId)
+                integrationList.find { it.source == source } ?: SourceSync.notRegistered(
+                    source,
+                    projectManagementId,
+                )
             }
         }
 
@@ -90,8 +91,7 @@ class SourceSyncService(
                         ),
                     )
                 } ?: throw IllegalArgumentException("Source not supported")
-        return repository
-            .save(sourceSyncRegistration)
+        return repository.save(sourceSyncRegistration)
     }
 
     /**
@@ -127,7 +127,12 @@ class SourceSyncService(
                 val operation = modificationOperations.first().operation
 
                 val updatedSourceSync =
-                    postProcessPatchedSourceSync(operation, patchedSourceSync, sourceSyncStrategy, requestingContributor)
+                    postProcessPatchedSourceSync(
+                        operation,
+                        patchedSourceSync,
+                        sourceSyncStrategy,
+                        requestingContributor,
+                    )
                 repository.save(updatedSourceSync)
             }
     }
@@ -168,21 +173,20 @@ class SourceSyncService(
             }
 
         SourceSyncOperation.REPLACE_MAPPING_USERS_DATA ->
-            syncAssets(patchedSourceSync, requestingContributor)
-    }
+            {
+                requireNotNull(patchedSourceSync.id) { "SourceSync id required for syncAssets" }
+                val assets = assetsService.findForSourceSyncId(patchedSourceSync.id).toList()
 
-    private suspend fun syncAssets(patchedSourceSync: SourceSync, requestingContributor: DetailedContributor) : SourceSync {
-        requireNotNull(patchedSourceSync.id) { "SourceSync id required for syncAssets" }
-        val assets = assetsService.findForSourceSyncId(patchedSourceSync.id).toList()
+                assetsService.syncAssets(
+                    assets,
+                    patchedSourceSync.id,
+                    patchedSourceSync.projectManagementId,
+                    requestingContributor,
+                    patchedSourceSync.mappings.users,
+                )
 
-        assetsService.syncAssets(
-            assets,
-            patchedSourceSync.id,
-            patchedSourceSync.projectManagementId,
-            requestingContributor,
-            patchedSourceSync.mappings.users,
-        )
-        return patchedSourceSync
+                patchedSourceSync
+            }
     }
 
     private suspend fun triggerFullSync(
@@ -227,10 +231,9 @@ class SourceSyncService(
             repository.findSingleUsingFilter(
                 SourceSyncFilter((listOf(sourceSyncId))),
                 requestingContributor,
+            ) ?: throw IllegalArgumentException(
+                "SourceSync [$sourceSyncId] not found for contributor",
             )
-                ?: throw IllegalArgumentException(
-                    "SourceSync [$sourceSyncId] not found for contributor",
-                )
 
         assetsService.processSyncingCorrespondence(
             correspondences,
@@ -292,8 +295,7 @@ class SourceSyncService(
                                         OptionSpec(
                                             value = platformUser.sourceUserId,
                                             prompt =
-                                                platformUser.username
-                                                    ?: platformUser.email
+                                                platformUser.username ?: platformUser.email
                                                     ?: platformUser.sourceUserId,
                                             promptData = platformUser.toMap(),
                                         )

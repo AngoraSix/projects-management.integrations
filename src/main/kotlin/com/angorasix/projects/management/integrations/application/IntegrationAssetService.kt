@@ -31,12 +31,11 @@ class IntegrationAssetService(
     private val streamBridge: StreamBridge,
     private val amqpConfigs: AmqpConfigurations,
 ) {
-    fun findForSourceSyncId(
-        sourceSyncId: String,
-    ) = repository.findUsingFilter(
-        ListIntegrationAssetFilter(null, null, listOf(sourceSyncId)),
-        allowAnonymous = true, // assets dont have information about admin
-    )
+    fun findForSourceSyncId(sourceSyncId: String) =
+        repository.findUsingFilter(
+            ListIntegrationAssetFilter(null, null, listOf(sourceSyncId)),
+            allowAnonymous = true, // assets dont have information about admin
+        )
 
     /**
      * Method to modify [SourceSync].
@@ -60,14 +59,12 @@ class IntegrationAssetService(
                     allowAnonymous = true, // assets dont have information about admin
                 ).toList()
         val updatedAssets = mutableListOf<IntegrationAsset>()
-        val pendingUpdatedAssets =
-            mutableListOf<IntegrationAsset>() // unsynced assets
+        val pendingUpdatedAssets = mutableListOf<IntegrationAsset>() // unsynced assets
 
         assets.forEach { asset ->
             val existing =
                 existingSourceSyncAssets.find { existing ->
-                    existing.sourceData.id ==
-                        asset.sourceData.id
+                    existing.sourceData.id == asset.sourceData.id
                 }
             updatedAssetOrNull(asset, existing)?.let {
                 if (existing == null || existing.integrationAssetStatus.isSynced()) {
