@@ -34,7 +34,7 @@ class IntegrationAssetService(
     fun findForSourceSyncId(sourceSyncId: String) =
         repository.findUsingFilter(
             ListIntegrationAssetFilter(null, null, listOf(sourceSyncId)),
-            allowAnonymous = true, // assets dont have information about admin
+            allowAnonymous = true,
         )
 
     /**
@@ -56,10 +56,10 @@ class IntegrationAssetService(
                         assets.map { it.sourceData.id },
                         listOf(sourceSyncId),
                     ),
-                    allowAnonymous = true, // assets dont have information about admin
+                    allowAnonymous = true,
                 ).toList()
         val updatedAssets = mutableListOf<IntegrationAsset>()
-        val pendingUpdatedAssets = mutableListOf<IntegrationAsset>() // unsynced assets
+        val pendingUpdatedAssets = mutableListOf<IntegrationAsset>()
 
         assets.forEach { asset ->
             val existing =
@@ -111,17 +111,41 @@ class IntegrationAssetService(
         requestingContributor: DetailedContributor,
         mappings: Map<String, String?>,
     ) {
+        val updatedAssets = mutableListOf<IntegrationAsset>()
+        val pendingUpdatedAssets = mutableListOf<IntegrationAsset>()
+
+        assets.forEach { asset ->
+            if (asset.integrationAssetStatus.isSynced()) {
+                updatedAssets.add(asset)
+            } else {
+                pendingUpdatedAssets.add(asset)
+            }
+        }
+
         val syncingEventId = UUID.randomUUID().toString()
 
+        // Start Syncing
         publishUpdatedAssets(
-            assets,
+            updatedAssets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
             AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
             mappings,
         )
         repository.registerEvent(
-            ListIntegrationAssetFilter(assets.mapNotNull { it.id }),
+            ListIntegrationAssetFilter(updatedAssets.mapNotNull { it.id }),
             IntegrationAssetSyncEvent.syncing(syncingEventId),
+        )
+
+        // Updates not ready to be processed, for later
+        publishUpdatedAssets(
+            pendingUpdatedAssets,
+            amqpConfigs.bindings.pendingSyncingOut,
+            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
+            mappings,
+        )
+        repository.registerEvent(
+            ListIntegrationAssetFilter(pendingUpdatedAssets.mapNotNull { it.id }),
+            IntegrationAssetSyncEvent.postponed(syncingEventId),
         )
     }
 

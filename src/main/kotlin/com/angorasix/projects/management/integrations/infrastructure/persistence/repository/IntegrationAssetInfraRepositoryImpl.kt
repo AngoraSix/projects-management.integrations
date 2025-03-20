@@ -60,7 +60,7 @@ class IntegrationAssetInfraRepositoryImpl(
             val query = correspondenceQuery(it.first, sourceSyncId)
             val update =
                 Update()
-                    .push("integrationStatus.events", ackEvent)
+                    .push("integrationAssetStatus.events", ackEvent)
                     .set("angoraSixData", A6AssetData.task(it.second))
             bulkOps.updateOne(query, update)
         }
@@ -105,4 +105,4 @@ private fun ListIntegrationAssetFilter.toAllByIdQuery(): Query {
     return query
 }
 
-private fun addEvent(event: IntegrationAssetSyncEvent): Update = Update().push("integrationStatus.events", event)
+private fun addEvent(event: IntegrationAssetSyncEvent): Update = Update().push("integrationAssetStatus.events", event)
