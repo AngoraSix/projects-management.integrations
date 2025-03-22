@@ -2,10 +2,8 @@ package com.angorasix.projects.management.integrations.domain.integration.source
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
-import org.springframework.data.annotation.Transient
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
@@ -36,9 +34,6 @@ data class SourceSync
         val events: MutableList<SourceSyncEvent> = mutableListOf(),
         val mappings: SourceSyncMappings = SourceSyncMappings(),
     ) {
-        @Transient
-        var assets: List<IntegrationAsset> = emptyList()
-
         /**
          * Checks whether a particular contributor is Admin of this Club.
          *
@@ -146,7 +141,7 @@ enum class SourceSyncEventValues {
     REQUEST_FULL_SYNC,
     TRIGGERED_FULL_SYNC,
     REQUEST_UPDATE_SYNC_CONFIG,
-    FULL_SYNC_CORRESPONDENCE,
+    SYNC_CORRESPONDENCE,
     STARTING_MEMBER_MATCH,
 }
 

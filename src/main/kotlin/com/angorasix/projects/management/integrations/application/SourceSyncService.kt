@@ -18,6 +18,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncOperation
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.domain.SourceSyncContext.Companion.context
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.SourceSyncFilter
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -37,17 +38,12 @@ class SourceSyncService(
     suspend fun findSingleSourceSync(
         id: String,
         requestingContributor: SimpleContributor,
-        includeAssets: Boolean = false,
     ): SourceSync? =
         repository
             .findSingleUsingFilter(
                 SourceSyncFilter(listOf(id)),
                 requestingContributor,
-            )?.apply {
-                if (includeAssets) {
-                    assets = assetsService.findForSourceSyncId(id).toList()
-                }
-            }
+            )
 
     fun findSourceSyncsForProjectManagement(
         projectManagementId: String,
@@ -172,21 +168,23 @@ class SourceSyncService(
                 )
             }
 
-        SourceSyncOperation.REPLACE_MAPPING_USERS_DATA ->
-            {
-                requireNotNull(patchedSourceSync.id) { "SourceSync id required for syncAssets" }
-                val assets = assetsService.findForSourceSyncId(patchedSourceSync.id).toList()
+        SourceSyncOperation.REPLACE_MAPPING_USERS_DATA -> {
+            val sourceSyncContext = patchedSourceSync.context()
+            val assets =
+                assetsService
+                    .findForSourceSync(
+                        sourceSyncContext,
+                        requestingContributor,
+                    ).toList()
 
-                assetsService.syncAssets(
-                    assets,
-                    patchedSourceSync.id,
-                    patchedSourceSync.projectManagementId,
-                    requestingContributor,
-                    patchedSourceSync.mappings.users,
-                )
+            assetsService.syncAssets(
+                assets,
+                sourceSyncContext,
+                requestingContributor,
+            )
 
-                patchedSourceSync
-            }
+            patchedSourceSync
+        }
     }
 
     private suspend fun triggerFullSync(
@@ -205,10 +203,8 @@ class SourceSyncService(
         val updatedAssets =
             assetsService.processAssets(
                 assets,
-                patchedSourceSync.id,
-                patchedSourceSync.projectManagementId,
+                patchedSourceSync.context(),
                 requestingContributor,
-                patchedSourceSync.mappings.users,
             )
 
         patchedSourceSync.addEvent(
@@ -237,13 +233,14 @@ class SourceSyncService(
 
         assetsService.processSyncingCorrespondence(
             correspondences,
-            sourceSyncId,
             syncingEventId,
+            sourceSync.context(),
+            requestingContributor,
         )
 
         sourceSync.addEvent(
             SourceSyncEvent(
-                SourceSyncEventValues.FULL_SYNC_CORRESPONDENCE,
+                SourceSyncEventValues.SYNC_CORRESPONDENCE,
                 syncingEventId,
                 correspondences.size,
             ),

@@ -15,6 +15,7 @@ import com.angorasix.projects.management.integrations.domain.integration.asset.I
 import com.angorasix.projects.management.integrations.domain.integration.asset.SourceAssetEstimationData
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.amqp.AmqpConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.domain.SourceSyncContext
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import kotlinx.coroutines.flow.toList
 import org.springframework.cloud.stream.function.StreamBridge
@@ -31,11 +32,14 @@ class IntegrationAssetService(
     private val streamBridge: StreamBridge,
     private val amqpConfigs: AmqpConfigurations,
 ) {
-    fun findForSourceSyncId(sourceSyncId: String) =
-        repository.findUsingFilter(
-            ListIntegrationAssetFilter(null, null, listOf(sourceSyncId)),
-            allowAnonymous = true,
-        )
+    fun findForSourceSync(
+        sourceSyncContext: SourceSyncContext,
+        requestingContributor: DetailedContributor,
+    ) = repository.findUsingFilter(
+        ListIntegrationAssetFilter(null, null, listOf(sourceSyncContext.sourceSyncId)),
+        sourceSyncContext,
+        requestingContributor,
+    )
 
     /**
      * Method to modify [SourceSync].
@@ -43,10 +47,8 @@ class IntegrationAssetService(
      */
     suspend fun processAssets(
         assets: List<IntegrationAsset>,
-        sourceSyncId: String,
-        projectManagementId: String,
+        sourceSyncContext: SourceSyncContext,
         requestingContributor: DetailedContributor,
-        mappings: Map<String, String?>,
     ): List<IntegrationAsset> {
         val existingSourceSyncAssets =
             repository
@@ -54,9 +56,10 @@ class IntegrationAssetService(
                     ListIntegrationAssetFilter(
                         null,
                         assets.map { it.sourceData.id },
-                        listOf(sourceSyncId),
+                        listOf(sourceSyncContext.sourceSyncId),
                     ),
-                    allowAnonymous = true,
+                    sourceSyncContext,
+                    requestingContributor,
                 ).toList()
         val updatedAssets = mutableListOf<IntegrationAsset>()
         val pendingUpdatedAssets = mutableListOf<IntegrationAsset>()
@@ -82,34 +85,38 @@ class IntegrationAssetService(
         publishUpdatedAssets(
             persistedAssets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
-            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
-            mappings,
+            syncingEventId,
+            sourceSyncContext,
+            requestingContributor,
         )
         repository.registerEvent(
             ListIntegrationAssetFilter(persistedAssets.mapNotNull { it.id }),
             IntegrationAssetSyncEvent.syncing(syncingEventId),
+            sourceSyncContext,
+            requestingContributor,
         )
 
         // Updates not ready to be processed, for later
         publishUpdatedAssets(
             pendingUpdatedAssets,
             amqpConfigs.bindings.pendingSyncingOut,
-            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
-            mappings,
+            syncingEventId,
+            sourceSyncContext,
+            requestingContributor,
         )
         repository.registerEvent(
             ListIntegrationAssetFilter(pendingUpdatedAssets.mapNotNull { it.id }),
             IntegrationAssetSyncEvent.postponed(syncingEventId),
+            sourceSyncContext,
+            requestingContributor,
         )
         return persistedAssets
     }
 
     suspend fun syncAssets(
         assets: List<IntegrationAsset>,
-        sourceSyncId: String,
-        projectManagementId: String,
+        sourceSyncContext: SourceSyncContext,
         requestingContributor: DetailedContributor,
-        mappings: Map<String, String?>,
     ) {
         val updatedAssets = mutableListOf<IntegrationAsset>()
         val pendingUpdatedAssets = mutableListOf<IntegrationAsset>()
@@ -128,62 +135,71 @@ class IntegrationAssetService(
         publishUpdatedAssets(
             updatedAssets,
             amqpConfigs.bindings.mgmtIntegrationSyncing,
-            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
-            mappings,
+            syncingEventId,
+            sourceSyncContext,
+            requestingContributor,
         )
         repository.registerEvent(
             ListIntegrationAssetFilter(updatedAssets.mapNotNull { it.id }),
             IntegrationAssetSyncEvent.syncing(syncingEventId),
+            sourceSyncContext,
+            requestingContributor,
         )
 
         // Updates not ready to be processed, for later
         publishUpdatedAssets(
             pendingUpdatedAssets,
             amqpConfigs.bindings.pendingSyncingOut,
-            AssetsContext(projectManagementId, sourceSyncId, requestingContributor),
-            mappings,
+            syncingEventId,
+            sourceSyncContext,
+            requestingContributor,
         )
         repository.registerEvent(
             ListIntegrationAssetFilter(pendingUpdatedAssets.mapNotNull { it.id }),
             IntegrationAssetSyncEvent.postponed(syncingEventId),
+            sourceSyncContext,
+            requestingContributor,
         )
     }
 
     suspend fun processSyncingCorrespondence(
         correspondences: List<Pair<String, String>>,
-        sourceSyncId: String,
         syncingEventId: String,
+        sourceSyncContext: SourceSyncContext,
+        requestingContributor: DetailedContributor,
     ) {
         repository.registerCorrespondences(
             correspondences,
-            sourceSyncId,
             syncingEventId,
+            sourceSyncContext,
+            requestingContributor,
         )
     }
 
     private fun publishUpdatedAssets(
         updatedAssets: List<IntegrationAsset>,
         bindingKey: String,
-        assetsContext: AssetsContext,
-        mappings: Map<String, String?>,
+        syncingEventId: String,
+        sourceSyncContext: SourceSyncContext,
+        requestingContributor: DetailedContributor,
     ) {
         if (updatedAssets.isNotEmpty()) {
             val messageData =
                 A6InfraBulkResourceDto(
                     A6DomainResource.Task,
-                    updatedAssets.map { it.toTaskDto(mappings) },
+                    updatedAssets.map { it.toTaskDto(sourceSyncContext.configurations.usersMappings) },
                 )
             streamBridge.send(
                 bindingKey,
                 MessageBuilder
                     .withPayload(
                         A6InfraMessageDto(
-                            assetsContext.projectManagementId,
+                            sourceSyncContext.projectManagementId,
                             A6DomainResource.ProjectManagement,
-                            assetsContext.sourceSyncId,
+                            "${sourceSyncContext.sourceSyncId}:$syncingEventId",
                             A6DomainResource.IntegrationSourceSync.value,
                             A6InfraTopics.TASKS_INTEGRATION_FULL_SYNCING.value,
-                            assetsContext.requestingContributor,
+                            requestingContributor,
                             messageData.toMap(),
                         ),
                     ).build(),
@@ -191,12 +207,6 @@ class IntegrationAssetService(
         }
     }
 }
-
-data class AssetsContext(
-    val projectManagementId: String,
-    val sourceSyncId: String,
-    val requestingContributor: DetailedContributor,
-)
 
 private fun updatedAssetOrNull(
     asset: IntegrationAsset,
