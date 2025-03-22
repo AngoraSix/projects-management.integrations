@@ -16,10 +16,10 @@ class ProjectsManagementIntegrationsMessagingRouter(
     val handler: ProjectsManagementIntegrationsMessagingHandler,
 ) {
     @Bean
-    fun pendingSyncing(): (A6InfraMessageDto) -> Unit = { handler.reprocessPendingAssets(it) }
+    fun pendingSyncing(): java.util.function.Function<A6InfraMessageDto, Unit> =
+        java.util.function.Function { handler.reprocessPendingAssets(it) }
 
     @Bean
-    fun tasksSyncingCorrespondence(): (
-        A6InfraMessageDto,
-    ) -> Unit = { handler.processSyncingCorrespondence(it) }
+    fun tasksSyncingCorrespondence(): java.util.function.Function<A6InfraMessageDto, Unit> =
+        java.util.function.Function { handler.processSyncingCorrespondence(it) }
 }

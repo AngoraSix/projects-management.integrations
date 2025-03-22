@@ -6,7 +6,7 @@ server:
 
 logging:
   level:
-    root: ${A6_PROJECTS_MGMT_INTEGRATIONS_LOGGING_LEVEL:DEBUG}
+    root: ${A6_PROJECTS_MGMT_INTEGRATIONS_LOGGING_LEVEL:INFO}
     reactor.netty: ${A6_PROJECTS_MGMT_INTEGRATIONS_LOGGING_LEVEL_WEB:INFO}
     org.springframework.web.reactive.function.client: ${A6_PROJECTS_MGMT_INTEGRATIONS_LOGGING_LEVEL_WEB:INFO}
 
