@@ -4,6 +4,7 @@ import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.projects.management.integrations.domain.integration.asset.A6AssetData
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
+import com.angorasix.projects.management.integrations.infrastructure.domain.SourceSyncContext
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.ListIntegrationAssetFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
@@ -19,29 +20,34 @@ class IntegrationAssetInfraRepositoryImpl(
 ) : IntegrationAssetInfraRepository {
     override fun findUsingFilter(
         filter: ListIntegrationAssetFilter,
+        sourceSyncContext: SourceSyncContext,
         requestingContributor: SimpleContributor?,
         allowAnonymous: Boolean,
     ): Flow<IntegrationAsset> =
         mongoOps
-            .find(filter.toQuery(requestingContributor, allowAnonymous), IntegrationAsset::class.java)
+            .find(filter.toQuery(sourceSyncContext, requestingContributor, allowAnonymous), IntegrationAsset::class.java)
             .asFlow()
 
     override suspend fun findSingleUsingFilter(
         filter: ListIntegrationAssetFilter,
+        sourceSyncContext: SourceSyncContext,
         requestingContributor: SimpleContributor?,
         allowAnonymous: Boolean,
     ): IntegrationAsset? =
         mongoOps
-            .find(filter.toQuery(requestingContributor), IntegrationAsset::class.java)
+            .find(filter.toQuery(sourceSyncContext, requestingContributor, allowAnonymous), IntegrationAsset::class.java)
             .awaitFirstOrNull()
 
     override suspend fun registerEvent(
         filter: ListIntegrationAssetFilter,
         event: IntegrationAssetSyncEvent,
+        sourceSyncContext: SourceSyncContext,
+        requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
     ) {
         mongoOps
             .updateMulti(
-                filter.toAllByIdQuery(),
+                filter.toAllByIdQuery(sourceSyncContext, requestingContributor, allowAnonymous),
                 addEvent(event),
                 IntegrationAsset::class.java,
             ).awaitFirstOrNull()
@@ -49,18 +55,21 @@ class IntegrationAssetInfraRepositoryImpl(
 
     override suspend fun registerCorrespondences(
         correspondences: List<Pair<String, String>>,
-        sourceSyncId: String,
         syncingEventId: String,
+        sourceSyncContext: SourceSyncContext,
+        requestingContributor: SimpleContributor?,
+        allowAnonymous: Boolean,
     ) {
         val bulkOps =
             mongoOps.bulkOps(BulkOperations.BulkMode.UNORDERED, IntegrationAsset::class.java)
         val ackEvent = IntegrationAssetSyncEvent.ack(syncingEventId)
 
         correspondences.forEach {
-            val query = correspondenceQuery(it.first, sourceSyncId)
+            val query =
+                correspondenceQuery(it.first, sourceSyncContext.sourceSyncId, sourceSyncContext, requestingContributor, allowAnonymous)
             val update =
                 Update()
-                    .push("integrationStatus.events", ackEvent)
+                    .push("integrationAssetStatus.events", ackEvent)
                     .set("angoraSixData", A6AssetData.task(it.second))
             bulkOps.updateOne(query, update)
         }
@@ -71,7 +80,13 @@ class IntegrationAssetInfraRepositoryImpl(
 private fun correspondenceQuery(
     id: String,
     sourceSyncId: String,
+    sourceSyncContext: SourceSyncContext,
+    requestingContributor: SimpleContributor?,
+    allowAnonymous: Boolean = false,
 ): Query {
+    if (!allowAnonymous) {
+        sourceSyncContext.requireAdmin(requestingContributor?.contributorId)
+    }
     val query = Query()
     query.addCriteria(where("_id").`is`(id))
     query.addCriteria(where("sourceSyncId").`is`(sourceSyncId))
@@ -79,31 +94,35 @@ private fun correspondenceQuery(
 }
 
 private fun ListIntegrationAssetFilter.toQuery(
+    sourceSyncContext: SourceSyncContext,
     requestingContributor: SimpleContributor?,
     allowAnonymous: Boolean = false,
 ): Query {
     if (!allowAnonymous) {
-        requireNotNull(requestingContributor)
+        sourceSyncContext.requireAdmin(requestingContributor?.contributorId)
     }
     val query = Query()
-
-    requestingContributor?.let {
-        query.addCriteria(where("admins.contributorId").`is`(it.contributorId))
-    }
 
     ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
     assetDataId?.let { query.addCriteria(where("sourceData.id").`in`(it as Collection<Any>)) }
     sourceSyncId?.let { query.addCriteria(where("sourceSyncId").`in`(it as Collection<Any>)) }
-    integrationId?.let { query.addCriteria(where("integrationId").`in`(it as Collection<Any>)) }
     sources?.let { query.addCriteria(where("source").`in`(it as Collection<Any>)) }
 
     return query
 }
 
-private fun ListIntegrationAssetFilter.toAllByIdQuery(): Query {
+private fun ListIntegrationAssetFilter.toAllByIdQuery(
+    sourceSyncContext: SourceSyncContext,
+    requestingContributor: SimpleContributor?,
+    allowAnonymous: Boolean = false,
+): Query {
+    if (!allowAnonymous) {
+        sourceSyncContext.requireAdmin(requestingContributor?.contributorId)
+    }
+
     val query = Query()
-    ids?.let { query.addCriteria(where("_id").`in`(it as Collection<Any>)) }
+    ids?.let { query.addCriteria(where("_id").`in`(it)) } // as Collection<Any>)) }
     return query
 }
 
-private fun addEvent(event: IntegrationAssetSyncEvent): Update = Update().push("integrationStatus.events", event)
+private fun addEvent(event: IntegrationAssetSyncEvent): Update = Update().push("integrationAssetStatus.events", event)

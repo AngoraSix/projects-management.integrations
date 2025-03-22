@@ -2,10 +2,8 @@ package com.angorasix.projects.management.integrations.domain.integration.source
 
 import com.angorasix.commons.domain.SimpleContributor
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
-import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
-import org.springframework.data.annotation.Transient
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
@@ -36,9 +34,6 @@ data class SourceSync
         val events: MutableList<SourceSyncEvent> = mutableListOf(),
         val mappings: SourceSyncMappings = SourceSyncMappings(),
     ) {
-        @Transient
-        var assets: List<IntegrationAsset> = emptyList()
-
         /**
          * Checks whether a particular contributor is Admin of this Club.
          *
@@ -47,8 +42,7 @@ data class SourceSync
         fun isAdmin(contributorId: String?): Boolean =
             (contributorId != null).and(
                 admins.any {
-                    it.contributorId ==
-                        contributorId
+                    it.contributorId == contributorId
                 },
             )
 
@@ -67,17 +61,11 @@ data class SourceSync
             config.steps.add(step)
         }
 
-        fun wasRequestedFullSync(): Boolean =
-            isActive() &&
-                events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
+        fun wasRequestedFullSync(): Boolean = isActive() && events.last().type == SourceSyncEventValues.REQUEST_FULL_SYNC
 
-        fun wasRequestedDisable(): Boolean =
-            isDisabled() &&
-                events.last().type == SourceSyncEventValues.REQUEST_UPDATE_STATE
+        fun wasRequestedDisable(): Boolean = isDisabled() && events.last().type == SourceSyncEventValues.REQUEST_UPDATE_STATE
 
-        fun requiresFurtherConfiguration(): Boolean =
-            isInProgress() &&
-                config.steps.any { !it.isCompleted() }
+        fun requiresFurtherConfiguration(): Boolean = isInProgress() && config.steps.any { !it.isCompleted() }
 
         companion object {
             fun initiate(
@@ -135,8 +123,7 @@ enum class SourceSyncStatusValues {
 data class SourceSyncConfig(
     var accessToken: String? = null,
     var sourceUserId: String? = null,
-    val steps: MutableList<SourceSyncStatusStep> =
-        mutableListOf(),
+    val steps: MutableList<SourceSyncStatusStep> = mutableListOf(),
 //        arrayListOf(),
 )
 
@@ -154,7 +141,7 @@ enum class SourceSyncEventValues {
     REQUEST_FULL_SYNC,
     TRIGGERED_FULL_SYNC,
     REQUEST_UPDATE_SYNC_CONFIG,
-    FULL_SYNC_CORRESPONDENCE,
+    SYNC_CORRESPONDENCE,
     STARTING_MEMBER_MATCH,
 }
 
@@ -191,6 +178,8 @@ data class SourceSyncMappings(
     fun addNewUserMappings(newUserMappings: Map<String, String?>) {
         users.putAllIfAbsent(newUserMappings)
     }
+
+    fun getContributorsFromSources(sources: List<String>): Set<String> = users.filterValues { sources.contains(it) }.keys
 }
 
 private fun <K, V> MutableMap<K, V>.putAllIfAbsent(other: Map<K, V>) {

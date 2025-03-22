@@ -44,7 +44,7 @@ spring:
           environment:
             spring:
               rabbitmq:
-                host: ${A6_MGMT_INTEGRATIONS_RABBITMQ_HO  ST:localhost}
+                host: ${A6_MGMT_INTEGRATIONS_RABBITMQ_HOST:localhost}
                 port: ${A6_MGMT_INTEGRATIONS_RABBITMQ_PORT:5672}
                 username: ${A6_MGMT_INTEGRATIONS_RABBITMQ_USER:guest}
                 password: ${A6_MGMT_INTEGRATIONS_RABBITMQ_PASSWORD:guest}

@@ -54,7 +54,6 @@ fun SourceSync.convertToDto(
         projectManagementId,
         status.convertToDto(),
         config.convertToDto(),
-        assets.map { it.convertToDto() },
         id,
     ).resolveHypermedia(
         contributor,

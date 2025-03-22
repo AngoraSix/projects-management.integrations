@@ -18,6 +18,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncOperation
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.domain.SourceSyncContext.Companion.context
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.SourceSyncFilter
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -37,17 +38,12 @@ class SourceSyncService(
     suspend fun findSingleSourceSync(
         id: String,
         requestingContributor: SimpleContributor,
-        includeAssets: Boolean = false,
     ): SourceSync? =
         repository
             .findSingleUsingFilter(
                 SourceSyncFilter(listOf(id)),
                 requestingContributor,
-            )?.apply {
-                if (includeAssets) {
-                    assets = assetsService.findForSourceSyncId(id, requestingContributor).toList()
-                }
-            }
+            )
 
     fun findSourceSyncsForProjectManagement(
         projectManagementId: String,
@@ -57,9 +53,10 @@ class SourceSyncService(
             val filter = SourceSyncFilter(null, null, listOf(projectManagementId))
             val integrationList = repository.findUsingFilter(filter, requestingContributor).toList()
             sourceConfigs.supported.map { source ->
-                integrationList
-                    .find { it.source == source }
-                    ?: SourceSync.notRegistered(source, projectManagementId)
+                integrationList.find { it.source == source } ?: SourceSync.notRegistered(
+                    source,
+                    projectManagementId,
+                )
             }
         }
 
@@ -90,8 +87,7 @@ class SourceSyncService(
                         ),
                     )
                 } ?: throw IllegalArgumentException("Source not supported")
-        return repository
-            .save(sourceSyncRegistration)
+        return repository.save(sourceSyncRegistration)
     }
 
     /**
@@ -127,7 +123,12 @@ class SourceSyncService(
                 val operation = modificationOperations.first().operation
 
                 val updatedSourceSync =
-                    postProcessPatchedSourceSync(operation, patchedSourceSync, sourceSyncStrategy, requestingContributor)
+                    postProcessPatchedSourceSync(
+                        operation,
+                        patchedSourceSync,
+                        sourceSyncStrategy,
+                        requestingContributor,
+                    )
                 repository.save(updatedSourceSync)
             }
     }
@@ -167,8 +168,23 @@ class SourceSyncService(
                 )
             }
 
-        SourceSyncOperation.REPLACE_MAPPING_USERS_DATA ->
+        SourceSyncOperation.REPLACE_MAPPING_USERS_DATA -> {
+            val sourceSyncContext = patchedSourceSync.context()
+            val assets =
+                assetsService
+                    .findForSourceSync(
+                        sourceSyncContext,
+                        requestingContributor,
+                    ).toList()
+
+            assetsService.syncAssets(
+                assets,
+                sourceSyncContext,
+                requestingContributor,
+            )
+
             patchedSourceSync
+        }
     }
 
     private suspend fun triggerFullSync(
@@ -187,8 +203,7 @@ class SourceSyncService(
         val updatedAssets =
             assetsService.processAssets(
                 assets,
-                patchedSourceSync.id,
-                patchedSourceSync.projectManagementId,
+                patchedSourceSync.context(),
                 requestingContributor,
             )
 
@@ -212,20 +227,20 @@ class SourceSyncService(
             repository.findSingleUsingFilter(
                 SourceSyncFilter((listOf(sourceSyncId))),
                 requestingContributor,
+            ) ?: throw IllegalArgumentException(
+                "SourceSync [$sourceSyncId] not found for contributor",
             )
-                ?: throw IllegalArgumentException(
-                    "SourceSync [$sourceSyncId] not found for contributor",
-                )
 
         assetsService.processSyncingCorrespondence(
             correspondences,
-            sourceSyncId,
             syncingEventId,
+            sourceSync.context(),
+            requestingContributor,
         )
 
         sourceSync.addEvent(
             SourceSyncEvent(
-                SourceSyncEventValues.FULL_SYNC_CORRESPONDENCE,
+                SourceSyncEventValues.SYNC_CORRESPONDENCE,
                 syncingEventId,
                 correspondences.size,
             ),
@@ -277,8 +292,7 @@ class SourceSyncService(
                                         OptionSpec(
                                             value = platformUser.sourceUserId,
                                             prompt =
-                                                platformUser.username
-                                                    ?: platformUser.email
+                                                platformUser.username ?: platformUser.email
                                                     ?: platformUser.sourceUserId,
                                             promptData = platformUser.toMap(),
                                         )

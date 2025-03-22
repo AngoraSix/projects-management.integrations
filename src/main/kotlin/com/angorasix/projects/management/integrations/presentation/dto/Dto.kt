@@ -31,7 +31,6 @@ data class SourceSyncDto(
     val projectManagementId: String? = null,
     val status: SourceSyncStatusDto? = null,
     val config: SourceSyncConfigDto? = null,
-    val sourceAssets: List<IntegrationAssetDto> = emptyList(),
     val id: String? = null,
 ) : RepresentationModel<SourceSyncDto>()
 
