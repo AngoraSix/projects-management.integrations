@@ -1,7 +1,6 @@
 package com.angorasix.projects.management.integrations.presentation.handler
 
-import com.angorasix.commons.domain.DetailedContributor
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.commons.infrastructure.constants.AngoraSixInfrastructure
 import com.angorasix.commons.presentation.dto.Patch
 import com.angorasix.commons.reactive.presentation.error.resolveBadRequest
@@ -56,7 +55,7 @@ class ProjectManagementIntegrationsHandler(
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
         val sourceSyncId = request.pathVariable("id")
 
-        return if (requestingContributor is SimpleContributor) {
+        return if (requestingContributor is A6Contributor) {
             service.findSingleSourceSync(sourceSyncId, requestingContributor)?.let {
                 val outputSourceSync =
                     it.convertToDto(
@@ -83,7 +82,7 @@ class ProjectManagementIntegrationsHandler(
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
         val sourceSyncId = request.pathVariable("id")
 
-        return if (requestingContributor is SimpleContributor) {
+        return if (requestingContributor is A6Contributor) {
             service.findSingleSourceSync(sourceSyncId, requestingContributor)?.let {
                 val outputSourceSync =
                     it.convertToDto(
@@ -111,7 +110,7 @@ class ProjectManagementIntegrationsHandler(
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
 
         val projectManagementId = request.pathVariable("projectManagementId")
-        return if (requestingContributor is SimpleContributor) {
+        return if (requestingContributor is A6Contributor) {
             service
                 .findSourceSyncsForProjectManagement(projectManagementId, requestingContributor)
                 .map {
@@ -150,7 +149,7 @@ class ProjectManagementIntegrationsHandler(
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
         val projectManagementId = request.pathVariable("projectManagementId")
 
-        return if (requestingContributor is SimpleContributor) {
+        return if (requestingContributor is A6Contributor) {
             try {
                 request
                     .awaitBody<SourceSyncDto>()
@@ -187,7 +186,7 @@ class ProjectManagementIntegrationsHandler(
         val sourceSyncId = request.pathVariable("id")
         val patch = request.awaitBody(Patch::class)
 
-        return if (requestingContributor is DetailedContributor) {
+        return if (requestingContributor is A6Contributor) {
             try {
                 val modifyOperations =
                     patch.operations.map {
@@ -234,7 +233,7 @@ class ProjectManagementIntegrationsHandler(
             request.attributes()[AngoraSixInfrastructure.REQUEST_ATTRIBUTE_CONTRIBUTOR_KEY]
         val sourceSyncId = request.pathVariable("id")
         val projectContributorsDto = request.awaitBody(ProjectContributorsToMatchDto::class)
-        return if (requestingContributor is SimpleContributor) {
+        return if (requestingContributor is A6Contributor) {
             try {
                 service
                     .startUserMatching(

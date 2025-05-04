@@ -1,7 +1,6 @@
 package com.angorasix.projects.management.integrations.presentation.dto
 
-import com.angorasix.commons.domain.DetailedContributor
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.commons.presentation.dto.InlineFieldSpecDto
 import com.angorasix.commons.presentation.dto.PatchOperation
 import com.angorasix.commons.presentation.dto.PatchOperationSpec
@@ -58,7 +57,7 @@ data class SourceSyncStatusStepDto(
 )
 
 data class ProjectContributorsToMatchDto(
-    val projectContributors: List<DetailedContributor>,
+    val projectContributors: List<A6Contributor>,
 )
 
 enum class SupportedSourceSyncPatchOperations(
@@ -70,7 +69,7 @@ enum class SupportedSourceSyncPatchOperations(
                 operation.op == "replace" && operation.path == "/status/status"
 
             override fun mapToObjectModification(
-                contributor: SimpleContributor,
+                contributor: A6Contributor,
                 operation: PatchOperation,
                 objectMapper: ObjectMapper,
             ): SourceSyncModification<SourceSyncStatusValues> {
@@ -90,7 +89,7 @@ enum class SupportedSourceSyncPatchOperations(
                 operation.op == "replace" && Regex("^/config/steps/\\d+$").matches(operation.path)
 
             override fun mapToObjectModification(
-                contributor: SimpleContributor,
+                contributor: A6Contributor,
                 operation: PatchOperation,
                 objectMapper: ObjectMapper,
             ): SourceSyncModification<List<Map<String, List<String>>?>> {
@@ -116,7 +115,7 @@ enum class SupportedSourceSyncPatchOperations(
                 operation.op == "replace" && operation.path == "/mappings/users"
 
             override fun mapToObjectModification(
-                contributor: SimpleContributor,
+                contributor: A6Contributor,
                 operation: PatchOperation,
                 objectMapper: ObjectMapper,
             ): SourceSyncModification<Map<String, String>> {
@@ -137,7 +136,7 @@ enum class SupportedSourceSyncPatchOperations(
             override fun supportsPatchOperation(operation: PatchOperation): Boolean = operation.op == "add" && operation.path == "/events/+"
 
             override fun mapToObjectModification(
-                contributor: SimpleContributor,
+                contributor: A6Contributor,
                 operation: PatchOperation,
                 objectMapper: ObjectMapper,
             ): SourceSyncModification<SourceSyncEvent> {

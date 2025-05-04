@@ -47,10 +47,7 @@ class ServiceConfiguration {
     ) = ProjectManagementIntegrationsHandler(service, apiConfigs, sourceConfigurations, objectMapper)
 
     @Bean
-    fun projectsManagementIntegrationsMessagingHandler(
-        service: SourceSyncService,
-        objectMapper: ObjectMapper,
-    ) = ProjectsManagementIntegrationsMessagingHandler(service, objectMapper)
+    fun projectsManagementIntegrationsMessagingHandler(service: SourceSyncService) = ProjectsManagementIntegrationsMessagingHandler(service)
 
     @Bean
     fun integrationAssetService(

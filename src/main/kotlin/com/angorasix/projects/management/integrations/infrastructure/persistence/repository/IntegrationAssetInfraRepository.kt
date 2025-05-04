@@ -1,6 +1,6 @@
 package com.angorasix.projects.management.integrations.infrastructure.persistence.repository
 
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
 import com.angorasix.projects.management.integrations.infrastructure.domain.SourceSyncContext
@@ -17,14 +17,14 @@ interface IntegrationAssetInfraRepository {
     fun findUsingFilter(
         filter: ListIntegrationAssetFilter,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor? = null,
+        requestingContributor: A6Contributor? = null,
         allowAnonymous: Boolean = false,
     ): Flow<IntegrationAsset>
 
     suspend fun findSingleUsingFilter(
         filter: ListIntegrationAssetFilter,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor? = null,
+        requestingContributor: A6Contributor? = null,
         allowAnonymous: Boolean = false,
     ): IntegrationAsset?
 
@@ -32,7 +32,7 @@ interface IntegrationAssetInfraRepository {
         filter: ListIntegrationAssetFilter,
         event: IntegrationAssetSyncEvent,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor? = null,
+        requestingContributor: A6Contributor? = null,
         allowAnonymous: Boolean = false,
     )
 
@@ -40,7 +40,7 @@ interface IntegrationAssetInfraRepository {
         correspondences: List<Pair<String, String>>,
         syncingEventId: String,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor? = null,
+        requestingContributor: A6Contributor? = null,
         allowAnonymous: Boolean = false,
     )
 }

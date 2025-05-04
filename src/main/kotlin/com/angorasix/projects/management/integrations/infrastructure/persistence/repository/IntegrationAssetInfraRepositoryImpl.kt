@@ -1,6 +1,6 @@
 package com.angorasix.projects.management.integrations.infrastructure.persistence.repository
 
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.projects.management.integrations.domain.integration.asset.A6AssetData
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetSyncEvent
@@ -21,7 +21,7 @@ class IntegrationAssetInfraRepositoryImpl(
     override fun findUsingFilter(
         filter: ListIntegrationAssetFilter,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor?,
+        requestingContributor: A6Contributor?,
         allowAnonymous: Boolean,
     ): Flow<IntegrationAsset> =
         mongoOps
@@ -31,7 +31,7 @@ class IntegrationAssetInfraRepositoryImpl(
     override suspend fun findSingleUsingFilter(
         filter: ListIntegrationAssetFilter,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor?,
+        requestingContributor: A6Contributor?,
         allowAnonymous: Boolean,
     ): IntegrationAsset? =
         mongoOps
@@ -42,7 +42,7 @@ class IntegrationAssetInfraRepositoryImpl(
         filter: ListIntegrationAssetFilter,
         event: IntegrationAssetSyncEvent,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor?,
+        requestingContributor: A6Contributor?,
         allowAnonymous: Boolean,
     ) {
         mongoOps
@@ -57,7 +57,7 @@ class IntegrationAssetInfraRepositoryImpl(
         correspondences: List<Pair<String, String>>,
         syncingEventId: String,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: SimpleContributor?,
+        requestingContributor: A6Contributor?,
         allowAnonymous: Boolean,
     ) {
         val bulkOps =
@@ -81,7 +81,7 @@ private fun correspondenceQuery(
     id: String,
     sourceSyncId: String,
     sourceSyncContext: SourceSyncContext,
-    requestingContributor: SimpleContributor?,
+    requestingContributor: A6Contributor?,
     allowAnonymous: Boolean = false,
 ): Query {
     if (!allowAnonymous) {
@@ -95,7 +95,7 @@ private fun correspondenceQuery(
 
 private fun ListIntegrationAssetFilter.toQuery(
     sourceSyncContext: SourceSyncContext,
-    requestingContributor: SimpleContributor?,
+    requestingContributor: A6Contributor?,
     allowAnonymous: Boolean = false,
 ): Query {
     if (!allowAnonymous) {
@@ -113,7 +113,7 @@ private fun ListIntegrationAssetFilter.toQuery(
 
 private fun ListIntegrationAssetFilter.toAllByIdQuery(
     sourceSyncContext: SourceSyncContext,
-    requestingContributor: SimpleContributor?,
+    requestingContributor: A6Contributor?,
     allowAnonymous: Boolean = false,
 ): Query {
     if (!allowAnonymous) {

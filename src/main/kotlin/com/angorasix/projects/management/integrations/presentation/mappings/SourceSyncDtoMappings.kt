@@ -1,6 +1,6 @@
 package com.angorasix.projects.management.integrations.presentation.mappings
 
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.commons.domain.projectmanagement.integrations.Source
 import com.angorasix.commons.presentation.dto.convertToDto
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
@@ -44,7 +44,7 @@ fun SourceSyncConfigDto.convertToDomain(): SourceSyncConfig =
     )
 
 fun SourceSync.convertToDto(
-    contributor: SimpleContributor?,
+    contributor: A6Contributor?,
     apiConfigs: ApiConfigs,
     sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
@@ -77,7 +77,7 @@ fun SourceSyncConfig.convertToDto(): SourceSyncConfigDto =
     )
 
 fun List<SourceSyncDto>.convertToDto(
-    contributor: SimpleContributor?,
+    contributor: A6Contributor?,
     filter: SourceSyncFilter,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
@@ -96,7 +96,7 @@ fun SourceSyncStatusStep.convertToDto(): SourceSyncStatusStepDto =
     SourceSyncStatusStepDto(stepKey, requiredDataForStep.map { it.convertToDto() }, responseData)
 
 fun SourceSyncMappingsUsersInput.convertToDto(
-    contributor: SimpleContributor?,
+    contributor: A6Contributor?,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
 ): SourceSyncMappingsUsersInputCollectionModel {
