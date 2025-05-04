@@ -1,6 +1,6 @@
 package com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification
 
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.commons.domain.modification.DomainObjectModification
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEvent
@@ -28,10 +28,10 @@ class ModifySourceSyncStatus(
     override val operation = SourceSyncOperation.MODIFY_STATUS
 
     override fun modify(
-        simpleContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+        require(domainObject.isAdmin(requestingContributor.contributorId)) {
             "Requesting contributor is not admin"
         }
         domainObject.status =
@@ -54,10 +54,10 @@ class ReplaceStepResponseData(
     override val operation = SourceSyncOperation.REPLACE_STEP_RESPONSE_DATA
 
     override fun modify(
-        simpleContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+        require(domainObject.isAdmin(requestingContributor.contributorId)) {
             "Requesting contributor is not admin"
         }
         modifyValue.forEachIndexed { index, stepResponse ->
@@ -75,10 +75,10 @@ class ReplaceMappingUsersData(
     override val operation = SourceSyncOperation.REPLACE_MAPPING_USERS_DATA
 
     override fun modify(
-        simpleContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+        require(domainObject.isAdmin(requestingContributor.contributorId)) {
             "Requesting contributor is not admin"
         }
         domainObject.mappings.addUserMappings(modifyValue)
@@ -92,10 +92,10 @@ class RequestFullSyncEvent(
     override val operation = SourceSyncOperation.REQUEST_FULL_SYNC_EVENT
 
     override fun modify(
-        simpleContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
         domainObject: SourceSync,
     ): SourceSync {
-        require(domainObject.isAdmin(simpleContributor.contributorId)) {
+        require(domainObject.isAdmin(requestingContributor.contributorId)) {
             "Requesting contributor is not admin"
         }
         if (modifyValue.type === SourceSyncEventValues.REQUEST_FULL_SYNC) {

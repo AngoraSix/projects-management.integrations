@@ -1,12 +1,10 @@
 package com.angorasix.projects.management.integrations.application
 
-import com.angorasix.commons.domain.DetailedContributor
-import com.angorasix.commons.infrastructure.intercommunication.dto.A6DomainResource
-import com.angorasix.commons.infrastructure.intercommunication.dto.A6InfraTopics
-import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraBulkResourceDto
-import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraTaskDto
-import com.angorasix.commons.infrastructure.intercommunication.dto.domainresources.A6InfraTaskEstimationDto
-import com.angorasix.commons.infrastructure.intercommunication.dto.messaging.A6InfraMessageDto
+import com.angorasix.commons.domain.A6Contributor
+import com.angorasix.commons.infrastructure.intercommunication.A6DomainResource
+import com.angorasix.commons.infrastructure.intercommunication.A6InfraTopics
+import com.angorasix.commons.infrastructure.intercommunication.integrations.IntegrationTaskReceived
+import com.angorasix.commons.infrastructure.intercommunication.messaging.A6InfraMessageDto
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAsset
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetRepository
 import com.angorasix.projects.management.integrations.domain.integration.asset.IntegrationAssetStatus
@@ -34,7 +32,7 @@ class IntegrationAssetService(
 ) {
     fun findForSourceSync(
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ) = repository.findUsingFilter(
         ListIntegrationAssetFilter(null, null, listOf(sourceSyncContext.sourceSyncId)),
         sourceSyncContext,
@@ -48,7 +46,7 @@ class IntegrationAssetService(
     suspend fun processAssets(
         assets: List<IntegrationAsset>,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ): List<IntegrationAsset> {
         val existingSourceSyncAssets =
             repository
@@ -116,7 +114,7 @@ class IntegrationAssetService(
     suspend fun syncAssets(
         assets: List<IntegrationAsset>,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ) {
         val updatedAssets = mutableListOf<IntegrationAsset>()
         val pendingUpdatedAssets = mutableListOf<IntegrationAsset>()
@@ -166,7 +164,7 @@ class IntegrationAssetService(
         correspondences: List<Pair<String, String>>,
         syncingEventId: String,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ) {
         repository.registerCorrespondences(
             correspondences,
@@ -181,12 +179,11 @@ class IntegrationAssetService(
         bindingKey: String,
         syncingEventId: String,
         sourceSyncContext: SourceSyncContext,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ) {
         if (updatedAssets.isNotEmpty()) {
             val messageData =
-                A6InfraBulkResourceDto(
-                    A6DomainResource.Task,
+                IntegrationTaskReceived(
                     updatedAssets.map { it.toTaskDto(sourceSyncContext.configurations.usersMappings) },
                 )
             streamBridge.send(
@@ -195,12 +192,12 @@ class IntegrationAssetService(
                     .withPayload(
                         A6InfraMessageDto(
                             sourceSyncContext.projectManagementId,
-                            A6DomainResource.ProjectManagement,
+                            A6DomainResource.PROJECT_MANAGEMENT,
                             "${sourceSyncContext.sourceSyncId}:$syncingEventId",
-                            A6DomainResource.IntegrationSourceSync.value,
+                            A6DomainResource.INTEGRATION_SOURCE_SYNC_EVENT.value,
                             A6InfraTopics.TASKS_INTEGRATION_FULL_SYNCING.value,
                             requestingContributor,
-                            messageData.toMap(),
+                            messageData,
                         ),
                     ).build(),
             )
@@ -222,8 +219,8 @@ private fun updatedAssetOrNull(
         asset
     }
 
-private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto =
-    A6InfraTaskEstimationDto(
+private fun SourceAssetEstimationData.toDto(): IntegrationTaskReceived.IntegrationTaskEstimation =
+    IntegrationTaskReceived.IntegrationTaskEstimation(
         caps,
         strategy,
         effort,
@@ -235,11 +232,11 @@ private fun SourceAssetEstimationData.toDto(): A6InfraTaskEstimationDto =
 
 private fun IntegrationAssetStatus.isSynced(): Boolean = currentStatus() == IntegrationStatusValues.SYNCED
 
-private fun IntegrationAsset.toTaskDto(mappings: Map<String, String?>): A6InfraTaskDto {
+private fun IntegrationAsset.toTaskDto(mappings: Map<String, String?>): IntegrationTaskReceived.IntegrationTask {
     requireNotNull(this.id)
     val sourceData = this.sourceData
 
-    return A6InfraTaskDto(
+    return IntegrationTaskReceived.IntegrationTask(
         this.id,
         sourceData.title,
         sourceData.description,

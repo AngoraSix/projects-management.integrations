@@ -1,6 +1,6 @@
 package com.angorasix.projects.management.integrations.application.strategies.source
 
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.commons.domain.inputs.FieldSpec
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
 import com.angorasix.commons.domain.inputs.OptionSpec
@@ -54,7 +54,7 @@ class TrelloSourceSyncStrategy(
 
     override suspend fun resolveSourceSyncRegistration(
         sourceSyncData: SourceSync,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
         existingSourceSync: SourceSync?,
     ): SourceSync {
         val accessToken = sourceSyncData.config.accessToken
@@ -104,7 +104,7 @@ class TrelloSourceSyncStrategy(
 
     override suspend fun isReadyForSyncing(
         sourceSync: SourceSync,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
     ): Boolean =
         sourceSync.config.steps.all { it.isCompleted() } &&
             sourceSync.config.steps
@@ -113,7 +113,7 @@ class TrelloSourceSyncStrategy(
 
     override suspend fun configureNextStepData(
         sourceSync: SourceSync,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
     ): SourceSync {
         val currentStep = sourceSync.config.steps.size
         return trelloStepsFns[stepKeysInOrder[currentStep]]?.let {
@@ -130,7 +130,7 @@ class TrelloSourceSyncStrategy(
 
     private val trelloStepsFns: Map<
         TrelloSteps,
-        suspend (SourceSync, SimpleContributor)
+        suspend (SourceSync, A6Contributor)
         -> SourceSync,
     > =
         mapOf(
@@ -172,7 +172,7 @@ class TrelloSourceSyncStrategy(
 
     override suspend fun triggerSourceSync(
         sourceSync: SourceSync,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
         syncEventId: String,
     ): List<IntegrationAsset> {
         val accessToken = extractAccessToken(sourceSync)
@@ -306,7 +306,7 @@ class TrelloSourceSyncStrategy(
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun obtainUsersMatchOptions(
         sourceSync: SourceSync,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
     ): List<SourceUser> {
         val accessToken = extractAccessToken(sourceSync)
         val boardMembersUrlPattern = sourceConfigs.extractSourceConfig(SourceType.TRELLO.key, "boardMembersUrlPattern")

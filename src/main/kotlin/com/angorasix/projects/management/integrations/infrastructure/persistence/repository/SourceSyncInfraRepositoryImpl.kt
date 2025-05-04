@@ -1,6 +1,6 @@
 package com.angorasix.projects.management.integrations.infrastructure.persistence.repository
 
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.SourceSyncFilter
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +15,7 @@ class SourceSyncInfraRepositoryImpl(
 ) : SourceSyncInfraRepository {
     override fun findUsingFilter(
         filter: SourceSyncFilter,
-        requestingContributor: SimpleContributor?,
+        requestingContributor: A6Contributor?,
         allowAnonymous: Boolean,
     ): Flow<SourceSync> =
         mongoOps
@@ -24,7 +24,7 @@ class SourceSyncInfraRepositoryImpl(
 
     override suspend fun findSingleUsingFilter(
         filter: SourceSyncFilter,
-        requestingContributor: SimpleContributor?,
+        requestingContributor: A6Contributor?,
         allowAnonymous: Boolean,
     ): SourceSync? =
         mongoOps
@@ -33,7 +33,7 @@ class SourceSyncInfraRepositoryImpl(
 }
 
 private fun SourceSyncFilter.toQuery(
-    requestingContributor: SimpleContributor?,
+    requestingContributor: A6Contributor?,
     allowAnonymous: Boolean = false,
 ): Query {
     if (!allowAnonymous) {

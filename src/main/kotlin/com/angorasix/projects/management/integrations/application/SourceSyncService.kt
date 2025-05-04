@@ -1,7 +1,6 @@
 package com.angorasix.projects.management.integrations.application
 
-import com.angorasix.commons.domain.DetailedContributor
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.commons.domain.inputs.FieldSpec
 import com.angorasix.commons.domain.inputs.InlineFieldOptions
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
@@ -37,7 +36,7 @@ class SourceSyncService(
 ) {
     suspend fun findSingleSourceSync(
         id: String,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
     ): SourceSync? =
         repository
             .findSingleUsingFilter(
@@ -47,7 +46,7 @@ class SourceSyncService(
 
     fun findSourceSyncsForProjectManagement(
         projectManagementId: String,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
     ): List<SourceSync> =
         runBlocking {
             val filter = SourceSyncFilter(null, null, listOf(projectManagementId))
@@ -62,7 +61,7 @@ class SourceSyncService(
 
     suspend fun registerSourceSync(
         newSourceSyncData: SourceSync,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
     ): SourceSync {
         val source = Source.valueOf(newSourceSyncData.source.uppercase())
         val existingSourceSync =
@@ -95,7 +94,7 @@ class SourceSyncService(
      *
      */
     suspend fun modifySourceSync(
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
         sourceSyncId: String,
         modificationOperations: List<SourceSyncModification<out Any>>,
     ): SourceSync? {
@@ -137,7 +136,7 @@ class SourceSyncService(
         operation: SourceSyncOperation,
         patchedSourceSync: SourceSync,
         sourceSyncStrategy: SourceSyncStrategy,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ) = when (operation) {
         SourceSyncOperation.MODIFY_STATUS -> patchedSourceSync
 
@@ -190,7 +189,7 @@ class SourceSyncService(
     private suspend fun triggerFullSync(
         sourceSyncStrategy: SourceSyncStrategy,
         patchedSourceSync: SourceSync,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ): SourceSync {
         requireNotNull(patchedSourceSync.id) { "SourceSync id required for triggerFullSync" }
         val syncEventId = UUID.randomUUID().toString()
@@ -221,7 +220,7 @@ class SourceSyncService(
         correspondences: List<Pair<String, String>>,
         sourceSyncId: String,
         syncingEventId: String,
-        requestingContributor: DetailedContributor,
+        requestingContributor: A6Contributor,
     ): SourceSync {
         val sourceSync =
             repository.findSingleUsingFilter(
@@ -250,9 +249,9 @@ class SourceSyncService(
     }
 
     suspend fun startUserMatching(
-        contributorsToMatch: List<DetailedContributor>,
+        contributorsToMatch: List<A6Contributor>,
         sourceSyncId: String,
-        requestingContributor: SimpleContributor,
+        requestingContributor: A6Contributor,
     ): SourceSyncMappingsUsersInput {
         val sourceSync =
             repository.findSingleUsingFilter(
@@ -305,7 +304,7 @@ class SourceSyncService(
     }
 
     private fun determineSelectedValues(
-        contributor: DetailedContributor,
+        contributor: A6Contributor,
         existingMapping: Map<String, String?>,
         platformUsers: List<SourceUser>,
     ): List<String> {
@@ -318,7 +317,7 @@ class SourceSyncService(
         return selectedValue?.let { listOf(it) } ?: emptyList()
     }
 
-    private fun SourceSync.updateSourceSyncMappingUsers(contributorsToMatch: List<DetailedContributor>) {
+    private fun SourceSync.updateSourceSyncMappingUsers(contributorsToMatch: List<A6Contributor>) {
         val initialUsersMapping = contributorsToMatch.associate { it.contributorId to null }
         mappings.addNewUserMappings(initialUsersMapping)
         addEvent(

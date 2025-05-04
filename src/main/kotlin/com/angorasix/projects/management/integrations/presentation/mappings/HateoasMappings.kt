@@ -1,20 +1,18 @@
 package com.angorasix.projects.management.integrations.presentation.mappings
 
-import com.angorasix.commons.domain.SimpleContributor
-import com.angorasix.commons.infrastructure.config.configurationproperty.api.Route
+import com.angorasix.commons.domain.A6Contributor
+import com.angorasix.commons.reactive.presentation.mappings.addLink
+import com.angorasix.commons.reactive.presentation.mappings.addSelfLink
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSync
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.api.ApiConfigs
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.SourceSyncFilter
 import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncDto
 import com.angorasix.projects.management.integrations.presentation.dto.SourceSyncMappingsUsersInputCollectionModel
-import com.angorasix.projects.management.integrations.presentation.utils.uriBuilder
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.Link
-import org.springframework.hateoas.mediatype.Affordances
 import org.springframework.hateoas.server.core.EmbeddedWrapper
 import org.springframework.hateoas.server.core.EmbeddedWrappers
-import org.springframework.http.HttpMethod
 import org.springframework.web.reactive.function.server.ServerRequest
 
 /**
@@ -24,27 +22,14 @@ import org.springframework.web.reactive.function.server.ServerRequest
  * @author rozagerardo
  */
 fun SourceSyncDto.resolveHypermedia(
-    requestingContributor: SimpleContributor?,
+    requestingContributor: A6Contributor?,
     sourceSync: SourceSync,
     apiConfigs: ApiConfigs,
     sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
 ): SourceSyncDto {
-    val getSingleRoute = apiConfigs.routes.getSourceSync
     // self
-    val selfLink =
-        Link
-            .of(uriBuilder(request).path(getSingleRoute.resolvePath()).build().toUriString())
-            .withRel(getSingleRoute.name)
-            .expand(id)
-            .withSelfRel()
-    val selfLinkWithDefaultAffordance =
-        Affordances
-            .of(selfLink)
-            .afford(HttpMethod.OPTIONS)
-            .withName("default")
-            .toLink()
-    add(selfLinkWithDefaultAffordance)
+    addSelfLink(apiConfigs.routes.getSourceSync, request, listOf(id ?: "undefinedSourceSyncId"))
 
     requestingContributor?.let {
         if (requestingContributor.isAdminHint == true ||
@@ -134,83 +119,28 @@ fun <T> List<T>.generateCollectionModel(clazz: Class<T>): Pair<Boolean, Collecti
 }
 
 fun CollectionModel<SourceSyncDto>.resolveHypermedia(
-    requestingContributor: SimpleContributor?,
+    requestingContributor: A6Contributor?,
     filter: SourceSyncFilter,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
 ): CollectionModel<SourceSyncDto> {
-    val getByProjectManagementId = apiConfigs.routes.listSourceSyncsByProjectManagementId
     // self
-    val selfLink =
-        Link
-            .of(
-                uriBuilder(request)
-                    .path(getByProjectManagementId.resolvePath())
-                    .queryParams(filter.toMultiValueMap())
-                    .build()
-                    .toUriString(),
-            ).withSelfRel()
-    val selfLinkWithDefaultAffordance =
-        Affordances
-            .of(selfLink)
-            .afford(HttpMethod.OPTIONS)
-            .withName("default")
-            .toLink()
-    add(selfLinkWithDefaultAffordance)
+    addSelfLink(apiConfigs.routes.listSourceSyncsByProjectManagementId, request)
     if (requestingContributor != null && requestingContributor.isAdminHint == true) {
         // here goes admin-specific collection hypermedia
+        println("remove $filter?")
     }
     return this
 }
 
 fun SourceSyncMappingsUsersInputCollectionModel.resolveHypermedia(
-    requestingContributor: SimpleContributor?,
+    requestingContributor: A6Contributor?,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
 ): SourceSyncMappingsUsersInputCollectionModel {
-    val getByProjectManagementId = apiConfigs.routes.listSourceSyncsByProjectManagementId
-    // self
-    val selfLink =
-        Link
-            .of(
-                uriBuilder(request)
-                    .path(getByProjectManagementId.resolvePath())
-                    .build()
-                    .toUriString(),
-            ).withSelfRel()
-    val selfLinkWithDefaultAffordance =
-        Affordances
-            .of(selfLink)
-            .afford(HttpMethod.OPTIONS)
-            .withName("default")
-            .toLink()
-    add(selfLinkWithDefaultAffordance)
+    addSelfLink(apiConfigs.routes.listSourceSyncsByProjectManagementId, request)
     if (requestingContributor != null && requestingContributor.isAdminHint == true) {
         // here goes admin-specific collection hypermedia
     }
     return this
-}
-
-private fun SourceSyncDto.addLink(
-    route: Route,
-    actionName: String,
-    request: ServerRequest,
-) {
-    val actionLink =
-        Link
-            .of(
-                uriBuilder(request)
-                    .path(route.resolvePath())
-                    .build()
-                    .toUriString(),
-            ).withTitle(actionName)
-            .withName(actionName)
-            .withRel(actionName)
-    val affordanceLink =
-        Affordances
-            .of(actionLink)
-            .afford(route.method)
-            .withName(actionName)
-            .toLink()
-    add(affordanceLink)
 }

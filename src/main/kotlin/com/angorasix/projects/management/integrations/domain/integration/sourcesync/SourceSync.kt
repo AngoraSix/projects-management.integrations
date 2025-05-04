@@ -1,6 +1,6 @@
 package com.angorasix.projects.management.integrations.domain.integration.sourcesync
 
-import com.angorasix.commons.domain.SimpleContributor
+import com.angorasix.commons.domain.A6Contributor
 import com.angorasix.commons.domain.inputs.InlineFieldSpec
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.PersistenceCreator
@@ -28,7 +28,7 @@ data class SourceSync
         @field:Id val id: String?,
         val source: String,
         val projectManagementId: String, // for a particular Project Mgmt (same user/admin could link to the same source),
-        val admins: Set<SimpleContributor> = emptySet(),
+        val admins: Set<A6Contributor> = emptySet(),
         var status: SourceSyncStatus,
         val config: SourceSyncConfig = SourceSyncConfig(),
         val events: MutableList<SourceSyncEvent> = mutableListOf(),
@@ -70,7 +70,7 @@ data class SourceSync
         companion object {
             fun initiate(
                 baseSourceSyncData: SourceSync,
-                requestingContributor: SimpleContributor,
+                requestingContributor: A6Contributor,
                 config: SourceSyncConfig,
                 id: String? = null,
             ): SourceSync =
