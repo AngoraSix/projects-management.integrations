@@ -8,7 +8,7 @@
     <artifactId>projects.management.integrations</artifactId>
     <name>projects.management.integrations</name>
     <description>Projects Management Integrations Service</description>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
 
     <parent>
         <artifactId>parent-pom-spring-kotlin</artifactId>
