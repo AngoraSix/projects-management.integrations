@@ -154,7 +154,7 @@ class TrelloSourceSyncStrategy(
                     val boardFieldSpec =
                         InlineFieldSpec(
                             TrelloResponseFieldKeys.SELECT_BOARD_FIELD.value,
-                            FieldSpec.SELECT,
+                            FieldSpec.MULTIPLE,
                             boardsOptions,
                         )
                     sourceSync
