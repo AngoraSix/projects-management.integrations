@@ -75,7 +75,6 @@ class IntegrationAssetService(
 
         // Start Syncing
         publishAssetUpdates(
-            messagePublisher,
             persistedAssets,
             sourceSyncContext,
             syncingEventId,
@@ -90,7 +89,6 @@ class IntegrationAssetService(
 
         // Updates not ready to be processed, for later
         publishAssetUpdates(
-            messagePublisher,
             pendingUpdatedAssets,
             sourceSyncContext,
             syncingEventId,
@@ -126,7 +124,6 @@ class IntegrationAssetService(
 
         // Start Syncing
         publishAssetUpdates(
-            messagePublisher,
             updatedAssets,
             sourceSyncContext,
             syncingEventId,
@@ -141,7 +138,6 @@ class IntegrationAssetService(
 
         // Updates not ready to be processed, for later
         publishAssetUpdates(
-            messagePublisher,
             pendingUpdatedAssets,
             sourceSyncContext,
             syncingEventId,
@@ -169,30 +165,29 @@ class IntegrationAssetService(
             requestingContributor,
         )
     }
-}
 
-private fun publishAssetUpdates(
-    messagePublisher: MessagePublisher,
-    updatedAssets: Collection<IntegrationAsset>,
-    sourceSyncContext: SourceSyncContext,
-    syncingEventId: String,
-    requestingContributor: A6Contributor,
-    isForPendingSyncing: Boolean = false,
-) {
-    if (updatedAssets.isEmpty()) return
+    private fun publishAssetUpdates(
+        updatedAssets: Collection<IntegrationAsset>,
+        sourceSyncContext: SourceSyncContext,
+        syncingEventId: String,
+        requestingContributor: A6Contributor,
+        isForPendingSyncing: Boolean = false,
+    ) {
+        if (updatedAssets.isEmpty()) return
 
-    val integrationTaskReceived =
-        IntegrationTaskReceived(
-            updatedAssets.map { it.toTaskDto(sourceSyncContext.configurations.usersMappings) },
+        val integrationTaskReceived =
+            IntegrationTaskReceived(
+                updatedAssets.map { it.toTaskDto(sourceSyncContext.configurations.usersMappings) },
+            )
+
+        messagePublisher.publishAssetsUpdated(
+            integrationTaskReceived,
+            syncingEventId,
+            sourceSyncContext,
+            requestingContributor,
+            isForPendingSyncing,
         )
-
-    messagePublisher.publishAssetsUpdated(
-        integrationTaskReceived,
-        syncingEventId,
-        sourceSyncContext,
-        requestingContributor,
-        isForPendingSyncing,
-    )
+    }
 }
 
 private fun updatedAssetOrNull(
