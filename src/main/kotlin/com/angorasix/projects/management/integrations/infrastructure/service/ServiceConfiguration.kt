@@ -12,7 +12,8 @@ import com.angorasix.projects.management.integrations.infrastructure.config.conf
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
 import com.angorasix.projects.management.integrations.infrastructure.integrations.strategies.WebClientStrategies
 import com.angorasix.projects.management.integrations.infrastructure.security.TokenEncryptionUtil
-import com.angorasix.projects.management.integrations.messaging.handler.ProjectsManagementIntegrationsMessagingHandler
+import com.angorasix.projects.management.integrations.messaging.listener.handler.ProjectsManagementIntegrationsMessagingHandler
+import com.angorasix.projects.management.integrations.messaging.publisher.MessagePublisher
 import com.angorasix.projects.management.integrations.presentation.handler.ProjectManagementIntegrationsHandler
 import com.angorasix.projects.management.integrations.presentation.router.ProjectManagementIntegrationsRouter
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -50,11 +51,16 @@ class ServiceConfiguration {
     fun projectsManagementIntegrationsMessagingHandler(service: SourceSyncService) = ProjectsManagementIntegrationsMessagingHandler(service)
 
     @Bean
-    fun integrationAssetService(
-        repository: IntegrationAssetRepository,
+    fun messagePublisher(
         streamBridge: StreamBridge,
         amqpConfigs: AmqpConfigurations,
-    ) = IntegrationAssetService(repository, streamBridge, amqpConfigs)
+    ) = MessagePublisher(streamBridge, amqpConfigs)
+
+    @Bean
+    fun integrationAssetService(
+        repository: IntegrationAssetRepository,
+        messagePublisher: MessagePublisher,
+    ) = IntegrationAssetService(repository, messagePublisher)
 
     @Bean
     fun projectManagementIntegrationsRouter(

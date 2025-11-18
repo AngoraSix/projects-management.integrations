@@ -47,6 +47,12 @@ private fun SourceSyncDto.addSourceSyncDtoAdminLinks(
     sourceConfigurations: SourceConfigurations,
     request: ServerRequest,
 ) {
+    val actionLink =
+        Link
+            .of(
+                sourceConfigurations.extractSourceConfig(sourceSync.source, "installInPlatform"),
+            ).withRel(apiConfigs.integrationActions.installInPlatform)
+    add(actionLink)
     if (sourceSync.isActive()) {
         // REQUEST FULL SYNC
         addLink(

@@ -34,5 +34,5 @@ interface SourceSyncStrategy {
     suspend fun obtainUsersMatchOptions(
         sourceSync: SourceSync,
         requestingContributor: A6Contributor,
-    ): List<SourceUser>
+    ): Set<SourceUser>
 }

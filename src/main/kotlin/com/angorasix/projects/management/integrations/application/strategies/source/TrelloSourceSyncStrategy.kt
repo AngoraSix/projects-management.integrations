@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.reactor.awaitSingle
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -307,7 +308,7 @@ class TrelloSourceSyncStrategy(
     override suspend fun obtainUsersMatchOptions(
         sourceSync: SourceSync,
         requestingContributor: A6Contributor,
-    ): List<SourceUser> {
+    ): Set<SourceUser> {
         val accessToken = extractAccessToken(sourceSync)
         val boardMembersUrlPattern = sourceConfigs.extractSourceConfig(SourceType.TRELLO.key, "boardMembersUrlPattern")
 
@@ -340,7 +341,7 @@ class TrelloSourceSyncStrategy(
                         e,
                     )
                 }
-            }.toList()
+            }.toSet()
     }
 
     companion object {

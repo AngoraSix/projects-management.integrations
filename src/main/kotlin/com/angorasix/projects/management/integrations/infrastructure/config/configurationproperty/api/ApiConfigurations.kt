@@ -37,6 +37,7 @@ data class RoutesConfigs(
 )
 
 data class IntegrationActions(
+    val installInPlatform: String,
     val redirectAuthorization: String,
     val disableIntegration: String,
     val continueSourceSync: String,

@@ -169,7 +169,7 @@ data class SourceSyncStatusStep(
 // }
 
 data class SourceSyncMappings(
-    val users: MutableMap<String, String?> = mutableMapOf(), // A6 Contributor id to Source User
+    val users: MutableMap<String, String?> = mutableMapOf(), // Source User to A6 Contributor
 ) {
     fun addUserMappings(newUserMappings: Map<String, String?>) {
         users.putAll(newUserMappings)

@@ -1,4 +1,4 @@
-package com.angorasix.projects.management.integrations.messaging.handler
+package com.angorasix.projects.management.integrations.messaging.listener.handler
 
 import com.angorasix.commons.infrastructure.intercommunication.A6DomainResource
 import com.angorasix.commons.infrastructure.intercommunication.A6InfraTopics

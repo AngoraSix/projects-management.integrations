@@ -9,6 +9,7 @@ configs:
           appName: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_APPNAME:AngoraSix}
           pluginId: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_PLUGINID}
           # REGISTRATION
+          installInPlatform: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_INSTALLINPLATFORMURL:https://trello.com/power-ups/661330ba85fd438c6865b3dd}
           authorizationUrlPattern: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_AUTHORIZATIONURLPATTERN:https://trello.com/1/authorize?expiration=30days&name=:appName&scope=read&response_type=token&key=:apiKey&callback_method=fragment&return_url=:redirectUri}
           memberUrl: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_MEMBERURL:https://api.trello.com/1/members/me?fields=id}
           memberBoardsUrl: ${A6_PROJECTS_MGMT_INTEGRATIONS_INTEGRATION_TRELLO_MEMBERBOARDSURL:https://api.trello.com/1/members/me/boards?fields=id,name,desc,closed,idOrganization,pinned,url,shortUrl,shortLink}
