@@ -7,6 +7,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncEventValues
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatus
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.SourceSyncStatusValues
+import com.angorasix.projects.management.integrations.infrastructure.constants.ManagementIntegrationConstants
 import java.time.Instant
 
 enum class SourceSyncOperation {
@@ -81,7 +82,8 @@ class ReplaceMappingUsersData(
         require(domainObject.isAdmin(requestingContributor.contributorId)) {
             "Requesting contributor is not admin"
         }
-        domainObject.mappings.addUserMappings(modifyValue)
+        val normalizedValues = modifyValue.mapValues { if (it.value == ManagementIntegrationConstants.UNASSIGNED_KEY) null else it.value }
+        domainObject.mappings.addUserMappings(normalizedValues)
         return domainObject
     }
 }

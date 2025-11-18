@@ -48,6 +48,7 @@ configs:
         method: POST
         path: "/mappings/users"
     integrationActions:
+      installInPlatform: installInPlatform
       redirectAuthorization: redirectAuthorization
       disableIntegration: disableIntegration
       continueSourceSync: continueSourceSync

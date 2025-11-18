@@ -1,9 +1,9 @@
-package com.angorasix.projects.management.integrations.messaging.router
+package com.angorasix.projects.management.integrations.messaging.listener.router
 
 import com.angorasix.commons.infrastructure.intercommunication.integrations.IntegrationTaskReceived
 import com.angorasix.commons.infrastructure.intercommunication.messaging.A6InfraMessageDto
 import com.angorasix.commons.infrastructure.intercommunication.tasks.TasksSyncingCorrespondenceProcessed
-import com.angorasix.projects.management.integrations.messaging.handler.ProjectsManagementIntegrationsMessagingHandler
+import com.angorasix.projects.management.integrations.messaging.listener.handler.ProjectsManagementIntegrationsMessagingHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

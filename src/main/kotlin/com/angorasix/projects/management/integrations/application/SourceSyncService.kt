@@ -17,6 +17,7 @@ import com.angorasix.projects.management.integrations.domain.integration.sources
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncModification
 import com.angorasix.projects.management.integrations.domain.integration.sourcesync.modification.SourceSyncOperation
 import com.angorasix.projects.management.integrations.infrastructure.config.configurationproperty.integrations.SourceConfigurations
+import com.angorasix.projects.management.integrations.infrastructure.constants.ManagementIntegrationConstants
 import com.angorasix.projects.management.integrations.infrastructure.domain.SourceSyncContext.Companion.context
 import com.angorasix.projects.management.integrations.infrastructure.queryfilters.SourceSyncFilter
 import kotlinx.coroutines.flow.toList
@@ -269,14 +270,13 @@ class SourceSyncService(
                 sourceSync,
                 requestingContributor,
             )
-
-        sourceSync.updateSourceSyncMappingUsers(contributorsToMatch)
+        sourceSync.updateSourceSyncMappingUsers(platformUsers)
         repository.save(sourceSync)
         return SourceSyncMappingsUsersInput(
             inputs =
-                contributorsToMatch.map {
+                platformUsers.map {
                     InlineFieldSpec(
-                        name = it.contributorId,
+                        name = it.sourceUserId,
                         type = FieldSpec.SELECT_COMPLEX,
                         options =
                             InlineFieldOptions(
@@ -284,19 +284,30 @@ class SourceSyncService(
                                     determineSelectedValues(
                                         it,
                                         sourceSync.mappings.users,
-                                        platformUsers,
+                                        contributorsToMatch,
                                     ),
                                 inline =
-                                    platformUsers.map { platformUser ->
-                                        OptionSpec(
-                                            value = platformUser.sourceUserId,
-                                            prompt =
-                                                platformUser.username ?: platformUser.email
-                                                    ?: platformUser.sourceUserId,
-                                            promptData = platformUser.toMap(),
+                                    buildList {
+                                        add(
+                                            OptionSpec(
+                                                ManagementIntegrationConstants.UNASSIGNED_KEY,
+                                                ManagementIntegrationConstants.UNASSIGNED_KEY,
+                                            ),
                                         )
+                                        contributorsToMatch.forEach { contributor ->
+                                            add(
+                                                OptionSpec(
+                                                    value = contributor.contributorId,
+                                                    prompt = contributor.email ?: contributor.contributorId,
+                                                ),
+                                            )
+                                        }
                                     },
                             ),
+                        prompt =
+                            it.username ?: it.email
+                                ?: it.sourceUserId,
+                        promptData = it.toMap(),
                     )
                 },
             source = sourceSync.source,
@@ -304,26 +315,26 @@ class SourceSyncService(
     }
 
     private fun determineSelectedValues(
-        contributor: A6Contributor,
+        sourceUser: SourceUser,
         existingMapping: Map<String, String?>,
-        platformUsers: List<SourceUser>,
+        contributorsToMatch: List<A6Contributor>,
     ): List<String> {
-        val existingValue = existingMapping[contributor.contributorId]
+        val existingValue = existingMapping[sourceUser.sourceUserId]
         val selectedValue =
-            existingValue ?: platformUsers
-                .takeIf { contributor.email != null }
-                ?.find { it.email == contributor.email }
-                ?.sourceUserId
+            existingValue ?: contributorsToMatch
+                .takeIf { sourceUser.email != null }
+                ?.find { it.email == sourceUser.email }
+                ?.contributorId
         return selectedValue?.let { listOf(it) } ?: emptyList()
     }
 
-    private fun SourceSync.updateSourceSyncMappingUsers(contributorsToMatch: List<A6Contributor>) {
-        val initialUsersMapping = contributorsToMatch.associate { it.contributorId to null }
+    private fun SourceSync.updateSourceSyncMappingUsers(sourceUsersToMatch: Set<SourceUser>) {
+        val initialUsersMapping = sourceUsersToMatch.associate { it.sourceUserId to null }
         mappings.addNewUserMappings(initialUsersMapping)
         addEvent(
             SourceSyncEvent(
                 type = SourceSyncEventValues.STARTING_MEMBER_MATCH,
-                affectedQty = contributorsToMatch.size,
+                affectedQty = sourceUsersToMatch.size,
             ),
         )
     }
