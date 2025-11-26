@@ -125,17 +125,17 @@ fun <T> List<T>.generateCollectionModel(clazz: Class<T>): Pair<Boolean, Collecti
 }
 
 fun CollectionModel<SourceSyncDto>.resolveHypermedia(
-    requestingContributor: A6Contributor?,
     filter: SourceSyncFilter,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
 ): CollectionModel<SourceSyncDto> {
     // self
-    addSelfLink(apiConfigs.routes.listSourceSyncsByProjectManagementId, request)
-    if (requestingContributor != null && requestingContributor.isAdminHint == true) {
-        // here goes admin-specific collection hypermedia
-        println("remove $filter?")
-    }
+    addSelfLink(
+        apiConfigs.routes.listSourceSyncsByProjectManagementId,
+        request,
+        filter.projectManagementId?.let { listOf(it.first()) } ?: emptyList(),
+    )
+    // add admin-specific hypermedia here if requestingContributor.isAdminHint == true
     return this
 }
 

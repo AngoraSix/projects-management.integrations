@@ -125,7 +125,6 @@ class ProjectManagementIntegrationsHandler(
                         .contentType(MediaTypes.HAL_FORMS_JSON)
                         .bodyValueAndAwait(
                             it.convertToDto(
-                                requestingContributor,
                                 SourceSyncFilter(),
                                 apiConfigs,
                                 request,

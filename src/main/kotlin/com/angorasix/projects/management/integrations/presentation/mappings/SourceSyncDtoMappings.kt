@@ -77,7 +77,6 @@ fun SourceSyncConfig.convertToDto(): SourceSyncConfigDto =
     )
 
 fun List<SourceSyncDto>.convertToDto(
-    contributor: A6Contributor?,
     filter: SourceSyncFilter,
     apiConfigs: ApiConfigs,
     request: ServerRequest,
@@ -85,7 +84,6 @@ fun List<SourceSyncDto>.convertToDto(
     // Fix this when Spring HATEOAS provides consistent support for reactive/coroutines
     val pair = generateCollectionModel(SourceSyncDto::class.java)
     return pair.second.resolveHypermedia(
-        contributor,
         filter,
         apiConfigs,
         request,
