@@ -25,10 +25,7 @@ class TrelloStrategy(
                     ?: matchResult.value // Replace with map value or leave unchanged if not found
             }
 
-        return buildList {
-            sourceConfigs["installInPlatform"]?.let { add(ActionData(apiConfigs.integrationActions.installInPlatform, it)) }
-            add(ActionData(apiConfigs.integrationActions.redirectAuthorization, authUrl))
-        }
+        return listOf(ActionData(apiConfigs.integrationActions.redirectAuthorization, authUrl))
     }
 }
 
